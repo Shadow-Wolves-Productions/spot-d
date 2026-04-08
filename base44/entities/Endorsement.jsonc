@@ -1,0 +1,37 @@
+{
+  "name": "Endorsement",
+  "type": "object",
+  "properties": {
+    "profile_id": {
+      "type": "string",
+      "description": "Profile receiving the endorsement"
+    },
+    "endorser_id": {
+      "type": "string",
+      "description": "User ID giving the endorsement"
+    },
+    "endorser_name": {
+      "type": "string"
+    },
+    "endorsement_type": {
+      "type": "string",
+      "enum": [
+        "Reliable on set",
+        "Great communicator",
+        "Strong leadership",
+        "Excellent with actors",
+        "Calm under pressure",
+        "Fast and professional",
+        "Creative problem solver",
+        "Technical excellence",
+        "Team player",
+        "Highly organized"
+      ]
+    }
+  },
+  "required": [
+    "profile_id",
+    "endorser_id",
+    "endorsement_type"
+  ]
+}

@@ -1,0 +1,282 @@
+{
+  "name": "Profile",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "Owner user ID"
+    },
+    "full_name": {
+      "type": "string"
+    },
+    "preferred_name": {
+      "type": "string"
+    },
+    "pronouns": {
+      "type": "string",
+      "enum": [
+        "He/Him",
+        "She/Her",
+        "They/Them",
+        "Other"
+      ]
+    },
+    "profile_photo": {
+      "type": "string",
+      "format": "uri",
+      "description": "Profile photo URL"
+    },
+    "email": {
+      "type": "string",
+      "format": "email"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "city": {
+      "type": "string"
+    },
+    "state": {
+      "type": "string"
+    },
+    "country": {
+      "type": "string"
+    },
+    "willing_to_travel": {
+      "type": "boolean",
+      "default": false
+    },
+    "travel_notes": {
+      "type": "string"
+    },
+    "primary_role": {
+      "type": "string",
+      "enum": [
+        "Actor",
+        "Director",
+        "Producer",
+        "Cinematographer",
+        "Editor",
+        "Writer",
+        "Sound Designer",
+        "Production Designer",
+        "Costume Designer",
+        "Makeup Artist",
+        "Gaffer",
+        "Grip",
+        "1st AD",
+        "2nd AD",
+        "Line Producer",
+        "Production Manager",
+        "Script Supervisor",
+        "Stunt Coordinator",
+        "VFX Artist",
+        "Colorist",
+        "Composer",
+        "Sound Mixer",
+        "Boom Operator",
+        "Art Director",
+        "Set Designer",
+        "Props Master",
+        "Location Manager",
+        "Casting Director",
+        "Dialect Coach",
+        "Choreographer",
+        "Other"
+      ]
+    },
+    "secondary_roles": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "years_of_experience": {
+      "type": "number"
+    },
+    "experience_level": {
+      "type": "string",
+      "enum": [
+        "Entry",
+        "Mid",
+        "Senior",
+        "Expert"
+      ]
+    },
+    "day_rate_min": {
+      "type": "number"
+    },
+    "day_rate_max": {
+      "type": "number"
+    },
+    "willing_to_work_for": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "Paid Only",
+          "Deferred Payment",
+          "Credits / Experience",
+          "Union Scale",
+          "Negotiable"
+        ]
+      }
+    },
+    "union_status": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "SAG-AFTRA",
+          "MEAA",
+          "Equity",
+          "DGA",
+          "IATSE",
+          "WGA",
+          "Non-Union"
+        ]
+      }
+    },
+    "union_number": {
+      "type": "string"
+    },
+    "work_authorization": {
+      "type": "string",
+      "enum": [
+        "Citizen",
+        "Permanent Resident",
+        "Work Visa"
+      ]
+    },
+    "imdb_link": {
+      "type": "string",
+      "format": "uri"
+    },
+    "website": {
+      "type": "string",
+      "format": "uri"
+    },
+    "instagram": {
+      "type": "string"
+    },
+    "linkedin": {
+      "type": "string",
+      "format": "uri"
+    },
+    "showreel_link": {
+      "type": "string",
+      "format": "uri"
+    },
+    "resume_url": {
+      "type": "string",
+      "format": "uri"
+    },
+    "headshots": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "format": "uri"
+      },
+      "maxItems": 5
+    },
+    "equipment_owned": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "special_skills": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "languages_spoken": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "bio": {
+      "type": "string"
+    },
+    "availability_status": {
+      "type": "string",
+      "enum": [
+        "Available Now",
+        "Available Soon",
+        "Not Available"
+      ],
+      "default": "Available Now"
+    },
+    "availability_notes": {
+      "type": "string"
+    },
+    "credits": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "project_title": {
+            "type": "string"
+          },
+          "role_on_project": {
+            "type": "string"
+          },
+          "year": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "is_pro": {
+      "type": "boolean",
+      "default": false
+    },
+    "is_founding_member": {
+      "type": "boolean",
+      "default": false
+    },
+    "is_boosted": {
+      "type": "boolean",
+      "default": false
+    },
+    "boost_expires": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "email_verified": {
+      "type": "boolean",
+      "default": false
+    },
+    "phone_verified": {
+      "type": "boolean",
+      "default": false
+    },
+    "imdb_verified": {
+      "type": "boolean",
+      "default": false
+    },
+    "union_verified": {
+      "type": "boolean",
+      "default": false
+    },
+    "cine_score": {
+      "type": "number",
+      "default": 0
+    },
+    "agent_name": {
+      "type": "string"
+    },
+    "agent_email": {
+      "type": "string"
+    },
+    "agent_phone": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "full_name",
+    "primary_role"
+  ]
+}
