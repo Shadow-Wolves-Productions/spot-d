@@ -12,6 +12,7 @@ import ProfilePage from './pages/ProfilePage';
 import CreateProfile from './pages/CreateProfile';
 import Pricing from './pages/Pricing';
 import Dashboard from './pages/Dashboard';
+import ContactFAQ from './pages/ContactFAQ';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -46,6 +47,7 @@ const AuthenticatedApp = () => {
         <Route path="/create-profile" element={<CreateProfile />} />
         <Route path="/pricing" element={<Pricing />} />
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/contact" element={<ContactFAQ />} />
         <Route path="*" element={<PageNotFound />} />
       </Route>
     </Routes>

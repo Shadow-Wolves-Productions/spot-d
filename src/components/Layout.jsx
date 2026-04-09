@@ -15,6 +15,7 @@ import {
 const NAV_LINKS = [
   { path: "/search", label: "Directory" },
   { path: "/pricing", label: "Pricing" },
+  { path: "/contact", label: "Contact & FAQ" },
 ];
 
 export default function Layout() {

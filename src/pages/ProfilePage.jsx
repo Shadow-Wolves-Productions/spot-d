@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Link } from "react-router-dom";
-import { Bookmark, Share2, Flag, ArrowLeft } from "lucide-react";
+import { Bookmark, Share2, Flag, ArrowLeft, ThumbsUp } from "lucide-react";
+import RecommendModal from "../components/profile/RecommendModal";
 import { Button } from "@/components/ui/button";
 import ProfileHero from "../components/profile/ProfileHero";
 import ContactPanel from "../components/profile/ContactPanel";
@@ -18,6 +19,7 @@ export default function ProfilePage() {
   const [myProfile, setMyProfile] = useState(null);
   const [similarProfiles, setSimilarProfiles] = useState([]);
   const [isSaved, setIsSaved] = useState(false);
+  const [recommendOpen, setRecommendOpen] = useState(false);
 
   const urlParams = new URLSearchParams(window.location.search);
   const profileId = window.location.pathname.split("/profile/")[1];
@@ -96,6 +98,7 @@ export default function ProfilePage() {
 
   return (
     <div className="pb-20">
+      <RecommendModal profile={profile} user={user} open={recommendOpen} onClose={() => setRecommendOpen(false)} />
       <ProfileHero profile={profile} />
 
       {/* Actions strip */}
@@ -107,6 +110,11 @@ export default function ProfilePage() {
             </Button>
           </Link>
           <div className="flex-1" />
+          {user && myProfile?.id !== profile?.id && (
+            <Button variant="outline" size="sm" onClick={() => setRecommendOpen(true)} className="border-primary/30 text-primary hover:bg-primary/10">
+              <ThumbsUp className="w-4 h-4 mr-1" /> Recommend
+            </Button>
+          )}
           <Button variant="outline" size="sm" onClick={handleSave} className="border-border hover:border-primary/20">
             <Bookmark className={`w-4 h-4 mr-1 ${isSaved ? "fill-primary text-primary" : ""}`} />
             {isSaved ? "Saved" : "Save"}
