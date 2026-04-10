@@ -1,0 +1,33 @@
+{
+  "name": "CastingApplication",
+  "type": "object",
+  "properties": {
+    "casting_call_id": {
+      "type": "string"
+    },
+    "applicant_user_id": {
+      "type": "string"
+    },
+    "profile_id": {
+      "type": "string"
+    },
+    "note": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "viewed",
+        "shortlisted",
+        "rejected"
+      ],
+      "default": "pending"
+    }
+  },
+  "required": [
+    "casting_call_id",
+    "applicant_user_id",
+    "profile_id"
+  ]
+}

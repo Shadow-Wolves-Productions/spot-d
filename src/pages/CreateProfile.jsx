@@ -10,12 +10,17 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import AIAssistant from "../components/profile/AIAssistant";
 
 const ROLES = ["Actor", "Director", "Producer", "Cinematographer", "Editor", "Writer", "Sound Designer", "Production Designer", "Costume Designer", "Makeup Artist", "Gaffer", "Grip", "1st AD", "2nd AD", "Line Producer", "Production Manager", "Script Supervisor", "Stunt Coordinator", "VFX Artist", "Colorist", "Composer", "Sound Mixer", "Boom Operator", "Art Director", "Set Designer", "Props Master", "Location Manager", "Casting Director", "Dialect Coach", "Choreographer", "Other"];
 const EXPERIENCE_LEVELS = ["Entry", "Mid", "Senior", "Expert"];
 const UNIONS = ["SAG-AFTRA", "MEAA", "Equity", "DGA", "IATSE", "WGA", "Non-Union"];
 const WORK_FOR = ["Paid Only", "Deferred Payment", "Credits / Experience", "Union Scale", "Negotiable"];
 const PRONOUNS = ["He/Him", "She/Her", "They/Them", "Other"];
+const GENDERS = ["Male", "Female", "Non-Binary", "Other"];
+const HAIR_COLORS = ["Blonde", "Brown", "Black", "Red", "Grey", "White", "Bald", "Other"];
+const EYE_COLORS = ["Blue", "Brown", "Green", "Hazel", "Grey", "Amber", "Other"];
+const BUILDS = ["Slim", "Athletic", "Average", "Stocky", "Plus-size"];
 const WORK_AUTH = ["Citizen", "Permanent Resident", "Work Visa"];
 const AVAILABILITY = ["Available Now", "Available Soon", "Not Available"];
 
@@ -53,6 +58,7 @@ export default function CreateProfile() {
 
   const [form, setForm] = useState({
     full_name: "", preferred_name: "", pronouns: "", profile_photo: "",
+    gender: "", hair_color: "", eye_color: "", build: "", age: "", height_cm: "", ethnicity: "",
     email: "", phone: "", city: "", state: "", country: "",
     willing_to_travel: false, travel_notes: "",
     primary_role: "", secondary_roles: [], years_of_experience: 0,
@@ -265,6 +271,63 @@ export default function CreateProfile() {
               <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">Bio / About Me</Label>
               <Textarea value={form.bio} onChange={(e) => update("bio", e.target.value)} rows={4} className="bg-secondary border-border" placeholder="Tell filmmakers about yourself..." />
             </div>
+
+            {/* Appearance */}
+            <div className="border-t border-border pt-6">
+              <p className="text-xs uppercase tracking-wider text-muted-foreground mb-4">Appearance (Optional)</p>
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">Gender</Label>
+                  <Select value={form.gender} onValueChange={(v) => update("gender", v)}>
+                    <SelectTrigger className="bg-secondary border-border"><SelectValue placeholder="Select" /></SelectTrigger>
+                    <SelectContent className="bg-card border-border">
+                      {GENDERS.map((g) => <SelectItem key={g} value={g}>{g}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">Build</Label>
+                  <Select value={form.build} onValueChange={(v) => update("build", v)}>
+                    <SelectTrigger className="bg-secondary border-border"><SelectValue placeholder="Select" /></SelectTrigger>
+                    <SelectContent className="bg-card border-border">
+                      {BUILDS.map((b) => <SelectItem key={b} value={b}>{b}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">Hair Colour</Label>
+                  <Select value={form.hair_color} onValueChange={(v) => update("hair_color", v)}>
+                    <SelectTrigger className="bg-secondary border-border"><SelectValue placeholder="Select" /></SelectTrigger>
+                    <SelectContent className="bg-card border-border">
+                      {HAIR_COLORS.map((h) => <SelectItem key={h} value={h}>{h}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">Eye Colour</Label>
+                  <Select value={form.eye_color} onValueChange={(v) => update("eye_color", v)}>
+                    <SelectTrigger className="bg-secondary border-border"><SelectValue placeholder="Select" /></SelectTrigger>
+                    <SelectContent className="bg-card border-border">
+                      {EYE_COLORS.map((e) => <SelectItem key={e} value={e}>{e}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">Age</Label>
+                  <Input type="number" value={form.age} onChange={(e) => update("age", Number(e.target.value))} placeholder="e.g. 28" className="bg-secondary border-border" />
+                </div>
+                <div>
+                  <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">Height (cm)</Label>
+                  <Input type="number" value={form.height_cm} onChange={(e) => update("height_cm", Number(e.target.value))} placeholder="e.g. 175" className="bg-secondary border-border" />
+                </div>
+              </div>
+              <div className="mt-4">
+                <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">Ethnicity</Label>
+                <Input value={form.ethnicity} onChange={(e) => update("ethnicity", e.target.value)} placeholder="Optional" className="bg-secondary border-border" />
+              </div>
+            </div>
+
+            <AIAssistant form={form} onApply={(updates) => setForm((f) => ({ ...f, ...updates }))} />
           </div>
         )}
 

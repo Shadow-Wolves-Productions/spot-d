@@ -23,8 +23,7 @@
     },
     "profile_photo": {
       "type": "string",
-      "format": "uri",
-      "description": "Profile photo URL"
+      "format": "uri"
     },
     "email": {
       "type": "string",
@@ -272,6 +271,59 @@
       "type": "string"
     },
     "agent_phone": {
+      "type": "string"
+    },
+    "gender": {
+      "type": "string",
+      "enum": [
+        "Male",
+        "Female",
+        "Non-Binary",
+        "Other"
+      ]
+    },
+    "hair_color": {
+      "type": "string",
+      "enum": [
+        "Blonde",
+        "Brown",
+        "Black",
+        "Red",
+        "Grey",
+        "White",
+        "Bald",
+        "Other"
+      ]
+    },
+    "eye_color": {
+      "type": "string",
+      "enum": [
+        "Blue",
+        "Brown",
+        "Green",
+        "Hazel",
+        "Grey",
+        "Amber",
+        "Other"
+      ]
+    },
+    "height_cm": {
+      "type": "number"
+    },
+    "build": {
+      "type": "string",
+      "enum": [
+        "Slim",
+        "Athletic",
+        "Average",
+        "Stocky",
+        "Plus-size"
+      ]
+    },
+    "age": {
+      "type": "number"
+    },
+    "ethnicity": {
       "type": "string"
     }
   },

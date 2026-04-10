@@ -9,6 +9,10 @@
     "profile_id": {
       "type": "string",
       "description": "Saved profile ID"
+    },
+    "is_super_liked": {
+      "type": "boolean",
+      "default": false
     }
   },
   "required": [

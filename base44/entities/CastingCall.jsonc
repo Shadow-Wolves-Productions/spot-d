@@ -1,0 +1,93 @@
+{
+  "name": "CastingCall",
+  "type": "object",
+  "properties": {
+    "creator_user_id": {
+      "type": "string"
+    },
+    "project_title": {
+      "type": "string"
+    },
+    "project_type": {
+      "type": "string",
+      "enum": [
+        "Feature Film",
+        "Short Film",
+        "TV Series",
+        "Commercial",
+        "Music Video",
+        "Documentary",
+        "Web Series",
+        "Theatre",
+        "Other"
+      ]
+    },
+    "description": {
+      "type": "string"
+    },
+    "roles_needed": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "experience_level": {
+      "type": "string",
+      "enum": [
+        "Entry",
+        "Mid",
+        "Senior",
+        "Expert",
+        "Any"
+      ]
+    },
+    "location": {
+      "type": "string"
+    },
+    "shoot_dates": {
+      "type": "string"
+    },
+    "budget_range": {
+      "type": "string"
+    },
+    "union_required": {
+      "type": "boolean",
+      "default": false
+    },
+    "compensation": {
+      "type": "string",
+      "enum": [
+        "Paid",
+        "Deferred",
+        "Credits / Reel",
+        "Union Scale",
+        "TBD"
+      ]
+    },
+    "deadline": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "gender_preference": {
+      "type": "string"
+    },
+    "age_range_min": {
+      "type": "number"
+    },
+    "age_range_max": {
+      "type": "number"
+    },
+    "contact_email": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "project_title",
+    "description",
+    "roles_needed"
+  ]
+}

@@ -13,6 +13,8 @@ import CreateProfile from './pages/CreateProfile';
 import Pricing from './pages/Pricing';
 import Dashboard from './pages/Dashboard';
 import ContactFAQ from './pages/ContactFAQ';
+import CastingCalls from './pages/CastingCalls';
+import CreateCastingCall from './pages/CreateCastingCall';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -48,6 +50,8 @@ const AuthenticatedApp = () => {
         <Route path="/pricing" element={<Pricing />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/contact" element={<ContactFAQ />} />
+        <Route path="/casting" element={<CastingCalls />} />
+        <Route path="/casting/new" element={<CreateCastingCall />} />
         <Route path="*" element={<PageNotFound />} />
       </Route>
     </Routes>

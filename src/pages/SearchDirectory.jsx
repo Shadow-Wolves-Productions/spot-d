@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
-import { Search, Crown, ChevronDown } from "lucide-react";
+import { Search, Crown, ChevronDown, Star } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -21,6 +21,7 @@ export default function SearchDirectory() {
   const [user, setUser] = useState(null);
   const [myProfile, setMyProfile] = useState(null);
   const [savedIds, setSavedIds] = useState(new Set());
+  const [superLikedIds, setSuperLikedIds] = useState(new Set());
   const [sort, setSort] = useState("-cine_score");
   const [filters, setFilters] = useState({
     role: "",
@@ -32,6 +33,12 @@ export default function SearchDirectory() {
     verifiedOnly: false,
     imdbLinked: false,
     availableNow: false,
+    gender: "",
+    hair_color: "",
+    eye_color: "",
+    build: "",
+    age_min: "",
+    age_max: "",
   });
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -45,6 +52,7 @@ export default function SearchDirectory() {
         if (myProfiles.length > 0) setMyProfile(myProfiles[0]);
         const saved = await base44.entities.SavedProfile.filter({ user_id: me.id });
         setSavedIds(new Set(saved.map((s) => s.profile_id)));
+        setSuperLikedIds(new Set(saved.filter((s) => s.is_super_liked).map((s) => s.profile_id)));
       }
     };
     init();
@@ -92,6 +100,33 @@ export default function SearchDirectory() {
     if (filters.imdbLinked) {
       data = data.filter((p) => p.imdb_link);
     }
+    if (filters.gender && filters.gender !== "any_gender") {
+      data = data.filter((p) => p.gender === filters.gender);
+    }
+    if (filters.hair_color && filters.hair_color !== "any_hair") {
+      data = data.filter((p) => p.hair_color === filters.hair_color);
+    }
+    if (filters.eye_color && filters.eye_color !== "any_eye") {
+      data = data.filter((p) => p.eye_color === filters.eye_color);
+    }
+    if (filters.build && filters.build !== "any_build") {
+      data = data.filter((p) => p.build === filters.build);
+    }
+    if (filters.age_min) {
+      data = data.filter((p) => p.age >= Number(filters.age_min));
+    }
+    if (filters.age_max) {
+      data = data.filter((p) => p.age <= Number(filters.age_max));
+    }
+
+    // Matching algorithm: boost super-liked profiles and profiles matching user's history
+    if (user && superLikedIds.size > 0) {
+      data = data.sort((a, b) => {
+        const aScore = (superLikedIds.has(a.id) ? 30 : 0) + (savedIds.has(a.id) ? 10 : 0) + (a.cine_score || 0);
+        const bScore = (superLikedIds.has(b.id) ? 30 : 0) + (savedIds.has(b.id) ? 10 : 0) + (b.cine_score || 0);
+        return bScore - aScore;
+      });
+    }
 
     setProfiles(data);
     setLoading(false);
@@ -114,6 +149,18 @@ export default function SearchDirectory() {
       await base44.entities.SavedProfile.create({ user_id: user.id, profile_id: profileId });
       setSavedIds((prev) => new Set(prev).add(profileId));
     }
+  };
+
+  const handleSuperLike = async (profileId) => {
+    if (!user) { base44.auth.redirectToLogin(); return; }
+    const existing = await base44.entities.SavedProfile.filter({ user_id: user.id, profile_id: profileId });
+    if (existing.length > 0) {
+      await base44.entities.SavedProfile.update(existing[0].id, { is_super_liked: true });
+    } else {
+      await base44.entities.SavedProfile.create({ user_id: user.id, profile_id: profileId, is_super_liked: true });
+    }
+    setSuperLikedIds((prev) => new Set(prev).add(profileId));
+    setSavedIds((prev) => new Set(prev).add(profileId));
   };
 
   return (
@@ -216,13 +263,25 @@ export default function SearchDirectory() {
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 {profiles.map((profile, i) => (
-                  <ProfileCard
-                    key={profile.id}
-                    profile={profile}
-                    index={i}
-                    onSave={handleSave}
-                    isSaved={savedIds.has(profile.id)}
-                  />
+                  <div key={profile.id} className="relative group">
+                   <ProfileCard
+                     profile={profile}
+                     index={i}
+                     onSave={handleSave}
+                     isSaved={savedIds.has(profile.id)}
+                   />
+                   <button
+                     onClick={() => handleSuperLike(profile.id)}
+                     title="Super Like"
+                     className={`absolute bottom-[88px] right-3 z-10 w-7 h-7 rounded-full flex items-center justify-center transition-all ${
+                       superLikedIds.has(profile.id)
+                         ? "bg-yellow-500/30 text-yellow-400"
+                         : "bg-card/80 backdrop-blur-sm border border-border/50 text-muted-foreground opacity-0 group-hover:opacity-100"
+                     }`}
+                   >
+                     <Star className={`w-3.5 h-3.5 ${superLikedIds.has(profile.id) ? "fill-yellow-400" : ""}`} />
+                   </button>
+                  </div>
                 ))}
               </div>
             )}

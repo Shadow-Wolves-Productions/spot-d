@@ -14,6 +14,7 @@ import {
 
 const NAV_LINKS = [
   { path: "/search", label: "Directory" },
+  { path: "/casting", label: "Casting Calls" },
   { path: "/pricing", label: "Pricing" },
   { path: "/contact", label: "Contact & FAQ" },
 ];
