@@ -422,7 +422,7 @@ export default function CreateProfile() {
                   <button
                     key={w}
                     onClick={() => update("willing_to_work_for", form.willing_to_work_for.includes(w) ? form.willing_to_work_for.filter((v) => v !== w) : [...form.willing_to_work_for, w])}
-                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${form.willing_to_work_for.includes(w) ? "glass-gold text-primary" : "bg-secondary text-muted-foreground hover:text-foreground"}`}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${form.willing_to_work_for.includes(w) ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground hover:text-foreground"}`}
                   >{w}</button>
                 ))}
               </div>
@@ -434,7 +434,7 @@ export default function CreateProfile() {
                   <button
                     key={u}
                     onClick={() => update("union_status", form.union_status.includes(u) ? form.union_status.filter((v) => v !== u) : [...form.union_status, u])}
-                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${form.union_status.includes(u) ? "glass-gold text-primary" : "bg-secondary text-muted-foreground hover:text-foreground"}`}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${form.union_status.includes(u) ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground hover:text-foreground"}`}
                   >{u}</button>
                 ))}
               </div>

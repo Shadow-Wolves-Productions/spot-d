@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Link } from "react-router-dom";
-import { Crown, Eye, Bookmark, Clock, ChevronRight, Edit, UserCheck, Zap } from "lucide-react";
+import { Crown, Eye, Bookmark, Clock, ChevronRight, Edit, UserCheck, Zap, Moon, Sun } from "lucide-react";
+import { useTheme } from "../lib/useTheme";
 import VerificationPanel from "../components/VerificationPanel";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -19,6 +20,7 @@ export default function Dashboard() {
   const [endorsementCount, setEndorsementCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [activatingBoost, setActivatingBoost] = useState(false);
+  const { theme, toggleTheme } = useTheme();
 
   useEffect(() => {
     const load = async () => {
@@ -293,13 +295,35 @@ export default function Dashboard() {
             {/* PRO badge */}
             {profile?.is_pro && (
               <div className="glass-gold rounded-xl p-6 text-center">
-                <Crown className="w-8 h-8 text-primary mx-auto mb-2" />
-                <p className="font-display text-lg font-bold text-primary">PRO Member</p>
+                <Crown className="w-8 h-8 text-primary-foreground mx-auto mb-2" />
+                <p className="font-display text-lg font-bold text-primary-foreground">PRO Member</p>
                 {profile.is_founding_member && (
-                  <Badge className="bg-primary/20 text-primary mt-2">Founding Member</Badge>
+                  <Badge className="bg-white/20 text-white mt-2">Founding Member</Badge>
                 )}
               </div>
             )}
+
+            {/* Appearance */}
+            <div className="bg-card border border-border/60 rounded-xl p-6">
+              <h3 className="font-display text-sm font-semibold text-foreground uppercase tracking-wider mb-4">Appearance</h3>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  {theme === "dark" ? <Moon className="w-4 h-4 text-primary" /> : <Sun className="w-4 h-4 text-primary" />}
+                  <span className="text-sm text-foreground">{theme === "dark" ? "Dark Mode" : "Light Mode"}</span>
+                </div>
+                <button
+                  onClick={toggleTheme}
+                  className={`relative w-11 h-6 rounded-full transition-colors ${
+                    theme === "dark" ? "bg-primary" : "bg-border"
+                  }`}
+                >
+                  <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${
+                    theme === "dark" ? "translate-x-5" : "translate-x-0.5"
+                  }`} />
+                </button>
+              </div>
+              <p className="text-xs text-muted-foreground mt-3">{theme === "dark" ? "Switch to light editorial mode" : "Switch to dark mode"}</p>
+            </div>
           </div>
         </div>
       </div>

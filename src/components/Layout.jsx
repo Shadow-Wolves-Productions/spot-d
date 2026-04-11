@@ -1,4 +1,5 @@
 import { Outlet, Link, useLocation } from "react-router-dom";
+import { useTheme } from "@/lib/useTheme";
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Search, Menu, X, Crown, User, LogOut, Shield } from "lucide-react";
@@ -24,6 +25,7 @@ export default function Layout() {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [scrolled, setScrolled] = useState(false);
+  const { theme } = useTheme();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
