@@ -12,19 +12,23 @@ Deno.serve(async (req) => {
 
   if (!valid) return Response.json({ error: 'Invalid or expired code' }, { status: 400 });
 
-  // Mark used
   await base44.asServiceRole.entities.VerificationCode.update(valid.id, { used: true });
 
-  // Update profile verification flag
   const profiles = await base44.asServiceRole.entities.Profile.filter({ user_id: user.id });
   if (profiles.length > 0) {
-    const updateData = type === 'email' ? { email_verified: true } : { phone_verified: true };
     const profile = profiles[0];
-    const currentScore = profile.cine_score || 0;
-    await base44.asServiceRole.entities.Profile.update(profile.id, {
-      ...updateData,
-      cine_score: Math.min(currentScore + 10, 100)
-    });
+    const updateData = type === 'email' ? { email_verified: true } : { phone_verified: true };
+
+    // Also auto-verify union if union_number is set and user has a non-Non-Union status
+    const hasUnion = profile.union_status?.some((u) => u !== 'Non-Union');
+    if (profile.union_number && hasUnion) {
+      updateData.union_verified = true;
+    }
+
+    await base44.asServiceRole.entities.Profile.update(profile.id, updateData);
+
+    // Recalculate full CineScore
+    await base44.asServiceRole.functions.invoke('recalculateCineScore', {});
   }
 
   return Response.json({ success: true });

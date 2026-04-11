@@ -28,24 +28,32 @@ const STEPS = ["Personal", "Professional", "Portfolio & IMDb", "Availability & C
 
 function calculateCineScore(data) {
   let score = 0;
-  if (data.full_name) score += 5;
-  if (data.profile_photo) score += 10;
+  // Completeness
+  if (data.full_name) score += 4;
+  if (data.profile_photo) score += 8;
   if (data.primary_role) score += 5;
-  if (data.bio) score += 10;
-  if (data.city) score += 5;
-  if (data.experience_level) score += 5;
-  if (data.years_of_experience > 0) score += 5;
-  if (data.email) score += 5;
-  if (data.phone) score += 3;
-  if (data.imdb_link) score += 10;
-  if (data.showreel_link) score += 8;
-  if (data.website) score += 3;
-  if (data.credits?.length > 0) score += Math.min(data.credits.length * 3, 12);
-  if (data.union_status?.length > 0) score += 3;
-  if (data.headshots?.length > 0) score += 5;
-  if (data.special_skills?.length > 0) score += 3;
-  if (data.languages_spoken?.length > 0) score += 3;
-  return Math.min(score, 100);
+  if (data.bio) score += 8;
+  if (data.city) score += 3;
+  if (data.experience_level) score += 4;
+  if (data.years_of_experience > 0) score += 3;
+  if (data.email) score += 2;
+  if (data.phone) score += 2;
+  if (data.imdb_link) score += 6;
+  if (data.showreel_link) score += 6;
+  if (data.website) score += 2;
+  if (data.instagram || data.linkedin) score += 2;
+  if (data.credits?.length > 0) score += Math.min(data.credits.length * 2, 10);
+  if (data.union_status?.length > 0) score += 2;
+  if (data.headshots?.length > 0) score += 4;
+  if (data.special_skills?.length > 0) score += 2;
+  if (data.languages_spoken?.length > 0) score += 2;
+  if (data.willing_to_travel) score += 1;
+  // Verification bonuses
+  if (data.email_verified) score += 8;
+  if (data.phone_verified) score += 6;
+  if (data.union_verified) score += 6;
+  if (data.imdb_verified) score += 8;
+  return Math.min(Math.round(score), 100);
 }
 
 export default function CreateProfile() {

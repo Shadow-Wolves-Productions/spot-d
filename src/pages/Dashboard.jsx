@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Link } from "react-router-dom";
-import { Crown, Eye, Bookmark, Shield, Clock, ChevronRight, Edit, Film, UserCheck, Award, Zap } from "lucide-react";
+import { Crown, Eye, Bookmark, Clock, ChevronRight, Edit, UserCheck, Zap } from "lucide-react";
+import VerificationPanel from "../components/VerificationPanel";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -164,27 +165,13 @@ export default function Dashboard() {
 
             {/* Verification Status */}
             {profile && (
-              <div className="bg-card border border-border/60 rounded-xl p-6">
-                <h3 className="font-display text-sm font-semibold text-foreground uppercase tracking-wider mb-4">
-                  Verification Status
-                </h3>
-                <div className="grid sm:grid-cols-2 gap-3">
-                  {[
-                    { label: "Email", verified: profile.email_verified, icon: Shield },
-                    { label: "Phone", verified: profile.phone_verified, icon: Shield },
-                    { label: "IMDb / Credits", verified: profile.imdb_verified, icon: Film },
-                    { label: "Union", verified: profile.union_verified, icon: Award },
-                  ].map((v) => (
-                    <div key={v.label} className="flex items-center gap-3 bg-secondary/30 rounded-lg p-3">
-                      <v.icon className={`w-4 h-4 ${v.verified ? "text-green-400" : "text-muted-foreground/30"}`} />
-                      <span className="text-sm text-foreground">{v.label}</span>
-                      <Badge variant="outline" className={`ml-auto text-[10px] ${v.verified ? "border-green-500/30 text-green-400" : "border-border text-muted-foreground"}`}>
-                        {v.verified ? "Verified" : "Pending"}
-                      </Badge>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              <VerificationPanel
+                profile={profile}
+                onVerified={async () => {
+                  const profiles = await base44.entities.Profile.filter({ user_id: user.id });
+                  if (profiles.length > 0) setProfile(profiles[0]);
+                }}
+              />
             )}
 
             {/* Saved Profiles */}
