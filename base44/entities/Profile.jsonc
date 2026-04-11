@@ -12,6 +12,10 @@
     "preferred_name": {
       "type": "string"
     },
+    "profile_slug": {
+      "type": "string",
+      "description": "Custom URL slug e.g. BrendanByrne"
+    },
     "pronouns": {
       "type": "string",
       "enum": [

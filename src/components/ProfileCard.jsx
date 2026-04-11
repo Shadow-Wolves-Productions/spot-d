@@ -17,7 +17,7 @@ export default function ProfileCard({ profile, onSave, isSaved, index = 0 }) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.05, duration: 0.4 }}
     >
-      <Link to={`/profile/${profile.id}`}>
+      <Link to={`/profile/${profile.profile_slug || profile.id}`}>
         <div className="group relative bg-card border border-border/60 rounded-xl overflow-hidden hover:border-primary/30 transition-all duration-300 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-1">
           {/* Image */}
           <div className="relative aspect-[3/4] bg-secondary overflow-hidden">

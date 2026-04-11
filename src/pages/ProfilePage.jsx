@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Link } from "react-router-dom";
+import { toast } from "sonner";
 import { Bookmark, Share2, Flag, ArrowLeft, ThumbsUp } from "lucide-react";
 import RecommendModal from "../components/profile/RecommendModal";
 import { Button } from "@/components/ui/button";
@@ -21,8 +22,8 @@ export default function ProfilePage() {
   const [isSaved, setIsSaved] = useState(false);
   const [recommendOpen, setRecommendOpen] = useState(false);
 
-  const urlParams = new URLSearchParams(window.location.search);
-  const profileId = window.location.pathname.split("/profile/")[1];
+  const profileParam = window.location.pathname.split("/profile/")[1];
+  const isMongoId = /^[a-f0-9]{24}$/.test(profileParam);
 
   useEffect(() => {
     const load = async () => {
@@ -36,12 +37,14 @@ export default function ProfilePage() {
 
         const saved = await base44.entities.SavedProfile.filter({
           user_id: me.id,
-          profile_id: profileId,
+          profile_id: profileParam,
         });
         setIsSaved(saved.length > 0);
       }
 
-      const profiles = await base44.entities.Profile.filter({ id: profileId });
+      const profiles = isMongoId
+        ? await base44.entities.Profile.filter({ id: profileParam })
+        : await base44.entities.Profile.filter({ profile_slug: profileParam });
       if (profiles.length > 0) {
         const p = profiles[0];
         setProfile(p);
@@ -58,7 +61,7 @@ export default function ProfilePage() {
       setLoading(false);
     };
     load();
-  }, [profileId]);
+  }, [profileParam]);
 
   const handleSave = async () => {
     if (!user) {
@@ -66,17 +69,31 @@ export default function ProfilePage() {
       return;
     }
     if (isSaved) {
-      const saved = await base44.entities.SavedProfile.filter({ user_id: user.id, profile_id: profileId });
+      const saved = await base44.entities.SavedProfile.filter({ user_id: user.id, profile_id: profileParam });
       if (saved.length > 0) await base44.entities.SavedProfile.delete(saved[0].id);
       setIsSaved(false);
     } else {
-      await base44.entities.SavedProfile.create({ user_id: user.id, profile_id: profileId });
+      await base44.entities.SavedProfile.create({ user_id: user.id, profile_id: profileParam });
       setIsSaved(true);
     }
   };
 
-  const handleShare = () => {
-    navigator.clipboard.writeText(window.location.href);
+  const handleShare = async () => {
+    const slug = profile.profile_slug;
+    const url = slug
+      ? `${window.location.origin}/profile/${slug}`
+      : window.location.href;
+    try {
+      await navigator.clipboard.writeText(url);
+    } catch {
+      const el = document.createElement('input');
+      el.value = url;
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand('copy');
+      document.body.removeChild(el);
+    }
+    toast.success('Profile link copied!');
   };
 
   if (loading) {

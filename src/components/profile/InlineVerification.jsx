@@ -18,7 +18,7 @@ export default function InlineVerification({ form, onVerified }) {
     try {
       const res = await base44.functions.invoke("sendVerificationCode", {
         type,
-        phone: form.phone,
+        phone: normalizePhone(form.phone),
       });
       if (res.data?.error) throw new Error(res.data.error);
       setActive(type);
@@ -44,6 +44,17 @@ export default function InlineVerification({ form, onVerified }) {
       toast.error(e?.response?.data?.error || e?.message || "Invalid or expired code");
     }
     setVerifying(false);
+  };
+
+  // Normalize phone to international format for Twilio
+  const normalizePhone = (phone) => {
+    if (!phone) return '';
+    const digits = phone.replace(/\D/g, '');
+    if (phone.startsWith('+')) return phone;
+    // Australian mobile: starts with 04 → +614...
+    if (digits.startsWith('04') && digits.length === 10) return '+61' + digits.slice(1);
+    // Fallback: assume needs +1 (US) or let user include +country
+    return phone;
   };
 
   const items = [
@@ -84,7 +95,11 @@ export default function InlineVerification({ form, onVerified }) {
               )}
             </div>
             {isActive && (
-              <div className="mt-3 ml-6 flex gap-2">
+            <div className="mt-3 ml-6 space-y-2">
+              {item.key === 'phone' && (
+                <p className="text-[11px] text-muted-foreground">Include country code, e.g. +61420984558 (AU) or +14155552671 (US)</p>
+              )}
+              <div className="flex gap-2">
                 <Input
                   value={code}
                   onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
@@ -102,10 +117,11 @@ export default function InlineVerification({ form, onVerified }) {
                   <RefreshCw className="w-3 h-3" />
                 </Button>
               </div>
+            </div>
             )}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
+            </div>
+            );
+            })}
+            </div>
+            );
+            }

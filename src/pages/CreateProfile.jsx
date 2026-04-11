@@ -65,8 +65,11 @@ export default function CreateProfile() {
   const [existingProfile, setExistingProfile] = useState(null);
   const [photoFile, setPhotoFile] = useState(null);
 
+  const [slugAvailable, setSlugAvailable] = useState(null);
+  const [checkingSlug, setCheckingSlug] = useState(false);
+
   const [form, setForm] = useState({
-    full_name: "", preferred_name: "", pronouns: "", profile_photo: "",
+    full_name: "", preferred_name: "", pronouns: "", profile_photo: "", profile_slug: "",
     gender: "", hair_color: "", eye_color: "", build: "", age: "", height_cm: "", ethnicity: "",
     email: "", phone: "", city: "", state: "", country: "",
     willing_to_travel: false, travel_notes: "",
@@ -108,6 +111,23 @@ export default function CreateProfile() {
 
   const update = (key, value) => setForm((f) => ({ ...f, [key]: value }));
 
+  const generateSlugFromName = (name) => name.replace(/\s+/g, '').replace(/[^a-zA-Z0-9]/g, '');
+
+  const checkSlugAvailability = async (slug) => {
+    if (!slug) return;
+    setCheckingSlug(true);
+    const existing = await base44.entities.Profile.filter({ profile_slug: slug });
+    const taken = existing.filter((p) => p.id !== existingProfile?.id);
+    setSlugAvailable(taken.length === 0);
+    setCheckingSlug(false);
+  };
+
+  const handleSlugChange = (val) => {
+    const clean = val.replace(/[^a-zA-Z0-9_-]/g, '');
+    update('profile_slug', clean);
+    setSlugAvailable(null);
+  };
+
   const addTag = (field) => {
     const val = tagInputs[field].trim();
     if (!val || form[field].includes(val)) return;
@@ -147,7 +167,24 @@ export default function CreateProfile() {
     }
     setSaving(true);
     const me = await base44.auth.me();
-    const data = { ...form, user_id: me.id, cine_score: calculateCineScore(form) };
+
+    // Auto-generate slug if not set
+    let slug = form.profile_slug || generateSlugFromName(form.full_name);
+    if (!existingProfile || !existingProfile.profile_slug) {
+      // Ensure uniqueness
+      const base = slug;
+      let attempt = slug;
+      let suffix = 1;
+      while (true) {
+        const existing = await base44.entities.Profile.filter({ profile_slug: attempt });
+        const conflict = existing.filter((p) => p.id !== existingProfile?.id);
+        if (conflict.length === 0) { slug = attempt; break; }
+        attempt = base + suffix;
+        suffix++;
+      }
+    }
+
+    const data = { ...form, profile_slug: slug, user_id: me.id, cine_score: calculateCineScore(form) };
 
     if (existingProfile) {
       await base44.entities.Profile.update(existingProfile.id, data);
@@ -535,6 +572,26 @@ export default function CreateProfile() {
                   <Input value={form.agent_phone} onChange={(e) => update("agent_phone", e.target.value)} className="bg-secondary border-border" />
                 </div>
               </div>
+            </div>
+
+            {/* Profile URL slug */}
+            <div className="border-t border-border pt-6">
+              <h3 className="font-display text-lg font-semibold text-foreground mb-1">Your Profile URL</h3>
+              <p className="text-xs text-muted-foreground mb-3">Customise your profile link to match your brand or social handles.</p>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground whitespace-nowrap">cineconnect.com/profile/</span>
+                <input
+                  value={form.profile_slug}
+                  onChange={(e) => handleSlugChange(e.target.value)}
+                  onBlur={() => checkSlugAvailability(form.profile_slug)}
+                  placeholder={generateSlugFromName(form.full_name) || 'YourName'}
+                  className="flex h-9 flex-1 rounded-md border border-input bg-secondary px-3 py-1 text-base shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring md:text-sm"
+                />
+              </div>
+              {checkingSlug && <p className="text-xs text-muted-foreground mt-1">Checking availability…</p>}
+              {!checkingSlug && slugAvailable === true && <p className="text-xs text-green-400 mt-1">✓ Available</p>}
+              {!checkingSlug && slugAvailable === false && <p className="text-xs text-destructive mt-1">✗ Already taken — try another</p>}
+              <p className="text-[11px] text-muted-foreground mt-1">Only letters, numbers, hyphens, underscores. Leave blank to auto-generate.</p>
             </div>
 
             <InlineVerification
