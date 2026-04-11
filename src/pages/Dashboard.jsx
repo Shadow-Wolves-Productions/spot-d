@@ -102,7 +102,7 @@ export default function Dashboard() {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
           {/* CineScore */}
           <div className="bg-card border border-border/60 rounded-xl p-5 flex items-center gap-4">
             <CineScoreBadge score={profile?.cine_score || 0} size="md" showLabel={false} />

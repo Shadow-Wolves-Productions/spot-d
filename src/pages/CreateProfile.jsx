@@ -401,6 +401,18 @@ export default function CreateProfile() {
                 ))}
               </div>
             </div>
+            {form.union_status.some((u) => u !== "Non-Union") && (
+              <div>
+                <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">Union Membership Number</Label>
+                <Input
+                  value={form.union_number || ""}
+                  onChange={(e) => update("union_number", e.target.value)}
+                  placeholder="e.g. 0123456"
+                  className="bg-secondary border-border"
+                />
+                <p className="text-[11px] text-muted-foreground mt-1">Adding your number enables auto-verification once email or phone is confirmed.</p>
+              </div>
+            )}
             <div>
               <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">Work Authorization</Label>
               <Select value={form.work_authorization} onValueChange={(v) => update("work_authorization", v)}>
