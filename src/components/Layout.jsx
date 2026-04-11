@@ -116,6 +116,11 @@ export default function Layout() {
                       <DropdownMenuItem asChild>
                         <Link to="/dashboard" className="cursor-pointer">Dashboard</Link>
                       </DropdownMenuItem>
+                      {user?.role === 'admin' && (
+                        <DropdownMenuItem asChild>
+                          <Link to="/admin" className="cursor-pointer text-primary">Admin Panel</Link>
+                        </DropdownMenuItem>
+                      )}
                       <DropdownMenuItem asChild>
                         <Link to={profile ? `/profile/${profile.id}` : "/create-profile"} className="cursor-pointer">
                           {profile ? "My Profile" : "Create Profile"}

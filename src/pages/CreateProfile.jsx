@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import AIAssistant from "../components/profile/AIAssistant";
+import InlineVerification from "../components/profile/InlineVerification";
 
 const ROLES = ["Actor", "Director", "Producer", "Cinematographer", "Editor", "Writer", "Sound Designer", "Production Designer", "Costume Designer", "Makeup Artist", "Gaffer", "Grip", "1st AD", "2nd AD", "Line Producer", "Production Manager", "Script Supervisor", "Stunt Coordinator", "VFX Artist", "Colorist", "Composer", "Sound Mixer", "Boom Operator", "Art Director", "Set Designer", "Props Master", "Location Manager", "Casting Director", "Dialect Coach", "Choreographer", "Other"];
 const EXPERIENCE_LEVELS = ["Entry", "Mid", "Senior", "Expert"];
@@ -535,6 +536,14 @@ export default function CreateProfile() {
                 </div>
               </div>
             </div>
+
+            <InlineVerification
+              form={form}
+              onVerified={(type) => {
+                if (type === 'email') update('email_verified', true);
+                if (type === 'phone') update('phone_verified', true);
+              }}
+            />
 
             {/* CineScore preview */}
             <div className="border-t border-border pt-6">
