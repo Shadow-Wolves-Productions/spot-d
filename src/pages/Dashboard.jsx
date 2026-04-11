@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Link } from "react-router-dom";
-import { Crown, Eye, Bookmark, Shield, Clock, ChevronRight, Edit, Film, UserCheck, Award } from "lucide-react";
+import { Crown, Eye, Bookmark, Shield, Clock, ChevronRight, Edit, Film, UserCheck, Award, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -17,6 +17,7 @@ export default function Dashboard() {
   const [workedWithCount, setWorkedWithCount] = useState(0);
   const [endorsementCount, setEndorsementCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [activatingBoost, setActivatingBoost] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -242,6 +243,63 @@ export default function Dashboard() {
                     <Crown className="w-4 h-4 mr-1" /> From $9.99/mo
                   </Button>
                 </Link>
+              </div>
+            )}
+
+            {/* Featured on Homepage add-on */}
+            {profile && (
+              <div className={`rounded-xl p-6 border ${profile.is_boosted ? "glass-gold border-primary/30" : "bg-card border-border/60"}`}>
+                <Zap className={`w-5 h-5 mb-3 ${profile.is_boosted ? "text-primary" : "text-muted-foreground"}`} />
+                <h3 className="font-display text-base font-semibold text-foreground">
+                  {profile.is_boosted ? "Featured on Homepage" : "Feature My Profile"}
+                </h3>
+                {profile.is_boosted ? (
+                  <>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Your profile is in the homepage spotlight. Visible to every visitor.
+                    </p>
+                    <div className="mt-3 flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+                      <span className="text-xs text-green-400 font-medium">Active</span>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full mt-4 border-border text-xs text-muted-foreground"
+                      disabled={activatingBoost}
+                      onClick={async () => {
+                        setActivatingBoost(true);
+                        await base44.entities.Profile.update(profile.id, { is_boosted: false, boost_expires: null });
+                        setProfile((p) => ({ ...p, is_boosted: false }));
+                        setActivatingBoost(false);
+                      }}
+                    >
+                      Cancel Boost
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Get your profile pinned on the homepage spotlight — seen by every visitor.
+                    </p>
+                    <p className="font-display text-xl font-bold text-primary mt-3">$14.99<span className="text-xs font-normal text-muted-foreground">/mo</span></p>
+                    <Button
+                      size="sm"
+                      className="w-full mt-4 bg-primary text-primary-foreground font-semibold"
+                      disabled={activatingBoost || !profile}
+                      onClick={async () => {
+                        setActivatingBoost(true);
+                        const expires = new Date();
+                        expires.setMonth(expires.getMonth() + 1);
+                        await base44.entities.Profile.update(profile.id, { is_boosted: true, boost_expires: expires.toISOString() });
+                        setProfile((p) => ({ ...p, is_boosted: true }));
+                        setActivatingBoost(false);
+                      }}
+                    >
+                      {activatingBoost ? <div className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" /> : <><Zap className="w-4 h-4 mr-1" /> Activate — $14.99/mo</>}
+                    </Button>
+                  </>
+                )}
               </div>
             )}
 
