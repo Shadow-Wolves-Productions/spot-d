@@ -1,25 +1,23 @@
 import { Link } from "react-router-dom";
-import { MapPin, Crown, CheckCircle, Film, Bookmark, Clock } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import CineScoreBadge from "./CineScoreBadge";
+import { MapPin, Crown, CheckCircle, Film, Bookmark } from "lucide-react";
 import { motion } from "framer-motion";
 
 const AVAILABILITY_STYLES = {
-  "Available Now": "bg-green-500/20 text-green-400 border-green-500/30",
-  "Available Soon": "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
-  "Not Available": "bg-red-500/20 text-red-400 border-red-500/30",
+  "Available Now": "bg-green-500/15 text-green-700 border-green-500/30",
+  "Available Soon": "bg-yellow-500/15 text-yellow-700 border-yellow-500/30",
+  "Not Available": "bg-red-500/10 text-red-600 border-red-500/20",
 };
 
-export default function ProfileCard({ profile, onSave, isSaved, index = 0 }) {
+export default function ProfileCard({ profile, onSave, isSaved, index = 0, featured = false }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.05, duration: 0.4 }}
+      transition={{ delay: index * 0.04, duration: 0.4 }}
     >
-      <Link to={`/profile/${profile.profile_slug || profile.id}`}>
-        <div className="group relative bg-card border border-border/60 rounded-xl overflow-hidden hover:border-primary/30 transition-all duration-300 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-1">
-          {/* Image */}
+      <Link to={`/profile/${profile.profile_slug || profile.id}`} className="block group">
+        <div className="paper-card paper-card-hover overflow-hidden">
+          {/* Poster image */}
           <div className="relative aspect-[3/4] bg-secondary overflow-hidden">
             {profile.profile_photo ? (
               <img
@@ -28,53 +26,55 @@ export default function ProfileCard({ profile, onSave, isSaved, index = 0 }) {
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center text-muted-foreground/30">
-                <Film className="w-16 h-16" />
+              <div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground/20 bg-secondary">
+                <Film className="w-10 h-10 mb-2" />
+                <span className="text-[10px] uppercase tracking-widest">No Photo</span>
               </div>
             )}
 
-            {/* Gradient overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-card via-card/20 to-transparent" />
+            {/* Gradient */}
+            <div className="absolute inset-0 bg-gradient-to-t from-foreground/80 via-foreground/10 to-transparent" />
 
             {/* Top badges */}
             <div className="absolute top-3 left-3 right-3 flex items-start justify-between">
-              <div className="flex gap-1.5">
+              <div className="flex gap-1.5 flex-wrap">
+                {featured && (
+                  <span className="bg-primary text-primary-foreground px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest">
+                    Featured
+                  </span>
+                )}
                 {profile.is_pro && (
-                  <span className="glass-gold px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider text-primary flex items-center gap-1">
-                    <Crown className="w-3 h-3" /> PRO
+                  <span className="bg-foreground text-background px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest flex items-center gap-1">
+                    <Crown className="w-2.5 h-2.5" /> PRO
                   </span>
                 )}
                 {profile.is_founding_member && (
-                  <span className="glass-effect px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider text-primary">
+                  <span className="bg-foreground/80 text-background px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest">
                     Founder
                   </span>
                 )}
               </div>
               {onSave && (
                 <button
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    onSave(profile.id);
-                  }}
-                  className="w-8 h-8 rounded-full bg-card/80 backdrop-blur-sm border border-border/50 flex items-center justify-center hover:bg-card transition-colors"
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); onSave(profile.id); }}
+                  className="w-7 h-7 bg-background/90 flex items-center justify-center hover:bg-background transition-colors"
                 >
-                  <Bookmark className={`w-4 h-4 ${isSaved ? "fill-primary text-primary" : "text-muted-foreground"}`} />
+                  <Bookmark className={`w-3.5 h-3.5 ${isSaved ? "fill-primary text-primary" : "text-foreground"}`} />
                 </button>
               )}
             </div>
 
-            {/* Bottom info overlay */}
+            {/* Bottom overlay — name & role */}
             <div className="absolute bottom-0 left-0 right-0 p-4">
-              <h3 className="font-display text-lg font-semibold text-foreground leading-tight">
+              <h3 className="font-display text-base font-bold text-background leading-tight">
                 {profile.preferred_name || profile.full_name}
               </h3>
-              <p className="text-primary text-sm font-medium mt-0.5">{profile.primary_role}</p>
+              <p className="text-primary text-xs font-semibold mt-0.5 uppercase tracking-wide">{profile.primary_role}</p>
             </div>
           </div>
 
-          {/* Details */}
-          <div className="p-4 space-y-3">
+          {/* Card footer */}
+          <div className="p-3.5 space-y-2.5">
             <div className="flex items-center justify-between">
               {profile.city && (
                 <div className="flex items-center gap-1 text-muted-foreground text-xs">
@@ -83,28 +83,31 @@ export default function ProfileCard({ profile, onSave, isSaved, index = 0 }) {
                 </div>
               )}
               {profile.experience_level && (
-                <span className="text-xs text-muted-foreground">{profile.experience_level}</span>
+                <span className="text-[10px] text-muted-foreground uppercase tracking-wide">{profile.experience_level}</span>
               )}
             </div>
 
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                {profile.availability_status && (
-                  <Badge variant="outline" className={`text-[10px] ${AVAILABILITY_STYLES[profile.availability_status] || ""}`}>
-                    <Clock className="w-3 h-3 mr-1" />
-                    {profile.availability_status}
-                  </Badge>
-                )}
-              </div>
-              <CineScoreBadge score={profile.cine_score} size="sm" showLabel={false} />
+              {profile.availability_status && (
+                <span className={`text-[9px] uppercase tracking-widest font-semibold px-2 py-0.5 border ${AVAILABILITY_STYLES[profile.availability_status] || ""}`}>
+                  {profile.availability_status === "Available Now" ? "Available" :
+                   profile.availability_status === "Available Soon" ? "Soon" : "Unavailable"}
+                </span>
+              )}
+              {profile.cine_score > 0 && (
+                <div className="flex items-center gap-1">
+                  <span className="text-[9px] uppercase tracking-widest text-muted-foreground">CS</span>
+                  <span className="font-display font-bold text-sm text-foreground">{profile.cine_score}</span>
+                </div>
+              )}
             </div>
 
-            {/* Verification icons */}
-            <div className="flex items-center gap-1.5">
-              {profile.email_verified && <CheckCircle className="w-3.5 h-3.5 text-green-400" title="Email Verified" />}
-              {profile.phone_verified && <CheckCircle className="w-3.5 h-3.5 text-blue-400" title="Phone Verified" />}
-              {profile.imdb_verified && <CheckCircle className="w-3.5 h-3.5 text-primary" title="IMDb Verified" />}
-              {profile.imdb_link && <Film className="w-3.5 h-3.5 text-primary/60" title="IMDb Linked" />}
+            {/* Verification row */}
+            <div className="flex items-center gap-1.5 pt-0.5">
+              {profile.email_verified && <CheckCircle className="w-3 h-3 text-green-600" title="Email Verified" />}
+              {profile.phone_verified && <CheckCircle className="w-3 h-3 text-blue-600" title="Phone Verified" />}
+              {profile.imdb_verified && <CheckCircle className="w-3 h-3 text-primary" title="IMDb Verified" />}
+              {profile.imdb_link && <Film className="w-3 h-3 text-primary/60" title="IMDb Linked" />}
             </div>
           </div>
         </div>

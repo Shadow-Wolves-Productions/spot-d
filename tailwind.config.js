@@ -5,6 +5,7 @@ module.exports = {
   safelist: [
     'bg-green-500/20', 'text-green-400', 'bg-yellow-500/20', 'text-yellow-400',
     'bg-red-500/20', 'text-red-400', 'bg-blue-500/20', 'text-blue-400',
+    'border-green-500/30', 'border-red-500/30',
   ],
   theme: {
     extend: {
@@ -53,7 +54,8 @@ module.exports = {
         ring: 'hsl(var(--ring))',
         gold: 'hsl(var(--gold))',
         success: 'hsl(var(--success))',
-        'slate-blue': 'hsl(var(--slate-blue))',
+        paper: 'hsl(var(--paper))',
+        charcoal: 'hsl(var(--charcoal))',
         chart: {
           1: 'hsl(var(--chart-1))',
           2: 'hsl(var(--chart-2))',
@@ -73,28 +75,14 @@ module.exports = {
         },
       },
       keyframes: {
-        'accordion-down': {
-          from: { height: '0' },
-          to: { height: 'var(--radix-accordion-content-height)' },
-        },
-        'accordion-up': {
-          from: { height: 'var(--radix-accordion-content-height)' },
-          to: { height: '0' },
-        },
-        'shimmer': {
-          '0%': { backgroundPosition: '-200% 0' },
-          '100%': { backgroundPosition: '200% 0' },
-        },
-        'pulse-gold': {
-          '0%, 100%': { opacity: '1' },
-          '50%': { opacity: '0.7' },
-        },
+        'accordion-down': { from: { height: '0' }, to: { height: 'var(--radix-accordion-content-height)' } },
+        'accordion-up': { from: { height: 'var(--radix-accordion-content-height)' }, to: { height: '0' } },
+        'shimmer': { '0%': { backgroundPosition: '-200% 0' }, '100%': { backgroundPosition: '200% 0' } },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
         'shimmer': 'shimmer 2s infinite linear',
-        'pulse-gold': 'pulse-gold 2s infinite ease-in-out',
       },
     },
   },
