@@ -1,165 +1,230 @@
-import { Check, Crown, Sparkles, X } from "lucide-react";
+import { Check, Crown, Sparkles, X, Zap, Star, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
+import { base44 } from "@/api/base44Client";
 
-const COMPARISON = [
-  { feature: "Profile Creation", free: true, pro: true },
-  { feature: "Profile Photo", free: true, pro: true },
-  { feature: "Basic Search Filters", free: true, pro: true },
-  { feature: "Contact Reveals", free: "5/month", pro: "Unlimited" },
-  { feature: "Advanced Search Filters", free: false, pro: true },
-  { feature: "Portfolio Uploads", free: false, pro: true },
-  { feature: "PRO Badge", free: false, pro: true },
-  { feature: "Priority Placement", free: false, pro: true },
-  { feature: "Verification Indicators", free: false, pro: true },
-  { feature: "Save Favourite Profiles", free: false, pro: true },
-  { feature: "Full Credits Visibility", free: false, pro: true },
-  { feature: "Featured Eligibility", free: false, pro: true },
-  { feature: "Profile Boost Options", free: false, pro: true },
+const FREE_FEATURES = [
+  { text: "Basic profile creation", included: true },
+  { text: "1 headshot upload", included: true },
+  { text: "Browse casting calls", included: true },
+  { text: "2 contact reveals per month", included: true },
+  { text: "Limited search visibility", included: true },
+  { text: "Advanced search filters", included: false },
+  { text: "Portfolio uploads", included: false },
+  { text: "Priority placement", included: false },
+  { text: "Analytics & insights", included: false },
 ];
 
+const PRO_FEATURES = [
+  { text: "Unlimited contact reveals", included: true },
+  { text: "Multiple headshots + full portfolio", included: true },
+  { text: "Advanced search filters", included: true },
+  { text: "IMDb profile visibility", included: true },
+  { text: "Increased search visibility", included: true },
+  { text: "Save favourite profiles & roles", included: true },
+  { text: "Profile boost options", included: true },
+  { text: "Full credits visibility", included: true },
+  { text: "Analytics & insights", included: false },
+];
+
+const ELITE_FEATURES = [
+  { text: "Everything in Pro", included: true },
+  { text: "Highest priority search placement", included: true },
+  { text: "Rotating homepage spotlight", included: true },
+  { text: "Advanced analytics & engagement insights", included: true },
+  { text: "Premium verified badge", included: true },
+  { text: "Early access to casting calls", included: true },
+  { text: "Exclusive Elite member status", included: true },
+  { text: "Priority support", included: true },
+];
+
+function FeatureList({ features }) {
+  return (
+    <ul className="space-y-3 mt-6">
+      {features.map((f) => (
+        <li key={f.text} className={`flex items-start gap-3 text-sm ${f.included ? "text-foreground" : "text-muted-foreground/50"}`}>
+          {f.included ? (
+            <Check className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
+          ) : (
+            <X className="w-4 h-4 text-muted-foreground/30 flex-shrink-0 mt-0.5" />
+          )}
+          {f.text}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 export default function Pricing() {
-  const [annual, setAnnual] = useState(true);
+  const [spotsLeft, setSpotsLeft] = useState(null);
+  const MAX_SPOTS = 500;
+
+  useEffect(() => {
+    base44.entities.Profile.list("-created_date", 1).then((profiles) => {
+      base44.entities.Profile.list("-created_date", 500).then((all) => {
+        const taken = Math.min(all.length, MAX_SPOTS);
+        setSpotsLeft(Math.max(0, MAX_SPOTS - taken));
+      });
+    });
+  }, []);
 
   return (
-    <div className="pt-28 pb-20 px-4">
-      <div className="max-w-5xl mx-auto">
+    <div className="pt-28 pb-24 px-4">
+      <div className="max-w-6xl mx-auto">
+
         {/* Header */}
         <div className="text-center mb-16">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
-            <Badge className="glass-gold text-primary text-xs mb-4">
-              <Sparkles className="w-3 h-3 mr-1" /> First 500 Members Get Free PRO
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+            <Badge className="bg-primary/10 text-primary border-primary/20 text-xs mb-4 px-3 py-1">
+              <Sparkles className="w-3 h-3 mr-1" /> Join Australia's Indie Film Directory
             </Badge>
             <h1 className="font-display text-4xl sm:text-5xl font-bold text-foreground">
-              Simple, Transparent Pricing
+              Pricing That Scales With You
             </h1>
-            <p className="text-muted-foreground mt-4 max-w-lg mx-auto">
-              Start free. Upgrade when you're ready to unlock unlimited access and premium features.
+            <p className="text-muted-foreground mt-4 max-w-xl mx-auto text-base">
+              Start free. Upgrade to get seen faster, unlock more opportunities, and stand out from the crowd.
             </p>
-
-            {/* Toggle */}
-            <div className="flex items-center justify-center gap-3 mt-8">
-              <button
-                onClick={() => setAnnual(false)}
-                className={`text-sm font-medium transition-colors ${!annual ? "text-foreground" : "text-muted-foreground"}`}
-              >
-                Monthly
-              </button>
-              <button
-                onClick={() => setAnnual(!annual)}
-                className={`relative w-12 h-6 rounded-full transition-colors ${annual ? "bg-primary" : "bg-secondary"}`}
-              >
-                <div className={`absolute top-1 w-4 h-4 rounded-full bg-primary-foreground transition-transform ${annual ? "left-7" : "left-1"}`} />
-              </button>
-              <button
-                onClick={() => setAnnual(true)}
-                className={`text-sm font-medium transition-colors ${annual ? "text-foreground" : "text-muted-foreground"}`}
-              >
-                Annual <span className="text-primary text-xs ml-1">Save 34%</span>
-              </button>
-            </div>
           </motion.div>
         </div>
 
-        {/* Cards */}
-        <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto mb-20">
+        {/* 3-column cards */}
+        <div className="grid md:grid-cols-3 gap-6 items-start">
+
+          {/* FREE */}
           <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="bg-card border border-border/60 rounded-xl p-8"
+            className="bg-card border border-border/60 rounded-2xl p-7"
           >
-            <h3 className="font-display text-2xl font-semibold text-foreground">Free</h3>
-            <div className="mt-4">
+            <p className="text-xs uppercase tracking-widest text-muted-foreground font-semibold mb-3">Free</p>
+            <div className="flex items-end gap-1">
               <span className="font-display text-5xl font-bold text-foreground">$0</span>
             </div>
-            <p className="text-sm text-muted-foreground mt-3">Get started and explore the directory.</p>
-            <Button variant="outline" className="w-full mt-8 border-border hover:bg-secondary/50 h-11">
-              Get Started Free
-            </Button>
+            <p className="text-sm text-muted-foreground mt-3">Get started and explore opportunities</p>
+            <Link to="/create-profile" className="block mt-6">
+              <Button variant="outline" className="w-full border-border h-11 text-sm font-semibold">
+                Get Started
+              </Button>
+            </Link>
+            <FeatureList features={FREE_FEATURES} />
           </motion.div>
 
+          {/* PRO — Most Popular */}
           <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="relative bg-card border border-primary/30 rounded-xl p-8 gold-glow"
+            className="relative bg-card border-2 border-primary rounded-2xl p-7 shadow-lg shadow-primary/10 md:-mt-4 md:-mb-4"
           >
-            <div className="absolute -top-3 left-6">
-              <span className="glass-gold px-3 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider text-primary">
-                Recommended
+            <div className="absolute -top-4 left-1/2 -translate-x-1/2">
+              <span className="bg-primary text-primary-foreground px-4 py-1 rounded-full text-[11px] font-bold uppercase tracking-widest whitespace-nowrap shadow-sm">
+                ★ Most Popular
               </span>
             </div>
-            <div className="flex items-center gap-2">
-              <Crown className="w-6 h-6 text-primary" />
-              <h3 className="font-display text-2xl font-semibold text-foreground">PRO</h3>
+            <p className="text-xs uppercase tracking-widest text-primary font-semibold mb-3 mt-2">Pro</p>
+            <div className="flex items-end gap-1">
+              <span className="font-display text-5xl font-bold text-foreground">$79</span>
+              <span className="text-muted-foreground mb-2">/year</span>
             </div>
-            <div className="mt-4">
-              <span className="font-display text-5xl font-bold text-foreground">
-                ${annual ? "79" : "9.99"}
-              </span>
-              <span className="text-muted-foreground ml-1">/{annual ? "year" : "month"}</span>
-            </div>
-            {annual && <p className="text-xs text-primary mt-1">~$6.58/month</p>}
-            <p className="text-sm text-muted-foreground mt-3">Everything you need to stand out and connect.</p>
-            <Button className="w-full mt-8 bg-primary text-primary-foreground hover:bg-primary/90 h-11">
-              <Crown className="w-4 h-4 mr-2" /> Upgrade to PRO
+            <p className="text-xs text-primary font-medium mt-1">~$6.58/month · Best value</p>
+            <p className="text-sm text-muted-foreground mt-3">Unlock full access and get seen</p>
+            <Button className="w-full mt-6 bg-primary text-primary-foreground hover:bg-primary/90 h-11 text-sm font-semibold">
+              <Crown className="w-4 h-4 mr-2" /> Upgrade to Pro
             </Button>
+            <FeatureList features={PRO_FEATURES} />
+          </motion.div>
+
+          {/* ELITE */}
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="relative bg-foreground border border-foreground rounded-2xl p-7 overflow-hidden"
+          >
+            {/* Subtle glow overlay */}
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-primary/5 pointer-events-none" />
+
+            <div className="relative">
+              <div className="flex items-center gap-2 mb-3">
+                <Shield className="w-4 h-4 text-primary" />
+                <p className="text-xs uppercase tracking-widest text-primary font-semibold">Elite</p>
+              </div>
+              <div className="flex items-end gap-1">
+                <span className="font-display text-5xl font-bold text-background">$149</span>
+                <span className="text-background/50 mb-2">/year</span>
+              </div>
+              <p className="text-xs text-primary font-medium mt-1">~$12.42/month</p>
+              <p className="text-sm text-background/60 mt-3">Stand out and get ahead of the competition</p>
+              <Badge className="mt-3 bg-primary/20 text-primary border-primary/30 text-[10px] px-2 py-0.5">
+                Best for Serious Actors &amp; Crew
+              </Badge>
+              <Button className="w-full mt-6 bg-primary text-primary-foreground hover:bg-primary/90 h-11 text-sm font-semibold">
+                <Star className="w-4 h-4 mr-2" /> Go Elite
+              </Button>
+
+              <ul className="space-y-3 mt-6">
+                {ELITE_FEATURES.map((f) => (
+                  <li key={f.text} className="flex items-start gap-3 text-sm text-background/80">
+                    <Check className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
+                    {f.text}
+                  </li>
+                ))}
+              </ul>
+            </div>
           </motion.div>
         </div>
 
-        {/* Comparison Table */}
-        <div className="max-w-3xl mx-auto">
-          <h2 className="font-display text-2xl font-bold text-foreground text-center mb-8">
-            Feature Comparison
-          </h2>
-          <div className="bg-card border border-border/60 rounded-xl overflow-hidden">
-            <div className="grid grid-cols-3 gap-4 p-4 border-b border-border bg-secondary/30">
-              <span className="text-xs uppercase tracking-wider text-muted-foreground font-medium">Feature</span>
-              <span className="text-xs uppercase tracking-wider text-muted-foreground font-medium text-center">Free</span>
-              <span className="text-xs uppercase tracking-wider text-primary font-medium text-center">PRO</span>
-            </div>
-            {COMPARISON.map((row) => (
-              <div key={row.feature} className="grid grid-cols-3 gap-4 p-4 border-b border-border/30 last:border-0">
-                <span className="text-sm text-foreground">{row.feature}</span>
-                <div className="text-center">
-                  {typeof row.free === "string" ? (
-                    <span className="text-sm text-muted-foreground">{row.free}</span>
-                  ) : row.free ? (
-                    <Check className="w-4 h-4 text-muted-foreground mx-auto" />
-                  ) : (
-                    <X className="w-4 h-4 text-muted-foreground/30 mx-auto" />
-                  )}
-                </div>
-                <div className="text-center">
-                  {typeof row.pro === "string" ? (
-                    <span className="text-sm text-primary font-medium">{row.pro}</span>
-                  ) : row.pro ? (
-                    <Check className="w-4 h-4 text-primary mx-auto" />
-                  ) : (
-                    <X className="w-4 h-4 text-muted-foreground/30 mx-auto" />
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        {/* Founding Member CTA */}
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="max-w-2xl mx-auto mt-24"
+        >
+          <div className="relative bg-card border border-primary/30 rounded-2xl p-10 text-center overflow-hidden gold-glow">
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/5 pointer-events-none" />
+            <div className="relative">
+              <Crown className="w-9 h-9 text-primary mx-auto mb-4" />
+              <h3 className="font-display text-2xl font-bold text-foreground">Founding Member Offer</h3>
+              <p className="text-muted-foreground mt-3 max-w-md mx-auto text-sm leading-relaxed">
+                Join now and lock in Pro access for life — free. The first 500 members receive a Founding Member badge, verified profile, and permanent priority listing. No credit card required.
+              </p>
 
-        {/* Founding Member */}
-        <div className="max-w-2xl mx-auto mt-20 text-center">
-          <div className="glass-effect rounded-2xl p-10 gold-glow">
-            <Crown className="w-8 h-8 text-primary mx-auto mb-4" />
-            <h3 className="font-display text-2xl font-bold text-foreground">Founding Member Offer</h3>
-            <p className="text-muted-foreground mt-3 max-w-md mx-auto text-sm">
-              The first 500 members get free PRO access, a Founding Member badge, verified profile, and priority listing.
-            </p>
-            <Button size="lg" className="mt-6 glass-gold text-primary-foreground font-semibold px-8">
-              Claim Your Spot
-            </Button>
+              {/* Countdown */}
+              <div className="mt-6 inline-flex items-center gap-3 bg-secondary/70 border border-border/50 rounded-full px-5 py-2.5">
+                <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                <span className="text-sm font-semibold text-foreground">
+                  {spotsLeft === null ? (
+                    <span className="text-muted-foreground">Loading spots...</span>
+                  ) : spotsLeft === 0 ? (
+                    <span className="text-destructive">All spots claimed!</span>
+                  ) : (
+                    <>
+                      <span className="text-primary">{spotsLeft}</span>
+                      <span className="text-muted-foreground"> / {MAX_SPOTS} spots remaining</span>
+                    </>
+                  )}
+                </span>
+              </div>
+
+              <Link to="/create-profile" className="block mt-6">
+                <Button
+                  size="lg"
+                  disabled={spotsLeft === 0}
+                  className="bg-primary text-primary-foreground hover:bg-primary/90 font-bold px-10 h-12 text-sm"
+                >
+                  <Sparkles className="w-4 h-4 mr-2" /> Claim Your Founding Member Spot
+                </Button>
+              </Link>
+              <p className="text-xs text-muted-foreground mt-3">Free forever · No credit card · Limited to first 500</p>
+            </div>
           </div>
-        </div>
+        </motion.div>
+
       </div>
     </div>
   );
