@@ -1,8 +1,10 @@
-import { Outlet, Link, useLocation } from "react-router-dom";
+import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
+import { AnimatePresence, motion } from "framer-motion";
+import MobileBottomTabs from "./MobileBottomTabs";
 import { useTheme } from "@/lib/useTheme";
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { Search, Menu, X, Crown, User, LogOut, Shield } from "lucide-react";
+import { Search, Menu, Crown, User, LogOut, Shield, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
@@ -48,11 +50,12 @@ export default function Layout() {
   }, []);
 
   const isActive = (path) => location.pathname === path;
+  const isChildRoute = location.pathname !== "/";
+  const navigate = useNavigate();
 
   return (
     <div className="min-h-screen bg-background font-body">
-      {/* Top editorial rule */}
-      <div className="fixed top-0 left-0 right-0 z-50">
+      <div className="fixed top-0 left-0 right-0 z-50" style={{ paddingTop: "env(safe-area-inset-top)" }}>
         <div className={`h-[3px] bg-foreground transition-opacity duration-300 ${scrolled ? "opacity-100" : "opacity-100"}`} />
         <nav className={`transition-all duration-300 ${
           scrolled
@@ -61,6 +64,16 @@ export default function Layout() {
         }`}>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-14 lg:h-16">
+              {/* Back button on child routes (mobile) */}
+              {isChildRoute && (
+                <button
+                  onClick={() => navigate(-1)}
+                  className="md:hidden flex items-center gap-1 text-sm text-foreground/70 hover:text-foreground select-none mr-2"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                </button>
+              )}
+
               {/* Logo */}
               <Link to="/" className="flex items-center gap-2 group">
                 <div className="w-7 h-7 bg-foreground flex items-center justify-center group-hover:bg-primary transition-colors">
@@ -214,12 +227,24 @@ export default function Layout() {
         </nav>
       </div>
 
-      <main className="pt-[67px]">
-        <Outlet />
+      <main className="pt-[67px] pb-16 md:pb-0">
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={location.pathname}
+            initial={{ opacity: 0, x: 12 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -12 }}
+            transition={{ duration: 0.18, ease: "easeInOut" }}
+          >
+            <Outlet />
+          </motion.div>
+        </AnimatePresence>
       </main>
 
+      <MobileBottomTabs />
+
       {/* Footer — editorial */}
-      <footer className="border-t border-border bg-foreground mt-16">
+      <footer className="border-t border-border bg-foreground mt-16 hidden md:block" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
             <div>

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Link } from "react-router-dom";
-import { Crown, Eye, Bookmark, Clock, ChevronRight, Edit, UserCheck, Zap, Moon, Sun } from "lucide-react";
+import { Crown, Eye, Bookmark, Clock, ChevronRight, Edit, UserCheck, Zap, Moon, Sun, Trash2, AlertTriangle } from "lucide-react";
 import { useTheme } from "../lib/useTheme";
 import VerificationPanel from "../components/VerificationPanel";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,9 @@ export default function Dashboard() {
   const [endorsementCount, setEndorsementCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [activatingBoost, setActivatingBoost] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [deleting, setDeleting] = useState(false);
   const { theme, toggleTheme } = useTheme();
 
   useEffect(() => {
@@ -323,6 +326,64 @@ export default function Dashboard() {
                 </button>
               </div>
               <p className="text-xs text-muted-foreground mt-3">{theme === "dark" ? "Switch to light editorial mode" : "Switch to dark mode"}</p>
+            </div>
+
+            {/* Danger Zone */}
+            <div className="bg-card border border-destructive/30 rounded-xl p-6">
+              <div className="flex items-center gap-2 mb-3">
+                <AlertTriangle className="w-4 h-4 text-destructive" />
+                <h3 className="font-display text-sm font-semibold text-destructive uppercase tracking-wider">Danger Zone</h3>
+              </div>
+              <p className="text-xs text-muted-foreground mb-4">
+                Permanently delete your account and all associated data. This cannot be undone.
+              </p>
+              {!showDeleteConfirm ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-destructive/40 text-destructive hover:bg-destructive hover:text-white w-full"
+                  onClick={() => setShowDeleteConfirm(true)}
+                >
+                  <Trash2 className="w-3.5 h-3.5 mr-1.5" /> Delete Account
+                </Button>
+              ) : (
+                <div className="space-y-3">
+                  <p className="text-xs text-foreground font-medium">Type <span className="font-bold text-destructive">DELETE</span> to confirm:</p>
+                  <input
+                    value={deleteConfirmText}
+                    onChange={(e) => setDeleteConfirmText(e.target.value)}
+                    placeholder="Type DELETE"
+                    className="w-full h-9 px-3 text-sm border border-destructive/40 bg-secondary rounded-md focus:outline-none focus:ring-1 focus:ring-destructive"
+                  />
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="flex-1 border-border"
+                      onClick={() => { setShowDeleteConfirm(false); setDeleteConfirmText(""); }}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      size="sm"
+                      disabled={deleteConfirmText !== "DELETE" || deleting}
+                      className="flex-1 bg-destructive text-white hover:bg-destructive/90"
+                      onClick={async () => {
+                        if (deleteConfirmText !== "DELETE") return;
+                        setDeleting(true);
+                        if (profile) await base44.entities.Profile.delete(profile.id);
+                        await base44.auth.logout();
+                      }}
+                    >
+                      {deleting ? (
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <><Trash2 className="w-3.5 h-3.5 mr-1" /> Confirm Delete</>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

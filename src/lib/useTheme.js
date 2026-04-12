@@ -1,12 +1,15 @@
 import { useState, useEffect } from "react";
 
+function getInitialTheme() {
+  if (typeof window === "undefined") return "light";
+  const stored = localStorage.getItem("cineconnect-theme");
+  if (stored) return stored;
+  // Fall back to system preference
+  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+
 export function useTheme() {
-  const [theme, setTheme] = useState(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("cineconnect-theme") || "light";
-    }
-    return "light";
-  });
+  const [theme, setTheme] = useState(getInitialTheme);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -15,7 +18,25 @@ export function useTheme() {
     localStorage.setItem("cineconnect-theme", theme);
   }, [theme]);
 
-  const toggleTheme = () => setTheme((t) => (t === "light" ? "dark" : "light"));
+  // Listen for system preference changes (only if user hasn't manually set a preference)
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    const handleChange = (e) => {
+      if (!localStorage.getItem("cineconnect-theme")) {
+        setTheme(e.matches ? "dark" : "light");
+      }
+    };
+    mq.addEventListener("change", handleChange);
+    return () => mq.removeEventListener("change", handleChange);
+  }, []);
+
+  const toggleTheme = () => {
+    setTheme((t) => {
+      const next = t === "light" ? "dark" : "light";
+      localStorage.setItem("cineconnect-theme", next);
+      return next;
+    });
+  };
 
   return { theme, toggleTheme };
 }
