@@ -52,6 +52,7 @@ export default function Layout() {
   const isActive = (path) => location.pathname === path;
   const isChildRoute = location.pathname !== "/";
   const navigate = useNavigate();
+  const { toggleTheme } = useTheme();
 
   return (
     <div className="min-h-screen bg-background font-body">
@@ -152,6 +153,10 @@ export default function Layout() {
                           </>
                         )}
                         <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={toggleTheme} className="cursor-pointer text-sm">
+                          {theme === "dark" ? "☀️ Light Mode" : "🌙 Dark Mode"}
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={() => base44.auth.logout()} className="cursor-pointer text-sm text-destructive">
                           <LogOut className="w-3.5 h-3.5 mr-2" />
                           Sign Out
@@ -209,6 +214,9 @@ export default function Layout() {
                               <Shield className="w-3.5 h-3.5" /> Admin Panel
                             </Link>
                           )}
+                          <button onClick={toggleTheme} className="block text-sm text-foreground py-2 text-left w-full">
+                            {theme === "dark" ? "☀️ Light Mode" : "🌙 Dark Mode"}
+                          </button>
                           <button onClick={() => base44.auth.logout()} className="block text-sm text-destructive py-2 text-left">
                             Sign Out
                           </button>

@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { usePullToRefresh } from "../hooks/usePullToRefresh";
 import { base44 } from "@/api/base44Client";
 import { Link } from "react-router-dom";
 import { Plus, MapPin, Calendar, DollarSign, Briefcase, Users, Clock } from "lucide-react";
@@ -118,27 +119,41 @@ export default function CastingCalls() {
   const [myProfile, setMyProfile] = useState(null);
   const [filter, setFilter] = useState("all");
 
-  useEffect(() => {
-    const load = async () => {
-      const isAuth = await base44.auth.isAuthenticated();
-      if (isAuth) {
-        const me = await base44.auth.me();
-        setUser(me);
-        const profiles = await base44.entities.Profile.filter({ user_id: me.id });
-        if (profiles.length > 0) setMyProfile(profiles[0]);
-      }
-      const data = await base44.entities.CastingCall.filter({ is_active: true }, "-created_date", 50);
-      setCalls(data);
-      setLoading(false);
-    };
-    load();
+  const load = useCallback(async () => {
+    setLoading(true);
+    const isAuth = await base44.auth.isAuthenticated();
+    if (isAuth) {
+      const me = await base44.auth.me();
+      setUser(me);
+      const profiles = await base44.entities.Profile.filter({ user_id: me.id });
+      if (profiles.length > 0) setMyProfile(profiles[0]);
+    }
+    const data = await base44.entities.CastingCall.filter({ is_active: true }, "-created_date", 50);
+    setCalls(data);
+    setLoading(false);
   }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const { pullY, refreshing } = usePullToRefresh(load);
 
   const filtered = filter === "all" ? calls : calls.filter((c) => c.project_type === filter);
   const types = [...new Set(calls.map((c) => c.project_type).filter(Boolean))];
 
   return (
     <div className="min-h-screen pt-20">
+      {(pullY > 0 || refreshing) && (
+        <div
+          className="fixed top-16 left-1/2 -translate-x-1/2 z-50 flex items-center justify-center w-9 h-9 bg-card border border-border rounded-full shadow-md"
+          style={{ transform: `translateX(-50%) translateY(${Math.min(pullY, 56)}px)` }}
+        >
+          <div className={`w-4 h-4 border-2 border-primary border-t-transparent rounded-full ${refreshing ? 'animate-spin' : ''}`}
+            style={{ transform: refreshing ? undefined : `rotate(${(pullY / 56) * 360}deg)` }}
+          />
+        </div>
+      )}
       {/* Hero */}
       <div className="relative py-12 sm:py-16 px-4">
         <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-background to-background" />

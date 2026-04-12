@@ -203,7 +203,7 @@ export default function SearchFilters({ filters, onChange, isProUser }) {
         </div>
       </div>
 
-      {/* Mobile filter sheet */}
+      {/* Mobile filter bottom drawer */}
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
         <SheetTrigger asChild className="lg:hidden">
           <Button variant="outline" size="sm" className="border-border gap-2">
@@ -214,11 +214,11 @@ export default function SearchFilters({ filters, onChange, isProUser }) {
             )}
           </Button>
         </SheetTrigger>
-        <SheetContent side="left" className="bg-card border-border w-80">
-          <SheetHeader>
+        <SheetContent side="bottom" className="bg-card border-border rounded-t-2xl max-h-[85vh]">
+          <SheetHeader className="pb-2">
             <SheetTitle className="font-display">Filters</SheetTitle>
           </SheetHeader>
-          <ScrollArea className="h-[calc(100vh-100px)] mt-6 pr-4">
+          <ScrollArea className="h-[calc(85vh-80px)] mt-2 pr-4">
             <FilterContent />
           </ScrollArea>
         </SheetContent>

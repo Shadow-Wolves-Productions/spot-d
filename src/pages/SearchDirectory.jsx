@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { usePullToRefresh } from "../hooks/usePullToRefresh";
 import { base44 } from "@/api/base44Client";
 import { Search, Crown, ChevronDown, Star } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -137,34 +138,46 @@ export default function SearchDirectory() {
   }, [loadProfiles]);
 
   const handleSave = async (profileId) => {
-    if (!user) {
-      base44.auth.redirectToLogin();
-      return;
-    }
-    if (savedIds.has(profileId)) {
+    if (!user) { base44.auth.redirectToLogin(); return; }
+    // Optimistic update
+    const wasSaved = savedIds.has(profileId);
+    setSavedIds((prev) => { const next = new Set(prev); wasSaved ? next.delete(profileId) : next.add(profileId); return next; });
+    if (wasSaved) {
       const saved = await base44.entities.SavedProfile.filter({ user_id: user.id, profile_id: profileId });
       if (saved.length > 0) await base44.entities.SavedProfile.delete(saved[0].id);
-      setSavedIds((prev) => { const next = new Set(prev); next.delete(profileId); return next; });
     } else {
       await base44.entities.SavedProfile.create({ user_id: user.id, profile_id: profileId });
-      setSavedIds((prev) => new Set(prev).add(profileId));
     }
   };
 
   const handleSuperLike = async (profileId) => {
     if (!user) { base44.auth.redirectToLogin(); return; }
+    // Optimistic update
+    setSuperLikedIds((prev) => new Set(prev).add(profileId));
+    setSavedIds((prev) => new Set(prev).add(profileId));
     const existing = await base44.entities.SavedProfile.filter({ user_id: user.id, profile_id: profileId });
     if (existing.length > 0) {
       await base44.entities.SavedProfile.update(existing[0].id, { is_super_liked: true });
     } else {
       await base44.entities.SavedProfile.create({ user_id: user.id, profile_id: profileId, is_super_liked: true });
     }
-    setSuperLikedIds((prev) => new Set(prev).add(profileId));
-    setSavedIds((prev) => new Set(prev).add(profileId));
   };
+
+  const { pullY, refreshing } = usePullToRefresh(loadProfiles);
 
   return (
     <div className="pt-20">
+      {/* Pull-to-refresh indicator */}
+      {(pullY > 0 || refreshing) && (
+        <div
+          className="fixed top-16 left-1/2 -translate-x-1/2 z-50 flex items-center justify-center w-9 h-9 bg-card border border-border rounded-full shadow-md transition-transform"
+          style={{ transform: `translateX(-50%) translateY(${Math.min(pullY, 56)}px)` }}
+        >
+          <div className={`w-4 h-4 border-2 border-primary border-t-transparent rounded-full ${refreshing ? 'animate-spin' : ''}`}
+            style={{ transform: refreshing ? undefined : `rotate(${(pullY / 56) * 360}deg)` }}
+          />
+        </div>
+      )}
       {/* Hero Search Strip */}
       <div className="relative py-12 sm:py-16 px-4 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-background to-background" />
