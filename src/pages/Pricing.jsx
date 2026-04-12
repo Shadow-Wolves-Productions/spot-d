@@ -1,4 +1,4 @@
-import { Check, Crown, Sparkles, X, Zap, Star, Shield } from "lucide-react";
+import { Check, Crown, Sparkles, X, Star, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useState, useEffect } from "react";
@@ -59,6 +59,7 @@ function FeatureList({ features }) {
 }
 
 export default function Pricing() {
+  const [annual, setAnnual] = useState(true);
   const [spotsLeft, setSpotsLeft] = useState(null);
   const MAX_SPOTS = 500;
 
@@ -87,6 +88,28 @@ export default function Pricing() {
             <p className="text-muted-foreground mt-4 max-w-xl mx-auto text-base">
               Start free. Upgrade to get seen faster, unlock more opportunities, and stand out from the crowd.
             </p>
+
+            {/* Billing Toggle */}
+            <div className="flex items-center justify-center gap-4 mt-8">
+              <button
+                onClick={() => setAnnual(false)}
+                className={`text-sm font-medium transition-colors ${!annual ? "text-foreground" : "text-muted-foreground"}`}
+              >
+                Monthly
+              </button>
+              <button
+                onClick={() => setAnnual(!annual)}
+                className={`relative w-12 h-6 rounded-full transition-colors ${annual ? "bg-primary" : "bg-secondary border border-border"}`}
+              >
+                <div className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-transform ${annual ? "left-7" : "left-1"}`} />
+              </button>
+              <button
+                onClick={() => setAnnual(true)}
+                className={`text-sm font-medium transition-colors ${annual ? "text-foreground" : "text-muted-foreground"}`}
+              >
+                Annual <span className="text-primary text-xs ml-1">Save ~30%</span>
+              </button>
+            </div>
           </motion.div>
         </div>
 
@@ -127,10 +150,14 @@ export default function Pricing() {
             </div>
             <p className="text-xs uppercase tracking-widest text-primary font-semibold mb-3 mt-2">Pro</p>
             <div className="flex items-end gap-1">
-              <span className="font-display text-5xl font-bold text-foreground">$79</span>
-              <span className="text-muted-foreground mb-2">/year</span>
+              <span className="font-display text-5xl font-bold text-foreground">
+                {annual ? "$79" : "$9.99"}
+              </span>
+              <span className="text-muted-foreground mb-2">/{annual ? "year" : "month"}</span>
             </div>
-            <p className="text-xs text-primary font-medium mt-1">~$6.58/month · Best value</p>
+            <p className="text-xs text-primary font-medium mt-1">
+              {annual ? "~$6.58/month · Best value" : "or $79/year — save 30%"}
+            </p>
             <p className="text-sm text-muted-foreground mt-3">Unlock full access and get seen</p>
             <Button className="w-full mt-6 bg-primary text-primary-foreground hover:bg-primary/90 h-11 text-sm font-semibold">
               <Crown className="w-4 h-4 mr-2" /> Upgrade to Pro
@@ -154,10 +181,14 @@ export default function Pricing() {
                 <p className="text-xs uppercase tracking-widest text-primary font-semibold">Elite</p>
               </div>
               <div className="flex items-end gap-1">
-                <span className="font-display text-5xl font-bold text-background">$149</span>
-                <span className="text-background/50 mb-2">/year</span>
+                <span className="font-display text-5xl font-bold text-background">
+                  {annual ? "$149" : "$14.99"}
+                </span>
+                <span className="text-background/50 mb-2">/{annual ? "year" : "month"}</span>
               </div>
-              <p className="text-xs text-primary font-medium mt-1">~$12.42/month</p>
+              <p className="text-xs text-primary font-medium mt-1">
+                {annual ? "~$12.42/month · Best value" : "or $149/year — save 16%"}
+              </p>
               <p className="text-sm text-background/60 mt-3">Stand out and get ahead of the competition</p>
               <Badge className="mt-3 bg-primary/20 text-primary border-primary/30 text-[10px] px-2 py-0.5">
                 Best for Serious Actors &amp; Crew

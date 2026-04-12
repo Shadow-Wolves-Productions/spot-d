@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Link } from "react-router-dom";
-import { Crown, Eye, Bookmark, Clock, ChevronRight, Edit, UserCheck, Zap, Moon, Sun, Trash2, AlertTriangle } from "lucide-react";
+import { Crown, Eye, Bookmark, Clock, ChevronRight, Edit, UserCheck, Zap, Moon, Sun, Trash2, AlertTriangle, BarChart2 } from "lucide-react";
 import { useTheme } from "../lib/useTheme";
 import VerificationPanel from "../components/VerificationPanel";
 import { Button } from "@/components/ui/button";
@@ -186,9 +186,14 @@ export default function Dashboard() {
                   <h3 className="font-display text-sm font-semibold text-foreground uppercase tracking-wider">
                     Saved Profiles
                   </h3>
+                  <div className="flex items-center gap-3">
                   <Link to="/search" className="text-xs text-primary hover:underline flex items-center gap-1">
                     View All <ChevronRight className="w-3 h-3" />
                   </Link>
+                  <Link to="/analytics" className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1">
+                    <BarChart2 className="w-3 h-3" /> Analytics
+                  </Link>
+                </div>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                   {savedProfileDetails.map((p, i) => (

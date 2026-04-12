@@ -135,6 +135,9 @@ export default function Layout() {
                           <Link to="/dashboard" className="cursor-pointer text-sm">Dashboard</Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
+                          <Link to="/analytics" className="cursor-pointer text-sm">Analytics</Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
                           <Link to={profile ? `/profile/${profile.profile_slug || profile.id}` : "/create-profile"} className="cursor-pointer text-sm">
                             {profile ? "My Profile" : "Create Profile"}
                           </Link>
