@@ -78,10 +78,10 @@ export default function Layout() {
               {/* Logo */}
               <Link to="/" className="flex items-center gap-2 group">
                 <div className="w-7 h-7 bg-foreground flex items-center justify-center group-hover:bg-primary transition-colors">
-                  <span className="text-background font-display font-bold text-sm">F</span>
+                  <span className="text-background font-display font-bold text-sm">C</span>
                 </div>
                 <span className="font-display text-lg font-bold text-foreground tracking-tight">
-                  First <span className="text-primary">Look</span>
+                  Cine<span className="text-primary">Connect</span>
                 </span>
               </Link>
 
@@ -261,10 +261,10 @@ export default function Layout() {
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <div className="w-7 h-7 bg-primary flex items-center justify-center">
-                  <span className="text-primary-foreground font-display font-bold text-sm">F</span>
+                  <span className="text-primary-foreground font-display font-bold text-sm">C</span>
                 </div>
                 <span className="font-display text-lg font-bold text-background">
-                  First <span className="text-primary">Look</span>
+                  Cine<span className="text-primary">Connect</span>
                 </span>
               </div>
               <p className="text-xs text-background/40">The indie film talent directory.</p>
@@ -276,7 +276,7 @@ export default function Layout() {
               <Link to="/contact" className="hover:text-background transition-colors">Contact</Link>
             </div>
             <p className="text-xs text-background/30">
-            © {new Date().getFullYear()} First Look
+              © {new Date().getFullYear()} CineConnect
             </p>
           </div>
         </div>

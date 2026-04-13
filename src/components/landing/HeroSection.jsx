@@ -100,7 +100,7 @@ export default function HeroSection() {
                   ))}
                 </div>
                 <div className="mt-6 pt-4 border-t border-background/10">
-                  <span className="text-[10px] uppercase tracking-widest text-primary font-semibold">First Look — Est. 2025</span>
+                  <span className="text-[10px] uppercase tracking-widest text-primary font-semibold">CineConnect — Est. 2025</span>
                 </div>
               </div>
 
