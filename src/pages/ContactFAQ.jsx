@@ -6,8 +6,8 @@ import { motion } from "framer-motion";
 
 const FAQS = [
   {
-    question: "What is CineConnect?",
-    answer: "CineConnect is a premium directory for film and TV industry professionals. It connects cast, crew, and creative talent — from actors and directors to DPs, editors, and sound designers — in one searchable, verifiable platform.",
+    question: "What is First Look?",
+    answer: "First Look is a premium directory for film and TV industry professionals. It connects cast, crew, and creative talent — from actors and directors to DPs, editors, and sound designers — in one searchable, verifiable platform.",
   },
   {
     question: "How do I create a profile?",
@@ -31,7 +31,7 @@ const FAQS = [
   },
   {
     question: "What is a Founding Member?",
-    answer: "Founding Members are early adopters who joined CineConnect before our official launch. They receive a permanent 'Founder' badge on their profile and are locked into our lowest PRO pricing for life.",
+    answer: "Founding Members are early adopters who joined First Look before our official launch. They receive a permanent 'Founder' badge on their profile and are locked into our lowest PRO pricing for life.",
   },
   {
     question: "How does contact reveal work?",
@@ -141,9 +141,9 @@ export default function ContactFAQ() {
           {/* Quick info */}
           <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.15 }} className="space-y-4">
             {[
-              { label: "General Inquiries", value: "hello@cineconnect.io" },
-              { label: "Support", value: "support@cineconnect.io" },
-              { label: "Partnerships", value: "partners@cineconnect.io" },
+              { label: "General Inquiries", value: "hello@firstlook.io" },
+              { label: "Support", value: "support@firstlook.io" },
+              { label: "Partnerships", value: "partners@firstlook.io" },
             ].map((item) => (
               <div key={item.label} className="bg-card border border-border/60 rounded-xl px-6 py-5 flex items-center justify-between">
                 <span className="text-muted-foreground text-sm">{item.label}</span>
@@ -152,7 +152,7 @@ export default function ContactFAQ() {
             ))}
             <div className="bg-card border border-border/60 rounded-xl px-6 py-5">
               <p className="text-muted-foreground text-sm leading-relaxed">
-                CineConnect is built by filmmakers, for filmmakers. We're a small team passionate about making industry connections easier and more transparent.
+                First Look is built by filmmakers, for filmmakers. We're a small team passionate about making industry connections easier and more transparent.
               </p>
             </div>
           </motion.div>

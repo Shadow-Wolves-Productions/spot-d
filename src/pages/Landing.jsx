@@ -28,7 +28,7 @@ export default function Landing() {
           <div className="mb-12">
             <span className="text-[10px] uppercase tracking-[0.25em] text-primary font-semibold">Built For Film People</span>
             <h2 className="font-display font-bold text-4xl sm:text-5xl text-foreground mt-1">
-              Why CineConnect?
+              Why First Look?
             </h2>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-0 border-t border-l border-border">
