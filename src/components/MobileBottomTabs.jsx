@@ -29,7 +29,8 @@ export default function MobileBottomTabs() {
 
   return (
     <div
-      className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-background border-t border-border"
+      className="fixed bottom-0 left-0 right-0 z-40 md:hidden border-t border-border"
+      style={{ background: "#0D0D0D" }}
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
       <div className="flex">

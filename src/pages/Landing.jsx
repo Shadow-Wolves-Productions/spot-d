@@ -4,16 +4,16 @@ import FeaturedProfiles from "../components/landing/FeaturedProfiles";
 import PricingPreview from "../components/landing/PricingPreview";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Film, Search, Shield, Star, Users, Camera } from "lucide-react";
+import { Search, Shield, Film, Users, Star, Camera } from "lucide-react";
 import { motion } from "framer-motion";
 
 const FEATURES = [
-  { icon: Search, title: "Smart Search", desc: "Filter by role, location, experience, availability, and more." },
-  { icon: Shield, title: "CineScore Trust", desc: "Credibility scores based on verification, credits, and connections." },
-  { icon: Film, title: "IMDb Integration", desc: "Link your IMDb profile and showcase your top credits." },
-  { icon: Users, title: "Worked With", desc: "Professional connection confirmations from real collaborators." },
-  { icon: Star, title: "Endorsements", desc: "Structured professional endorsements from your network." },
-  { icon: Camera, title: "PRO Profiles", desc: "Stand out with portfolio, priority placement, and unlimited reveals." },
+  { icon: Search, title: "Smart search", desc: "Filter by role, location, experience, availability, union status, and more." },
+  { icon: Shield, title: "Spot Score trust", desc: "Credibility scores based on verification, credits, and real connections." },
+  { icon: Film, title: "IMDb integration", desc: "Link your IMDb profile and showcase your top credits directly." },
+  { icon: Users, title: "Worked with", desc: "Professional connection confirmations from real collaborators you've worked with." },
+  { icon: Star, title: "Endorsements", desc: "Structured professional endorsements from your network — no empty words." },
+  { icon: Camera, title: "PRO profiles", desc: "Stand out with portfolio, priority placement, and unlimited contact reveals." },
 ];
 
 export default function Landing() {
@@ -22,13 +22,13 @@ export default function Landing() {
       <HeroSection />
       <FeaturedProfiles />
 
-      {/* Features — editorial grid */}
+      {/* Features */}
       <section className="py-20 px-4 border-t border-border">
         <div className="max-w-7xl mx-auto">
           <div className="mb-12">
-            <span className="text-[10px] uppercase tracking-[0.25em] text-primary font-semibold">Built For Film People</span>
-            <h2 className="font-display font-bold text-4xl sm:text-5xl text-foreground mt-1">
-              Why CineConnect?
+            <span className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Built for film people</span>
+            <h2 className="font-display font-500 text-4xl sm:text-5xl text-foreground mt-2" style={{ letterSpacing: "-1px" }}>
+              Why Spot'd?
             </h2>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-0 border-t border-l border-border">
@@ -42,8 +42,8 @@ export default function Landing() {
                 className="p-7 border-b border-r border-border group hover:bg-secondary/40 transition-colors"
               >
                 <feat.icon className="w-5 h-5 text-primary mb-4" />
-                <h3 className="font-display text-base font-bold text-foreground mb-2">{feat.title}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">{feat.desc}</p>
+                <h3 className="font-display text-base font-medium text-foreground mb-2">{feat.title}</h3>
+                <p className="text-sm text-muted-foreground leading-[1.7]">{feat.desc}</p>
               </motion.div>
             ))}
           </div>
@@ -53,32 +53,32 @@ export default function Landing() {
       <HowItWorks />
       <PricingPreview />
 
-      {/* Founding Member CTA */}
+      {/* Founding member CTA */}
       <section className="py-20 px-4 border-t border-border">
         <div className="max-w-7xl mx-auto">
-          <div className="grid lg:grid-cols-2 gap-0 border border-foreground">
-            <div className="p-10 lg:p-14 border-b lg:border-b-0 lg:border-r border-foreground">
-              <span className="text-[10px] uppercase tracking-[0.25em] text-primary font-semibold">Limited Offer</span>
-              <h2 className="font-display font-bold text-4xl sm:text-5xl text-foreground mt-2 leading-tight">
-                Founding<br />Member Access
+          <div className="grid lg:grid-cols-2 gap-0 border border-border rounded-xl overflow-hidden">
+            <div className="p-10 lg:p-14 border-b lg:border-b-0 lg:border-r border-border" style={{ background: "#161616" }}>
+              <span className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Limited offer</span>
+              <h2 className="font-display font-500 text-4xl sm:text-5xl text-foreground mt-2 leading-tight" style={{ letterSpacing: "-1px" }}>
+                Founding<br />member access
               </h2>
-              <p className="text-muted-foreground mt-4 text-base leading-relaxed max-w-sm">
-                The first 500 members get lifetime free PRO access, a Founding Member badge, and priority listing in the directory.
+              <p className="text-muted-foreground mt-4 text-base leading-[1.7] max-w-sm">
+                The first 500 members get lifetime free PRO access, a founding member badge, and priority listing in the directory.
               </p>
             </div>
-            <div className="p-10 lg:p-14 bg-foreground flex flex-col justify-center">
-              <div className="text-[10px] uppercase tracking-[0.25em] text-primary font-semibold mb-4">What You Get</div>
+            <div className="p-10 lg:p-14 flex flex-col justify-center" style={{ background: "#E8FF47" }}>
+              <div className="text-[11px] uppercase tracking-[0.08em] text-black/50 mb-4">What you get</div>
               <ul className="space-y-2 mb-8">
-                {["Free PRO access forever", "Founding Member badge", "Verified profile status", "Priority search placement"].map((item) => (
-                  <li key={item} className="text-sm text-background/80 flex items-center gap-2">
-                    <div className="w-1 h-1 rounded-full bg-primary flex-shrink-0" />
+                {["Free PRO access forever", "Founding member badge", "Verified profile status", "Priority search placement"].map((item) => (
+                  <li key={item} className="text-sm text-black flex items-center gap-2">
+                    <div className="w-1 h-1 rounded-full bg-black/40 flex-shrink-0" />
                     {item}
                   </li>
                 ))}
               </ul>
               <Link to="/create-profile">
-                <Button size="lg" className="bg-primary text-primary-foreground font-semibold hover:bg-primary/90 rounded-none w-full sm:w-auto px-10">
-                  Claim Your Spot Now
+                <Button size="lg" className="bg-black text-white font-semibold hover:bg-black/80 rounded-full w-full sm:w-auto px-10">
+                  Claim your spot
                 </Button>
               </Link>
             </div>

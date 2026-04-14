@@ -44,20 +44,18 @@ export default function FeaturedProfiles() {
     <section className="py-20 px-4">
       <div className="max-w-7xl mx-auto">
         {/* Section header — editorial */}
-        <div className="mb-10">
-          <div className="editorial-line pb-4">
+        <div className="mb-10 border-b border-border pb-4">
             <div className="flex items-end justify-between">
               <div>
-                <span className="text-[10px] uppercase tracking-[0.25em] text-primary font-semibold">In the Spotlight</span>
-                <h2 className="font-display font-bold text-4xl sm:text-5xl text-foreground mt-1">
-                  Profiles Worth Watching
+                <span className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">In the spotlight</span>
+                <h2 className="font-display font-500 text-4xl sm:text-5xl text-foreground mt-1" style={{ letterSpacing: "-1px" }}>
+                  Profiles worth watching
                 </h2>
               </div>
-              <Link to="/search" className="hidden sm:flex items-center gap-2 text-sm font-semibold text-foreground hover:text-primary transition-colors border-b border-foreground pb-1 hover:border-primary">
-                Full Directory <ArrowRight className="w-4 h-4" />
+              <Link to="/search" className="hidden sm:flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+                Full directory <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
-          </div>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
@@ -67,8 +65,8 @@ export default function FeaturedProfiles() {
         </div>
 
         <div className="mt-8 sm:hidden">
-          <Link to="/search" className="flex items-center justify-center gap-2 text-sm font-semibold text-foreground border border-foreground rounded-sm py-3 hover:bg-foreground hover:text-background transition-colors">
-            View Full Directory <ArrowRight className="w-4 h-4" />
+          <Link to="/search" className="flex items-center justify-center gap-2 text-sm font-medium text-foreground border border-border rounded-full py-3 hover:border-primary transition-colors">
+            Browse the full directory <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
       </div>

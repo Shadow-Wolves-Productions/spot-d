@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Check, ArrowRight, Crown, Shield } from "lucide-react";
+import { Check, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 
@@ -9,27 +9,27 @@ const TIERS = [
     price: "$0",
     desc: "Get listed. Start exploring.",
     features: ["Basic profile creation", "1 headshot upload", "Browse casting calls", "2 contact reveals / month"],
-    cta: "Get Started",
+    cta: "Get started",
     ctaLink: "/create-profile",
     highlight: false,
     dark: false,
   },
   {
-    name: "Pro",
-    label: "Most Popular",
+    name: "PRO",
+    label: "Recommended",
     price: "$79",
     priceSub: "/year",
     monthly: "~$6.58/mo",
     desc: "Unlock full access and get seen faster.",
     features: ["Unlimited contact reveals", "Full portfolio uploads", "Advanced search filters", "Priority placement", "Save favourite profiles"],
-    cta: "Upgrade to Pro",
+    cta: "Get Spot'd PRO",
     ctaLink: "/pricing",
     highlight: true,
     dark: false,
   },
   {
     name: "Elite",
-    label: "Best for Serious Actors",
+    label: "Best for serious talent",
     price: "$149",
     priceSub: "/year",
     monthly: "~$12.42/mo",
@@ -44,12 +44,12 @@ const TIERS = [
 
 export default function PricingPreview() {
   return (
-    <section className="py-20 px-4">
+    <section className="py-20 px-4 border-t border-border">
       <div className="max-w-7xl mx-auto">
         <div className="mb-12">
-          <span className="text-[10px] uppercase tracking-[0.25em] text-primary font-semibold">Membership</span>
-          <h2 className="font-display font-bold text-4xl sm:text-5xl text-foreground mt-1">Simple Pricing.</h2>
-          <p className="text-muted-foreground mt-3 text-base">Start free. Upgrade when you're ready to be seen.</p>
+          <span className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Membership</span>
+          <h2 className="font-display font-500 text-4xl sm:text-5xl text-foreground mt-2" style={{ letterSpacing: "-1px" }}>Simple pricing.</h2>
+          <p className="text-muted-foreground mt-3 text-base leading-[1.7]">Start free. Upgrade when you're ready to be seen.</p>
         </div>
 
         <div className="grid sm:grid-cols-3 gap-5 max-w-4xl">
@@ -60,35 +60,36 @@ export default function PricingPreview() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.1 }}
-              className={`relative p-7 rounded-xl border ${
-                tier.highlight
-                  ? "border-primary bg-card shadow-lg shadow-primary/10"
-                  : tier.dark
-                  ? "border-foreground bg-foreground"
-                  : "border-border bg-card"
-              }`}
+              className="relative p-7 rounded-xl border"
+              style={{
+                background: "#161616",
+                borderColor: tier.highlight ? "#E8FF47" : tier.dark ? "#534AB7" : "#262626",
+              }}
             >
               {tier.label && (
                 <div className="absolute -top-3 left-4">
-                  <span className="bg-primary text-primary-foreground text-[10px] uppercase tracking-widest font-bold px-3 py-1 rounded-full whitespace-nowrap">
+                  <span
+                    className="text-[10px] uppercase tracking-[0.08em] font-bold px-3 py-1 rounded-full whitespace-nowrap"
+                    style={tier.highlight ? { background: "#E8FF47", color: "#000" } : { background: "#534AB7", color: "#fff" }}
+                  >
                     {tier.label}
                   </span>
                 </div>
               )}
-              <div className={`text-[10px] uppercase tracking-widest font-semibold mb-2 mt-1 ${tier.dark ? "text-primary" : "text-muted-foreground"}`}>
+              <div className="text-[10px] uppercase tracking-[0.08em] font-medium mb-2 mt-1 text-muted-foreground">
                 {tier.name}
               </div>
-              <div className={`font-display text-3xl font-bold ${tier.dark ? "text-background" : "text-foreground"}`}>
+              <div className="font-display text-3xl font-semibold text-foreground" style={{ letterSpacing: "-0.5px" }}>
                 {tier.price}
-                {tier.priceSub && <span className={`text-sm font-normal ${tier.dark ? "text-background/50" : "text-muted-foreground"}`}>{tier.priceSub}</span>}
+                {tier.priceSub && <span className="text-sm font-normal text-muted-foreground">{tier.priceSub}</span>}
               </div>
               {tier.monthly && (
                 <p className="text-xs text-primary mt-0.5">{tier.monthly}</p>
               )}
-              <p className={`text-sm mt-2 mb-5 ${tier.dark ? "text-background/60" : "text-muted-foreground"}`}>{tier.desc}</p>
+              <p className="text-sm mt-2 mb-5 text-muted-foreground leading-[1.7]">{tier.desc}</p>
               <div className="space-y-2 mb-6">
                 {tier.features.map((f) => (
-                  <div key={f} className={`flex items-center gap-2.5 text-sm ${tier.dark ? "text-background/80" : "text-foreground/80"}`}>
+                  <div key={f} className="flex items-center gap-2.5 text-sm text-foreground/80">
                     <Check className="w-3.5 h-3.5 text-primary flex-shrink-0" />
                     {f}
                   </div>
@@ -96,14 +97,15 @@ export default function PricingPreview() {
               </div>
               <Link to={tier.ctaLink}>
                 <Button
-                  className={`w-full font-semibold rounded-none text-sm ${
+                  className="w-full font-semibold rounded-full text-sm"
+                  style={
                     tier.highlight
-                      ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                      ? { background: "#E8FF47", color: "#000" }
                       : tier.dark
-                      ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                      : "border border-foreground/20 bg-transparent text-foreground hover:bg-secondary"
-                  }`}
-                  variant={tier.highlight || tier.dark ? "default" : "outline"}
+                      ? { background: "#534AB7", color: "#fff" }
+                      : { background: "transparent", color: "#fff", border: "1px solid #333" }
+                  }
+                  variant="outline"
                 >
                   {tier.cta} {(tier.highlight || tier.dark) && <ArrowRight className="w-3.5 h-3.5 ml-1" />}
                 </Button>
