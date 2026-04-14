@@ -1,0 +1,43 @@
+{
+  "name": "Notification",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "Recipient user ID"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "role_alert",
+        "endorsement",
+        "casting_match",
+        "system"
+      ],
+      "default": "role_alert"
+    },
+    "title": {
+      "type": "string"
+    },
+    "body": {
+      "type": "string"
+    },
+    "link": {
+      "type": "string",
+      "description": "Optional URL to navigate to"
+    },
+    "is_read": {
+      "type": "boolean",
+      "default": false
+    },
+    "meta": {
+      "type": "object",
+      "description": "Extra data e.g. casting_call_id"
+    }
+  },
+  "required": [
+    "user_id",
+    "title",
+    "body"
+  ]
+}

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Link } from "react-router-dom";
 import { Crown, Eye, Bookmark, Clock, ChevronRight, Edit, UserCheck, Zap, Moon, Sun, Trash2, AlertTriangle, BarChart2 } from "lucide-react";
+import RoleAlertsPanel from "../components/RoleAlertsPanel";
 import { useTheme } from "../lib/useTheme";
 import VerificationPanel from "../components/VerificationPanel";
 import { Button } from "@/components/ui/button";
@@ -332,6 +333,9 @@ export default function Dashboard() {
               </div>
               <p className="text-xs text-muted-foreground mt-3">{theme === "dark" ? "Switch to light editorial mode" : "Switch to dark mode"}</p>
             </div>
+
+            {/* Role Alerts */}
+            <RoleAlertsPanel user={user} profile={profile} />
 
             {/* Danger Zone */}
             <div className="bg-card border border-destructive/30 rounded-xl p-6">
