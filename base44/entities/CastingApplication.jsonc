@@ -20,7 +20,8 @@
         "pending",
         "viewed",
         "shortlisted",
-        "rejected"
+        "rejected",
+        "booked"
       ],
       "default": "pending"
     }

@@ -1,13 +1,15 @@
 import { useState, useEffect, useCallback } from "react";
 import { usePullToRefresh } from "../hooks/usePullToRefresh";
 import { base44 } from "@/api/base44Client";
-import { Search, Crown, ChevronDown, Star } from "lucide-react";
+import { Search, Star, Map, LayoutGrid } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import ProfileCard from "../components/ProfileCard";
 import SearchFilters from "../components/search/SearchFilters";
+import MapView from "../components/search/MapView";
+import { geocodePlace, haversineKm } from "../components/search/ProximityFilter";
 import { motion } from "framer-motion";
 
 const SORT_OPTIONS = [
@@ -42,6 +44,8 @@ export default function SearchDirectory() {
     age_max: "",
   });
   const [searchQuery, setSearchQuery] = useState("");
+  const [viewMode, setViewMode] = useState("grid"); // "grid" | "map"
+  const [proximity, setProximity] = useState(null); // { lat, lon, radius, display }
 
   useEffect(() => {
     const init = async () => {
@@ -60,6 +64,7 @@ export default function SearchDirectory() {
   }, []);
 
   const loadProfiles = useCallback(async () => {
+    // eslint-disable-next-line
     setLoading(true);
     const filterObj = {};
     if (filters.role && filters.role !== "all_roles") filterObj.primary_role = filters.role;
@@ -120,6 +125,25 @@ export default function SearchDirectory() {
       data = data.filter((p) => p.age <= Number(filters.age_max));
     }
 
+    // Proximity filter — geocode city field and compute distance
+    if (proximity) {
+      const filtered = [];
+      for (const p of data) {
+        if (!p.city && !p.state) continue;
+        const query = [p.city, p.state, p.country].filter(Boolean).join(", ");
+        // Cache geocodes on the profile object itself to avoid repeated API calls
+        if (!p._lat) {
+          const geo = await geocodePlace(query);
+          if (geo) { p._lat = geo.lat; p._lon = geo.lon; }
+        }
+        if (p._lat) {
+          const dist = haversineKm(proximity.lat, proximity.lon, p._lat, p._lon);
+          if (dist <= proximity.radius) { p._distKm = Math.round(dist); filtered.push(p); }
+        }
+      }
+      data = filtered.sort((a, b) => a._distKm - b._distKm);
+    }
+
     // Matching algorithm: boost super-liked profiles and profiles matching user's history
     if (user && superLikedIds.size > 0) {
       data = data.sort((a, b) => {
@@ -131,7 +155,7 @@ export default function SearchDirectory() {
 
     setProfiles(data);
     setLoading(false);
-  }, [filters, sort, searchQuery]);
+  }, [filters, sort, searchQuery, proximity]);
 
   useEffect(() => {
     loadProfiles();
@@ -237,7 +261,7 @@ export default function SearchDirectory() {
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
         <div className="flex gap-8">
-          <SearchFilters filters={filters} onChange={setFilters} isProUser={myProfile?.is_pro} />
+          <SearchFilters filters={filters} onChange={setFilters} isProUser={myProfile?.is_pro} proximity={proximity} onProximityChange={setProximity} />
 
           <div className="flex-1 min-w-0">
             {/* Results header */}
@@ -246,12 +270,29 @@ export default function SearchDirectory() {
                 <span className="text-sm text-muted-foreground">
                   {loading ? "Searching..." : `${profiles.length} profiles found`}
                 </span>
-                {/* Mobile filter trigger is inside SearchFilters component */}
                 <div className="lg:hidden">
-                  <SearchFilters filters={filters} onChange={setFilters} isProUser={myProfile?.is_pro} />
+                  <SearchFilters filters={filters} onChange={setFilters} isProUser={myProfile?.is_pro} proximity={proximity} onProximityChange={setProximity} />
                 </div>
               </div>
-              <Select value={sort} onValueChange={setSort}>
+              <div className="flex items-center gap-2">
+                {/* View toggle */}
+                <div className="flex items-center gap-1 bg-secondary rounded-lg p-1">
+                  <button
+                    onClick={() => setViewMode("grid")}
+                    className={`p-1.5 rounded transition-colors ${viewMode === "grid" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+                    title="Grid view"
+                  >
+                    <LayoutGrid className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={() => setViewMode("map")}
+                    className={`p-1.5 rounded transition-colors ${viewMode === "map" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+                    title="Map view"
+                  >
+                    <Map className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                <Select value={sort} onValueChange={setSort}>
                 <SelectTrigger className="w-48 bg-secondary border-border hidden sm:flex">
                   <SelectValue />
                 </SelectTrigger>
@@ -261,9 +302,10 @@ export default function SearchDirectory() {
                   ))}
                 </SelectContent>
               </Select>
+              </div>
             </div>
 
-            {/* Results Grid */}
+            {/* Results */}
             {loading ? (
               <div className="flex items-center justify-center h-64">
                 <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
@@ -274,6 +316,8 @@ export default function SearchDirectory() {
                 <h3 className="font-display text-lg font-semibold text-foreground">No profiles found</h3>
                 <p className="text-sm text-muted-foreground mt-2">Try adjusting your filters or search query.</p>
               </div>
+            ) : viewMode === "map" ? (
+              <MapView profiles={profiles} center={proximity} />
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 {profiles.map((profile, i) => (
@@ -284,6 +328,11 @@ export default function SearchDirectory() {
                      onSave={handleSave}
                      isSaved={savedIds.has(profile.id)}
                    />
+                   {profile._distKm !== undefined && (
+                     <div className="absolute top-3 left-3 px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold text-black z-10" style={{ background: "#E8FC6C" }}>
+                       {profile._distKm} km
+                     </div>
+                   )}
                    <button
                      onClick={() => handleSuperLike(profile.id)}
                      title="Super Like"

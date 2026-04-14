@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { usePullToRefresh } from "../hooks/usePullToRefresh";
 import { base44 } from "@/api/base44Client";
 import { Link } from "react-router-dom";
-import { Plus, MapPin, Calendar, DollarSign, Briefcase, Users, Clock } from "lucide-react";
+import { Plus, MapPin, Calendar, DollarSign, Briefcase, Users, Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
@@ -17,7 +17,7 @@ const TYPE_COLORS = {
   "Documentary": "text-orange-400 bg-orange-500/10 border-orange-500/20",
 };
 
-function CastingCallCard({ call, myProfile, index }) {
+function CastingCallCard({ call, myProfile, index, user }) {
   const [applyOpen, setApplyOpen] = useState(false);
 
   return (
@@ -80,8 +80,14 @@ function CastingCallCard({ call, myProfile, index }) {
           </div>
         </div>
 
-        <div className="flex-shrink-0">
-          {myProfile ? (
+        <div className="flex-shrink-0 flex flex-col gap-2 items-end">
+          {user?.id === call.creator_user_id ? (
+            <Link to={`/casting/applications?call=${call.id}`}>
+              <Button size="sm" variant="outline" className="border-border gap-1.5 text-xs">
+                <Settings2 className="w-3.5 h-3.5" /> Manage Applications
+              </Button>
+            </Link>
+          ) : myProfile ? (
             <Button
               onClick={() => setApplyOpen(true)}
               size="sm"
@@ -224,7 +230,7 @@ export default function CastingCalls() {
         ) : (
           <div className="space-y-4 pb-20">
             {filtered.map((call, i) => (
-              <CastingCallCard key={call.id} call={call} myProfile={myProfile} index={i} />
+              <CastingCallCard key={call.id} call={call} myProfile={myProfile} index={i} user={user} />
             ))}
           </div>
         )}

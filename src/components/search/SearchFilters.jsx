@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Search, SlidersHorizontal, X } from "lucide-react";
+import { SlidersHorizontal, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -8,6 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import ProximityFilter from "./ProximityFilter";
 
 const ROLES = ["Actor", "Director", "Producer", "Cinematographer", "Editor", "Writer", "Sound Designer", "Production Designer", "Costume Designer", "Makeup Artist", "Gaffer", "Grip", "1st AD", "2nd AD", "Line Producer", "Production Manager", "Script Supervisor", "Stunt Coordinator", "VFX Artist", "Colorist", "Composer", "Sound Mixer", "Boom Operator", "Art Director", "Set Designer", "Props Master", "Location Manager", "Casting Director", "Other"];
 const EXPERIENCE_LEVELS = ["Entry", "Mid", "Senior", "Expert"];
@@ -15,7 +16,7 @@ const AVAILABILITY = ["Available Now", "Available Soon", "Not Available"];
 const UNIONS = ["SAG-AFTRA", "MEAA", "Equity", "DGA", "IATSE", "WGA", "Non-Union"];
 const LANGUAGES = ["English", "Spanish", "French", "Mandarin", "Cantonese", "Japanese", "Korean", "Italian", "German", "Portuguese", "Arabic", "Hindi"];
 
-export default function SearchFilters({ filters, onChange, isProUser }) {
+export default function SearchFilters({ filters, onChange, isProUser, proximity, onProximityChange }) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const updateFilter = (key, value) => {
@@ -30,6 +31,11 @@ export default function SearchFilters({ filters, onChange, isProUser }) {
 
   const FilterContent = () => (
     <div className="space-y-5">
+      {/* Proximity */}
+      <ProximityFilter proximity={proximity} onChange={onProximityChange} />
+
+      <div className="border-t border-border/60 my-1" />
+
       {/* Role */}
       <div>
         <Label className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground mb-2 block">Role</Label>

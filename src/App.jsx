@@ -17,6 +17,7 @@ import CastingCalls from './pages/CastingCalls';
 import CreateCastingCall from './pages/CreateCastingCall';
 import AdminDashboard from './pages/AdminDashboard';
 import Analytics from './pages/Analytics';
+import CastingApplicationsKanban from './pages/CastingApplicationsKanban';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -54,6 +55,7 @@ const AuthenticatedApp = () => {
         <Route path="/contact" element={<ContactFAQ />} />
         <Route path="/casting" element={<CastingCalls />} />
         <Route path="/casting/new" element={<CreateCastingCall />} />
+        <Route path="/casting/applications" element={<CastingApplicationsKanban />} />
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/analytics" element={<Analytics />} />
         <Route path="*" element={<PageNotFound />} />
