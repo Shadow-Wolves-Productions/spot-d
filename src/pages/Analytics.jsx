@@ -128,7 +128,7 @@ export default function Analytics() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <h1 className="font-display text-3xl font-bold text-foreground">Profile Analytics</h1>
+              <h1 className="font-display text-3xl font-bold text-foreground" style={{ letterSpacing: "-1px" }}>Profile analytics</h1>
               {isElite && (
                 <Badge className="bg-primary/10 text-primary border-primary/20 text-[10px]">
                   <Star className="w-2.5 h-2.5 mr-1" /> Elite
@@ -140,7 +140,7 @@ export default function Analytics() {
                 </Badge>
               )}
             </div>
-            <p className="text-sm text-muted-foreground">Understand how your profile is performing</p>
+            <p className="text-sm text-muted-foreground">Understand how your Spot'd profile is performing</p>
           </div>
 
           {/* Range selector */}

@@ -1,11 +1,16 @@
 import { MapPin, Crown, CheckCircle, Film, Clock, Briefcase } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import CineScoreBadge from "../CineScoreBadge";
+import SpotScoreBadge from "../SpotScoreBadge";
 
 const AVAILABILITY_STYLES = {
-  "Available Now": "bg-green-500/20 text-green-400 border-green-500/30",
-  "Available Soon": "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
-  "Not Available": "bg-red-500/20 text-red-400 border-red-500/30",
+  "Available Now": "text-black border-0",
+  "Available Soon": "text-white border-0",
+  "Not Available": "text-white border-0",
+};
+const AVAILABILITY_BG = {
+  "Available Now": "#22C55E",
+  "Available Soon": "#FF5C35",
+  "Not Available": "#444",
 };
 
 export default function ProfileHero({ profile }) {
@@ -31,9 +36,9 @@ export default function ProfileHero({ profile }) {
               )}
             </div>
             {profile.is_pro && (
-              <div className="absolute -bottom-2 -right-2 glass-gold px-2.5 py-1 rounded-full flex items-center gap-1">
-                <Crown className="w-3.5 h-3.5 text-primary" />
-                <span className="text-[10px] font-bold text-primary uppercase tracking-wider">PRO</span>
+              <div className="absolute -bottom-2 -right-2 px-2.5 py-1 rounded-full flex items-center gap-1" style={{ background: "#E8FC6C" }}>
+                <Crown className="w-3.5 h-3.5 text-black" />
+                <span className="text-[10px] font-bold text-black uppercase tracking-[0.08em]">PRO</span>
               </div>
             )}
           </div>
@@ -83,7 +88,11 @@ export default function ProfileHero({ profile }) {
                 </span>
               )}
               {profile.availability_status && (
-                <Badge variant="outline" className={AVAILABILITY_STYLES[profile.availability_status]}>
+                <Badge
+                  variant="outline"
+                  className={AVAILABILITY_STYLES[profile.availability_status]}
+                  style={{ background: AVAILABILITY_BG[profile.availability_status] }}
+                >
                   <Clock className="w-3 h-3 mr-1" />
                   {profile.availability_status}
                 </Badge>
@@ -115,9 +124,10 @@ export default function ProfileHero({ profile }) {
             </div>
           </div>
 
-          {/* CineScore */}
-          <div className="flex-shrink-0">
-            <CineScoreBadge score={profile.cine_score} size="lg" />
+          {/* SpotScore */}
+          <div className="flex-shrink-0 flex flex-col items-center gap-1">
+            <SpotScoreBadge score={profile.cine_score || 0} size="lg" />
+            <span className="text-[10px] uppercase tracking-[0.08em] font-mono text-muted-foreground">SpotScore</span>
           </div>
         </div>
       </div>

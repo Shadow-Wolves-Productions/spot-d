@@ -10,8 +10,9 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        display: ['var(--font-display)', 'DM Sans', 'sans-serif'],
+        display: ['var(--font-display)', 'Sora', 'sans-serif'],
         body: ['var(--font-body)', 'DM Sans', 'sans-serif'],
+        mono: ['var(--font-mono)', 'Space Mono', 'monospace'],
       },
       borderRadius: {
         lg: 'var(--radius)',

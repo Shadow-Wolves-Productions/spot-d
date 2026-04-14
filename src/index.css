@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=DM+Sans:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,8 +6,9 @@
 
 @layer base {
   :root {
-    --font-display: 'DM Sans', sans-serif;
+    --font-display: 'Sora', sans-serif;
     --font-body: 'DM Sans', sans-serif;
+    --font-mono: 'Space Mono', monospace;
 
     /* ── DARK MODE FIRST (default) ── */
     --background: 0 0% 5%;          /* #0D0D0D Void */
@@ -16,8 +17,9 @@
     --card-foreground: 0 0% 96%;
     --popover: 0 0% 8.5%;
     --popover-foreground: 0 0% 96%;
-    --primary: 74 100% 64%;         /* #E8FF47 Spotlight lime */
+    --primary: 74 96% 71%;           /* #E8FC6C Electric lime */
     --primary-foreground: 0 0% 5%;  /* black on lime */
+    --signal: 14 100% 60%;          /* #FF5C35 Signal orange */
     --secondary: 0 0% 10%;          /* #1A1A1A */
     --secondary-foreground: 0 0% 96%;
     --muted: 0 0% 12%;

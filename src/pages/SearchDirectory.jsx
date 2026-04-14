@@ -11,7 +11,7 @@ import SearchFilters from "../components/search/SearchFilters";
 import { motion } from "framer-motion";
 
 const SORT_OPTIONS = [
-  { value: "-cine_score", label: "Highest CineScore" },
+  { value: "-cine_score", label: "Highest SpotScore" },
   { value: "-created_date", label: "Newest Profiles" },
   { value: "-years_of_experience", label: "Most Experienced" },
 ];
@@ -184,14 +184,14 @@ export default function SearchDirectory() {
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-primary/5 blur-[120px] rounded-full" />
 
         <div className="relative max-w-4xl mx-auto text-center">
-          <h1 className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground">
-            Find Cast & Crew
+          <h1 className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground" style={{ letterSpacing: "-1px" }}>
+            Find cast & crew
           </h1>
           <p className="text-muted-foreground mt-3 text-sm sm:text-base">
-            Search by role, location, experience, and availability
+            Search by role, location, experience, and availability.
           </p>
 
-          <div className="mt-8 glass-effect rounded-2xl p-4 sm:p-6 gold-glow max-w-3xl mx-auto">
+          <div className="mt-8 rounded-2xl p-4 sm:p-6 max-w-3xl mx-auto border border-border" style={{ background: "#161616" }}>
             <div className="flex flex-col sm:flex-row gap-3">
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -202,7 +202,7 @@ export default function SearchDirectory() {
                   className="pl-10 bg-secondary/50 border-border/50 h-11"
                 />
               </div>
-              <Button className="glass-gold text-primary-foreground font-semibold h-11 px-6">
+              <Button className="h-11 px-6 font-semibold rounded-full" style={{ background: "#E8FC6C", color: "#000" }}>
                 <Search className="w-4 h-4 mr-2" />
                 Search
               </Button>
@@ -221,9 +221,10 @@ export default function SearchDirectory() {
                   onClick={() => setFilters((f) => ({ ...f, [toggle.key]: !f[toggle.key] }))}
                   className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
                     filters[toggle.key]
-                      ? "glass-gold text-primary"
+                      ? "text-black"
                       : "bg-secondary/50 text-muted-foreground hover:text-foreground hover:bg-secondary"
                   }`}
+                  style={filters[toggle.key] ? { background: "#E8FC6C" } : {}}
                 >
                   {toggle.label}
                 </button>

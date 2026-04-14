@@ -7,7 +7,7 @@ import VerificationPanel from "../components/VerificationPanel";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import CineScoreBadge from "../components/CineScoreBadge";
+import SpotScoreBadge from "../components/SpotScoreBadge";
 import ProfileCard from "../components/ProfileCard";
 
 export default function Dashboard() {
@@ -80,7 +80,7 @@ export default function Dashboard() {
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
           <div>
             <h1 className="font-display text-3xl font-bold text-foreground">Dashboard</h1>
-            <p className="text-muted-foreground text-sm mt-1">Welcome back, {user?.full_name}</p>
+            <p className="text-muted-foreground text-sm mt-1">Welcome back, {user?.full_name} 👋</p>
           </div>
           <div className="flex gap-3">
             {profile ? (
@@ -108,11 +108,11 @@ export default function Dashboard() {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
-          {/* CineScore */}
+          {/* SpotScore */}
           <div className="bg-card border border-border/60 rounded-xl p-5 flex items-center gap-4">
-            <CineScoreBadge score={profile?.cine_score || 0} size="md" showLabel={false} />
+            <SpotScoreBadge score={profile?.cine_score || 0} size="md" />
             <div>
-              <p className="text-xs uppercase tracking-wider text-muted-foreground">CineScore</p>
+              <p className="text-xs uppercase tracking-[0.08em] font-mono text-muted-foreground">SpotScore</p>
               <p className="font-display text-xl font-bold text-foreground">{profile?.cine_score || 0}</p>
             </div>
           </div>
@@ -163,7 +163,7 @@ export default function Dashboard() {
                 </div>
                 <Progress value={profileCompleteness} className="h-2 bg-secondary" />
                 <p className="text-xs text-muted-foreground mt-3">
-                  Complete more fields to improve your CineScore and visibility.
+                  Complete more fields to improve your SpotScore and visibility.
                 </p>
               </div>
             )}

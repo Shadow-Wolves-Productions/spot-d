@@ -6,44 +6,44 @@ import { motion } from "framer-motion";
 
 const FAQS = [
   {
-    question: "What is CineConnect?",
-    answer: "CineConnect is a premium directory for film and TV industry professionals. It connects cast, crew, and creative talent — from actors and directors to DPs, editors, and sound designers — in one searchable, verifiable platform.",
+    question: "What is Spot'd?",
+    answer: "Spot'd is an indie film talent directory — a platform where cast, crew, and creatives get discovered by the people who matter. It's direct, no-fluff, and built specifically for independent film.",
   },
   {
     question: "How do I create a profile?",
-    answer: "Click 'Get Started' or 'Create Profile' from the navigation. You'll be guided through a 4-step form covering your contact info, professional experience, portfolio links, and credentials. Your CineScore updates automatically as you complete each section.",
+    answer: "Click 'Get spot'd' or 'Create Profile' from the navigation. You'll be guided through a step-by-step form covering your contact info, professional experience, portfolio links, and credentials. Your SpotScore updates automatically as you complete each section.",
   },
   {
-    question: "How does the Recommend feature work?",
-    answer: "On any profile page, you'll find a 'Recommend' button. Click it to vouch for that person by selecting one of our standardized recommendation types (e.g. 'Reliable on set', 'Great communicator'). Recommendations are public, tied to your account, and help build trust in the industry.",
+    question: "How does the Spotted feature work?",
+    answer: "On any profile page, any user can 'Spot' that person — it's a lightweight endorsement that says 'this person is worth watching'. Each spot increases the recipient's SpotScore and shows up in their activity feed. You'll be notified when someone spots you.",
   },
   {
     question: "How do I get verified?",
-    answer: "There are four verification types: Email (via confirmation link), Phone (via SMS code), IMDb (by linking your IMDb profile), and Union (by submitting your union credentials for review). Each verified badge increases your CineScore and builds credibility.",
+    answer: "There are four verification types: Email (via confirmation link), Phone (via SMS code), IMDb (by linking your IMDb profile), and Union (by submitting your union credentials for review). Each verified badge increases your SpotScore and builds credibility.",
   },
   {
-    question: "What is CineScore?",
-    answer: "CineScore is a profile credibility metric scored from 0–100. It's calculated based on profile completeness, verifications, recommendations received, links added, and more. A higher score boosts your visibility in search results.",
+    question: "What is SpotScore?",
+    answer: "SpotScore is your profile's credibility metric, scored 0–100. It's calculated from profile completeness, how many times you've been spotted, profile views, saves, search appearances, credits listed, and IMDb verification. A higher score boosts your visibility.",
   },
   {
     question: "What's the difference between Free and PRO?",
-    answer: "Free members can create a profile, appear in search, and receive up to 3 contact reveals per month. PRO members get unlimited contact reveals, a PRO badge, boosted visibility, priority search placement, and access to exclusive features. See our Pricing page for full details.",
+    answer: "Free members can create a profile, appear in search, and get 2 contact reveals per month. PRO members get unlimited contact reveals, a PRO badge, boosted visibility, priority search placement, full portfolio uploads, and analytics. See our Pricing page for full details.",
   },
   {
     question: "What is a Founding Member?",
-    answer: "Founding Members are early adopters who joined CineConnect before our official launch. They receive a permanent 'Founder' badge on their profile and are locked into our lowest PRO pricing for life.",
+    answer: "Founding Members are the first 500 people to join Spot'd. They receive lifetime free PRO access, a permanent 'Founder' badge on their profile, verified status, and priority search placement — forever.",
   },
   {
     question: "How does contact reveal work?",
-    answer: "To protect privacy, contact details (email, phone) are hidden by default. Clicking 'Reveal Contact' uses one of your monthly reveals. Free accounts get 3 reveals per month. PRO accounts get unlimited reveals.",
+    answer: "To protect privacy, contact details (email, phone) are hidden by default. Clicking 'Reveal Contact' uses one of your monthly reveals. Free accounts get 2 reveals per month. PRO and Elite accounts get unlimited reveals.",
   },
   {
     question: "Can I appear in search without a PRO account?",
-    answer: "Yes — all profiles appear in the directory. PRO profiles receive a badge and boosted placement, appearing higher in results and with more visual prominence.",
+    answer: "Yes — all profiles appear in the directory. PRO profiles receive a badge and boosted placement, appearing higher in results with more visual prominence.",
   },
   {
     question: "How do I report a fake or inappropriate profile?",
-    answer: "Use the flag icon on any profile page to report it. Our team reviews all reports within 48 hours. Accounts found to be fake or in violation of our community guidelines are removed.",
+    answer: "Use the flag icon on any profile page to report it. Our team reviews all reports within 48 hours. Accounts found to be fake or in violation of our community standards are removed.",
   },
 ];
 
@@ -67,8 +67,8 @@ export default function ContactFAQ() {
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-16"
         >
-          <h1 className="font-display text-4xl sm:text-5xl font-bold text-foreground mb-4">
-            Contact &amp; <span className="text-gold-gradient">FAQ</span>
+          <h1 className="font-display text-4xl sm:text-5xl font-bold text-foreground mb-4" style={{ letterSpacing: "-1.5px" }}>
+            Contact & FAQ
           </h1>
           <p className="text-muted-foreground text-lg max-w-xl mx-auto">
             Have a question or need help? Browse our FAQ or send us a message.
@@ -141,9 +141,9 @@ export default function ContactFAQ() {
           {/* Quick info */}
           <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.15 }} className="space-y-4">
             {[
-              { label: "General Inquiries", value: "hello@cineconnect.io" },
-              { label: "Support", value: "support@cineconnect.io" },
-              { label: "Partnerships", value: "partners@cineconnect.io" },
+              { label: "General inquiries", value: "hello@spotd.io" },
+              { label: "Support", value: "support@spotd.io" },
+              { label: "Partnerships", value: "partners@spotd.io" },
             ].map((item) => (
               <div key={item.label} className="bg-card border border-border/60 rounded-xl px-6 py-5 flex items-center justify-between">
                 <span className="text-muted-foreground text-sm">{item.label}</span>
@@ -152,7 +152,7 @@ export default function ContactFAQ() {
             ))}
             <div className="bg-card border border-border/60 rounded-xl px-6 py-5">
               <p className="text-muted-foreground text-sm leading-relaxed">
-                CineConnect is built by filmmakers, for filmmakers. We're a small team passionate about making industry connections easier and more transparent.
+                Spot'd is built by filmmakers, for filmmakers. Founded by Brendan Byrne (Shadow Wolves Productions, Australia) — we're a small team passionate about making the indie film world finally visible.
               </p>
             </div>
           </motion.div>

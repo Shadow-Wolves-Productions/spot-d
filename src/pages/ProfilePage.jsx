@@ -10,7 +10,7 @@ import ContactPanel from "../components/profile/ContactPanel";
 import { AboutSection, ProfessionalDetails, SkillsSection, CreditsSection, PortfolioSection } from "../components/profile/ProfileSections";
 import WorkedWithSection from "../components/profile/WorkedWithSection";
 import EndorsementsSection from "../components/profile/EndorsementsSection";
-import CineScoreBadge from "../components/CineScoreBadge";
+import SpotScoreBadge from "../components/SpotScoreBadge";
 import ProfileCard from "../components/ProfileCard";
 
 export default function ProfilePage() {
@@ -126,8 +126,10 @@ export default function ProfilePage() {
           </Link>
           <div className="flex-1" />
           {user && myProfile?.id !== profile?.id && (
-            <Button variant="outline" size="sm" onClick={() => setRecommendOpen(true)} className="border-primary/30 text-primary hover:bg-primary/10">
-              <ThumbsUp className="w-4 h-4 mr-1" /> Recommend
+            <Button variant="outline" size="sm" onClick={() => setRecommendOpen(true)}
+              className="border-border hover:border-primary/30 font-semibold"
+              style={{ background: "transparent" }}>
+              <ThumbsUp className="w-4 h-4 mr-1" style={{ color: "#FF5C35" }} /> Spot this person
             </Button>
           )}
           <Button variant="outline" size="sm" onClick={handleSave} className="border-border hover:border-primary/20">

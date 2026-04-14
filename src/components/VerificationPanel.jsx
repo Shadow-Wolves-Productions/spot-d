@@ -36,7 +36,7 @@ export default function VerificationPanel({ profile, onVerified }) {
     try {
       const res = await base44.functions.invoke("verifyCode", { type, code });
       if (res.data?.error) throw new Error(res.data.error);
-      toast.success(`${type === "email" ? "Email" : "Phone"} verified! CineScore updated.`);
+      toast.success(`${type === "email" ? "Email" : "Phone"} verified! SpotScore updated.`);
       setActive(null);
       setCode("");
       onVerified();
@@ -91,7 +91,7 @@ export default function VerificationPanel({ profile, onVerified }) {
         <h3 className="font-display text-sm font-semibold text-foreground uppercase tracking-wider">
           Verification
         </h3>
-        <span className="text-xs text-muted-foreground">Boosts your CineScore</span>
+        <span className="text-xs text-muted-foreground font-mono">Boosts your SpotScore</span>
       </div>
 
       <div className="space-y-2">
