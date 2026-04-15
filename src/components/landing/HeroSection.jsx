@@ -33,7 +33,7 @@ export default function HeroSection() {
             {/* Headline */}
             <h1 className="font-display font-500 text-foreground leading-[1.0]" style={{ letterSpacing: "-1.5px" }}>
               <span className="block text-5xl sm:text-6xl lg:text-7xl">The indie film world,</span>
-              <span className="block text-5xl sm:text-6xl lg:text-7xl" style={{ color: "#E8FF47" }}>finally visible.</span>
+              <span className="block text-5xl sm:text-6xl lg:text-7xl" style={{ color: "#E8FC6C" }}>finally visible.</span>
             </h1>
 
             <p className="mt-8 text-base text-muted-foreground max-w-lg leading-[1.7]">
@@ -82,7 +82,7 @@ export default function HeroSection() {
               <div className="absolute -top-4 -right-4 w-40 h-56 border border-primary/10 rounded-lg pointer-events-none" />
 
               {/* Panel */}
-              <div className="relative rounded-xl overflow-hidden border border-border" style={{ background: "#161616" }}>
+              <div className="relative rounded-xl overflow-hidden border border-border bg-card">
                 <div className="px-6 pt-6 pb-4 border-b border-border">
                   <div className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Now in the directory</div>
                 </div>
@@ -95,7 +95,7 @@ export default function HeroSection() {
                       </div>
                       <div className="flex flex-col items-end gap-1">
                         <div className="text-[10px] uppercase tracking-[0.08em] text-muted-foreground">Spot Score</div>
-                        <span className="font-display font-semibold text-sm" style={{ color: "#E8FF47" }}>{item.score}</span>
+                        <span className="font-display font-semibold text-sm text-primary">{item.score}</span>
                       </div>
                     </div>
                   ))}
@@ -106,7 +106,7 @@ export default function HeroSection() {
               </div>
 
               {/* Floating badge */}
-              <div className="absolute -bottom-4 -left-4 rounded-lg px-4 py-3 shadow-xl" style={{ background: "#E8FF47" }}>
+              <div className="absolute -bottom-4 -left-4 rounded-lg px-4 py-3 shadow-xl" style={{ background: "#E8FC6C" }}>
                 <div className="text-[10px] uppercase tracking-[0.08em] font-semibold text-black/60">Founding members</div>
                 <div className="font-display font-bold text-lg leading-none mt-0.5 text-black">Free PRO</div>
               </div>

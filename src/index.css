@@ -12,74 +12,113 @@
 
     /* ── DARK MODE FIRST (default) ── */
     --background: 0 0% 5%;          /* #0D0D0D Void */
-    --foreground: 0 0% 96%;         /* near white */
-    --card: 0 0% 8.5%;              /* #161616 */
-    --card-foreground: 0 0% 96%;
-    --popover: 0 0% 8.5%;
-    --popover-foreground: 0 0% 96%;
-    --primary: 74 96% 71%;           /* #E8FC6C Electric lime */
-    --primary-foreground: 0 0% 5%;  /* black on lime */
+    --foreground: 0 0% 100%;        /* #FFFFFF */
+    --card: 0 0% 10%;               /* #1A1A1A */
+    --card-foreground: 0 0% 100%;
+    --popover: 0 0% 10%;
+    --popover-foreground: 0 0% 100%;
+    --primary: 72 95% 70%;          /* #E8FC6C Electric lime */
+    --primary-foreground: 0 0% 5%;  /* #0D0D0D — dark text on lime */
     --signal: 14 100% 60%;          /* #FF5C35 Signal orange */
     --secondary: 0 0% 10%;          /* #1A1A1A */
-    --secondary-foreground: 0 0% 96%;
+    --secondary-foreground: 0 0% 100%;
     --muted: 0 0% 12%;
     --muted-foreground: 0 0% 53%;   /* #888 */
-    --accent: 248 43% 50%;          /* #534AB7 Festival purple */
-    --accent-foreground: 0 0% 100%;
-    --destructive: 0 72% 51%;
+    --accent: 72 95% 70%;           /* Same as primary — lime. Purple is ONLY for Elite tier via inline styles */
+    --accent-foreground: 0 0% 5%;
+    --destructive: 14 100% 60%;     /* #FF5C35 signal orange-red */
     --destructive-foreground: 0 0% 100%;
-    --border: 0 0% 15%;             /* ~#262626 */
-    --input: 0 0% 15%;
-    --ring: 74 100% 64%;
+    --border: 0 0% 16%;             /* #2A2A2A */
+    --input: 0 0% 16%;
+    --ring: 72 95% 70%;
     --radius: 0.5rem;
     --success: 142 72% 39%;
 
     --sidebar-background: 0 0% 7%;
-    --sidebar-foreground: 0 0% 96%;
-    --sidebar-primary: 74 100% 64%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 72 95% 70%;
     --sidebar-primary-foreground: 0 0% 5%;
     --sidebar-accent: 0 0% 10%;
-    --sidebar-accent-foreground: 0 0% 96%;
-    --sidebar-border: 0 0% 15%;
-    --sidebar-ring: 74 100% 64%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 0 0% 16%;
+    --sidebar-ring: 72 95% 70%;
 
-    --chart-1: 74 100% 64%;
+    --chart-1: 72 95% 70%;
     --chart-2: 142 72% 39%;
-    --chart-3: 248 43% 50%;
+    --chart-3: 14 100% 60%;
     --chart-4: 220 55% 50%;
     --chart-5: 0 0% 53%;
   }
 
   .dark {
-    --background: 0 0% 5%;
-    --foreground: 0 0% 96%;
-    --card: 0 0% 8.5%;
-    --card-foreground: 0 0% 96%;
-    --popover: 0 0% 8.5%;
-    --popover-foreground: 0 0% 96%;
-    --primary: 74 100% 64%;
-    --primary-foreground: 0 0% 5%;
+    --background: 0 0% 5%;          /* #0D0D0D */
+    --foreground: 0 0% 100%;        /* #FFFFFF */
+    --card: 0 0% 10%;               /* #1A1A1A */
+    --card-foreground: 0 0% 100%;
+    --popover: 0 0% 10%;
+    --popover-foreground: 0 0% 100%;
+    --primary: 72 95% 70%;          /* #E8FC6C */
+    --primary-foreground: 0 0% 5%;  /* #0D0D0D */
     --secondary: 0 0% 10%;
-    --secondary-foreground: 0 0% 96%;
+    --secondary-foreground: 0 0% 100%;
     --muted: 0 0% 12%;
     --muted-foreground: 0 0% 53%;
-    --accent: 248 43% 50%;
-    --accent-foreground: 0 0% 100%;
-    --destructive: 0 70% 55%;
+    --accent: 72 95% 70%;           /* Lime — not purple */
+    --accent-foreground: 0 0% 5%;
+    --destructive: 14 100% 60%;     /* #FF5C35 */
     --destructive-foreground: 0 0% 100%;
-    --border: 0 0% 15%;
-    --input: 0 0% 15%;
-    --ring: 74 100% 64%;
+    --border: 0 0% 16%;             /* #2A2A2A */
+    --input: 0 0% 16%;
+    --ring: 72 95% 70%;
     --success: 142 60% 42%;
 
     --sidebar-background: 0 0% 7%;
-    --sidebar-foreground: 0 0% 96%;
-    --sidebar-primary: 74 100% 64%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 72 95% 70%;
     --sidebar-primary-foreground: 0 0% 5%;
     --sidebar-accent: 0 0% 10%;
-    --sidebar-accent-foreground: 0 0% 96%;
-    --sidebar-border: 0 0% 15%;
-    --sidebar-ring: 74 100% 64%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 0 0% 16%;
+    --sidebar-ring: 72 95% 70%;
+  }
+
+  /* ── LIGHT MODE ── */
+  .light {
+    --background: 0 0% 96%;         /* #F5F5F5 */
+    --foreground: 0 0% 5%;          /* #0D0D0D */
+    --card: 0 0% 100%;              /* #FFFFFF */
+    --card-foreground: 0 0% 5%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 5%;
+    --primary: 72 95% 70%;          /* #E8FC6C — used as FILL only, never as text on white */
+    --primary-foreground: 0 0% 5%;  /* #0D0D0D */
+    --secondary: 0 0% 93%;          /* #EDEDED */
+    --secondary-foreground: 0 0% 5%;
+    --muted: 0 0% 90%;
+    --muted-foreground: 0 0% 33%;   /* #555 */
+    --accent: 72 95% 70%;
+    --accent-foreground: 0 0% 5%;
+    --destructive: 14 100% 60%;     /* #FF5C35 */
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 88%;             /* #E0E0E0 */
+    --input: 0 0% 88%;
+    --ring: 72 95% 70%;
+    --success: 142 60% 35%;
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 0 0% 5%;
+    --sidebar-primary: 72 95% 70%;
+    --sidebar-primary-foreground: 0 0% 5%;
+    --sidebar-accent: 0 0% 93%;
+    --sidebar-accent-foreground: 0 0% 5%;
+    --sidebar-border: 0 0% 88%;
+    --sidebar-ring: 72 95% 70%;
+
+    --chart-1: 0 0% 5%;
+    --chart-2: 142 60% 35%;
+    --chart-3: 14 100% 60%;
+    --chart-4: 220 55% 50%;
+    --chart-5: 0 0% 53%;
   }
 
   /* Light mode override for sections that need it */
@@ -135,8 +174,9 @@
   box-shadow: 0 0 0 1px hsl(var(--primary) / 0.15), 0 4px 24px hsl(var(--primary) / 0.08);
 }
 
-.purple-glow {
-  box-shadow: 0 0 0 1px hsl(var(--accent) / 0.2), 0 4px 16px hsl(var(--accent) / 0.1);
+/* purple-glow kept ONLY for Elite tier */
+.elite-glow {
+  box-shadow: 0 0 0 1px rgba(83, 74, 183, 0.3), 0 4px 16px rgba(83, 74, 183, 0.15);
 }
 
 /* Legacy aliases */
@@ -152,7 +192,19 @@
 }
 
 .gold-glow {
-  box-shadow: 0 4px 20px hsl(var(--primary) / 0.15);
+  box-shadow: 0 4px 20px hsl(var(--primary) / 0.2);
+}
+
+/* In light mode, lime (#E8FC6C) is used as a FILL/BACKGROUND colour only.
+   Any text that uses text-primary in light mode will be lime-on-white which is low contrast.
+   Fix this by using a dark text token in light mode. */
+/* In light mode: lime used as BG fill only. Text that inherits --primary colour
+   would be lime-on-white (poor contrast). We remap the text token to near-black. */
+html.light .text-primary,
+html.light a.text-primary,
+html.light span.text-primary,
+html.light p.text-primary {
+  color: hsl(0 0% 10%) !important;
 }
 
 .editorial-line {
@@ -164,17 +216,21 @@
 }
 
 .text-gold-gradient {
-  background: linear-gradient(135deg, #E8FF47, #c8e820);
+  background: linear-gradient(135deg, #E8FC6C, #c8e820);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
 .text-red-gradient {
-  background: linear-gradient(135deg, #E8FF47, #c8e820);
+  background: linear-gradient(135deg, #FF5C35, #e84020);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+}
+
+.signal-glow {
+  box-shadow: 0 0 0 1px rgba(255, 92, 53, 0.2), 0 4px 16px rgba(255, 92, 53, 0.1);
 }
 
 .red-glow {

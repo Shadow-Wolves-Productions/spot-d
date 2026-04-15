@@ -57,7 +57,7 @@ export default function Landing() {
       <section className="py-20 px-4 border-t border-border">
         <div className="max-w-7xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-0 border border-border rounded-xl overflow-hidden">
-            <div className="p-10 lg:p-14 border-b lg:border-b-0 lg:border-r border-border" style={{ background: "#161616" }}>
+            <div className="p-10 lg:p-14 border-b lg:border-b-0 lg:border-r border-border bg-card">
               <span className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Limited offer</span>
               <h2 className="font-display font-500 text-4xl sm:text-5xl text-foreground mt-2 leading-tight" style={{ letterSpacing: "-1px" }}>
                 Founding<br />member access
@@ -66,7 +66,7 @@ export default function Landing() {
                 The first 500 members get lifetime free PRO access, a founding member badge, and priority listing in the directory.
               </p>
             </div>
-            <div className="p-10 lg:p-14 flex flex-col justify-center" style={{ background: "#E8FF47" }}>
+            <div className="p-10 lg:p-14 flex flex-col justify-center" style={{ background: "#E8FC6C" }}>
               <div className="text-[11px] uppercase tracking-[0.08em] text-black/50 mb-4">What you get</div>
               <ul className="space-y-2 mb-8">
                 {["Free PRO access forever", "Founding member badge", "Verified profile status", "Priority search placement"].map((item) => (

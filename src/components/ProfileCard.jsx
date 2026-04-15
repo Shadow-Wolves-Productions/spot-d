@@ -11,10 +11,10 @@ const TIER_BADGE = {
 
 export default function ProfileCard({ profile, subscription, onSave, isSaved, index = 0, featured = false }) {
   const availabilityStyle = profile.availability_status === "Available Now"
-    ? { background: "#E8FF47", color: "#000", label: "Available now" }
+    ? { background: "#E8FC6C", color: "#0D0D0D", label: "Available now" }
     : profile.availability_status === "Available Soon"
-    ? { background: "#534AB7", color: "#fff", label: "Available soon" }
-    : { background: "#333", color: "#888", label: "Unavailable" };
+    ? { background: "#FF5C35", color: "#fff", label: "Available soon" }
+    : { background: "#2A2A2A", color: "#888", label: "Unavailable" };
 
   const tierBadge = subscription ? TIER_BADGE[subscription.tier] : null;
 
@@ -109,7 +109,7 @@ export default function ProfileCard({ profile, subscription, onSave, isSaved, in
               <div className="flex items-center gap-1.5">
                 {profile.spot_score > 0 && (
                   <div className="flex items-center gap-1" title="Spot Score — profile quality ranking out of 100">
-                    <span className="font-display font-semibold text-sm" style={{ color: "#E8FF47" }}>{profile.spot_score}</span>
+                    <span className="font-display font-semibold text-sm text-primary">{profile.spot_score}</span>
                     <span className="text-[9px] uppercase tracking-[0.08em]" style={{ color: "#888" }}>/100</span>
                   </div>
                 )}

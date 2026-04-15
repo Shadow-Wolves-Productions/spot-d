@@ -62,15 +62,15 @@ export default function PricingPreview() {
               transition={{ delay: i * 0.1 }}
               className="relative p-7 rounded-xl border"
               style={{
-                background: "#161616",
-                borderColor: tier.highlight ? "#E8FF47" : tier.dark ? "#534AB7" : "#262626",
+                background: "hsl(var(--card))",
+                borderColor: tier.highlight ? "#E8FC6C" : tier.dark ? "#534AB7" : "hsl(var(--border))",
               }}
             >
               {tier.label && (
                 <div className="absolute -top-3 left-4">
                   <span
                     className="text-[10px] uppercase tracking-[0.08em] font-bold px-3 py-1 rounded-full whitespace-nowrap"
-                    style={tier.highlight ? { background: "#E8FF47", color: "#000" } : { background: "#534AB7", color: "#fff" }}
+                    style={tier.highlight ? { background: "#E8FC6C", color: "#0D0D0D" } : { background: "#534AB7", color: "#fff" }}
                   >
                     {tier.label}
                   </span>
@@ -84,7 +84,7 @@ export default function PricingPreview() {
                 {tier.priceSub && <span className="text-sm font-normal text-muted-foreground">{tier.priceSub}</span>}
               </div>
               {tier.monthly && (
-                <p className="text-xs text-primary mt-0.5">{tier.monthly}</p>
+                <p className="text-xs font-semibold mt-0.5" style={{ color: tier.dark ? "#534AB7" : "#E8FC6C" }}>{tier.monthly}</p>
               )}
               <p className="text-sm mt-2 mb-5 text-muted-foreground leading-[1.7]">{tier.desc}</p>
               <div className="space-y-2 mb-6">
@@ -100,10 +100,10 @@ export default function PricingPreview() {
                   className="w-full font-semibold rounded-full text-sm"
                   style={
                     tier.highlight
-                      ? { background: "#E8FF47", color: "#000" }
+                      ? { background: "#E8FC6C", color: "#0D0D0D" }
                       : tier.dark
                       ? { background: "#534AB7", color: "#fff" }
-                      : { background: "transparent", color: "#fff", border: "1px solid #333" }
+                      : undefined
                   }
                   variant="outline"
                 >

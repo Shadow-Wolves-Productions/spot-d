@@ -4,7 +4,7 @@ import MobileBottomTabs from "./MobileBottomTabs";
 import { useTheme } from "@/lib/useTheme";
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { Search, Menu, User, LogOut, Shield, ArrowLeft } from "lucide-react";
+import { Search, Menu, User, LogOut, Shield, ArrowLeft, Sun, Moon } from "lucide-react";
 import NotificationBell from "./NotificationBell";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -27,7 +27,7 @@ const NAV_LINKS = [
 function SpotdLogo({ dark = false }) {
   return (
     <span className={`font-display text-lg font-bold tracking-tight ${dark ? "text-foreground" : "text-foreground"}`}>
-      Spot<span style={{ color: "#E8FF47" }}>'</span>d
+      Spot<span style={{ color: "#E8FC6C" }}>'</span>d
     </span>
   );
 }
@@ -115,6 +115,13 @@ export default function Layout() {
                         Search
                       </Button>
                     </Link>
+                    <button
+                      onClick={toggleTheme}
+                      className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground"
+                      title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+                    >
+                      {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                    </button>
                     <NotificationBell userId={user?.id} />
                     {!profile?.is_pro && (
                       <Link to="/pricing">
@@ -172,6 +179,13 @@ export default function Layout() {
                   </>
                 ) : (
                   <>
+                    <button
+                      onClick={toggleTheme}
+                      className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground"
+                      title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+                    >
+                      {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                    </button>
                     <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground text-xs"
                       onClick={() => base44.auth.redirectToLogin()}>
                       Sign in

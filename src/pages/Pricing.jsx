@@ -96,7 +96,7 @@ export default function Pricing() {
               <button
                 onClick={() => setAnnual(!annual)}
                 className="relative w-12 h-6 rounded-full transition-colors"
-                style={{ background: annual ? "#E8FF47" : "#333" }}
+                style={{ background: annual ? "#E8FC6C" : "#333" }}
               >
                 <div className={`absolute top-1 w-4 h-4 rounded-full shadow transition-transform ${annual ? "left-7" : "left-1"}`}
                   style={{ background: annual ? "#000" : "#fff" }} />
@@ -105,7 +105,7 @@ export default function Pricing() {
                 onClick={() => setAnnual(true)}
                 className={`text-sm font-normal transition-colors ${annual ? "text-foreground" : "text-muted-foreground"}`}
               >
-                Annual <span className="text-primary text-xs ml-1">Save ~30%</span>
+                Annual <span className="text-xs ml-1 font-semibold" style={{ color: "#E8FC6C" }}>Save ~30%</span>
               </button>
             </div>
           </motion.div>
@@ -120,7 +120,7 @@ export default function Pricing() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
             className="rounded-2xl p-7 border"
-            style={{ background: "#161616", borderColor: "#262626" }}
+            style={{ background: "hsl(var(--card))", borderColor: "hsl(var(--border))" }}
           >
             <p className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground mb-3">Free</p>
             <div className="flex items-end gap-1">
@@ -141,27 +141,27 @@ export default function Pricing() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
             className="relative rounded-2xl p-7 md:-mt-4 md:-mb-4 border"
-            style={{ background: "#161616", borderColor: "#E8FF47" }}
+            style={{ background: "hsl(var(--card))", borderColor: "#E8FC6C" }}
           >
             <div className="absolute -top-4 left-1/2 -translate-x-1/2">
               <span className="px-4 py-1 rounded-full text-[11px] font-bold uppercase tracking-[0.08em] whitespace-nowrap"
-                style={{ background: "#E8FF47", color: "#000" }}>
+                style={{ background: "#E8FC6C", color: "#0D0D0D" }}>
                 Recommended
               </span>
             </div>
-            <p className="text-[11px] uppercase tracking-[0.08em] text-primary mb-3 mt-2">PRO</p>
+            <p className="text-[11px] uppercase tracking-[0.08em] font-bold mb-3 mt-2" style={{ color: "#E8FC6C" }}>PRO</p>
             <div className="flex items-end gap-1">
               <span className="font-display text-5xl font-semibold text-foreground" style={{ letterSpacing: "-1px" }}>
                 {annual ? "$79" : "$9.99"}
               </span>
               <span className="text-muted-foreground mb-2">/{annual ? "year" : "month"}</span>
             </div>
-            <p className="text-xs text-primary font-medium mt-1">
+            <p className="text-xs font-semibold mt-1" style={{ color: "#E8FC6C" }}>
               {annual ? "~$6.58/month · best value" : "or $79/year — save 30%"}
             </p>
             <p className="text-sm text-muted-foreground mt-3 leading-[1.7]">Unlock full access and get seen</p>
             <Button className="w-full mt-6 h-11 text-sm font-semibold rounded-full"
-              style={{ background: "#E8FF47", color: "#000" }}>
+              style={{ background: "#E8FC6C", color: "#0D0D0D" }}>
               <Crown className="w-4 h-4 mr-2" /> Get Spot'd PRO
             </Button>
             <FeatureList features={PRO_FEATURES} />
@@ -173,12 +173,12 @@ export default function Pricing() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
             className="relative rounded-2xl p-7 overflow-hidden border"
-            style={{ background: "#161616", borderColor: "#534AB7" }}
+            style={{ background: "hsl(var(--card))", borderColor: "#534AB7" }}
           >
             <div className="relative">
               <div className="flex items-center gap-2 mb-3">
-                <Shield className="w-4 h-4 text-primary" />
-                <p className="text-[11px] uppercase tracking-[0.08em] text-primary">Elite</p>
+                <Shield className="w-4 h-4" style={{ color: "#534AB7" }} />
+                <p className="text-[11px] uppercase tracking-[0.08em] font-bold" style={{ color: "#534AB7" }}>Elite</p>
               </div>
               <div className="flex items-end gap-1">
                 <span className="font-display text-5xl font-semibold text-foreground" style={{ letterSpacing: "-1px" }}>
@@ -186,7 +186,7 @@ export default function Pricing() {
                 </span>
                 <span className="text-muted-foreground mb-2">/{annual ? "year" : "month"}</span>
               </div>
-              <p className="text-xs text-primary font-medium mt-1">
+              <p className="text-xs font-semibold mt-1" style={{ color: "#534AB7" }}>
                 {annual ? "~$12.42/month · best value" : "or $149/year — save 16%"}
               </p>
               <p className="text-sm text-muted-foreground mt-3 leading-[1.7]">Stand out and get ahead of the competition</p>
@@ -207,7 +207,7 @@ export default function Pricing() {
           className="max-w-2xl mx-auto mt-24"
         >
           <div className="relative rounded-2xl p-10 text-center overflow-hidden border"
-            style={{ background: "#161616", borderColor: "#E8FF47", boxShadow: "0 0 0 1px rgba(232,255,71,0.1), 0 4px 24px rgba(232,255,71,0.06)" }}>
+            style={{ background: "hsl(var(--card))", borderColor: "#E8FC6C", boxShadow: "0 0 0 1px rgba(232,252,108,0.12), 0 4px 24px rgba(232,252,108,0.07)" }}>
             <div className="relative">
               <span className="text-primary text-2xl mb-3 block">✦</span>
               <h3 className="font-display text-2xl font-500 text-foreground" style={{ letterSpacing: "-0.5px" }}>Founding member offer</h3>
@@ -238,7 +238,7 @@ export default function Pricing() {
                   size="lg"
                   disabled={spotsLeft === 0}
                   className="font-bold px-10 h-12 text-sm rounded-full"
-                  style={{ background: "#E8FF47", color: "#000" }}
+                  style={{ background: "#E8FC6C", color: "#0D0D0D" }}
                 >
                   <Sparkles className="w-4 h-4 mr-2" /> Claim your spot
                 </Button>
