@@ -13,7 +13,7 @@ import { geocodePlace, haversineKm } from "../components/search/ProximityFilter"
 import { motion } from "framer-motion";
 
 const SORT_OPTIONS = [
-  { value: "-cine_score", label: "Highest SpotScore" },
+  { value: "-spot_score", label: "Highest SpotScore" },
   { value: "-created_date", label: "Newest Profiles" },
   { value: "-years_of_experience", label: "Most Experienced" },
 ];
@@ -25,7 +25,7 @@ export default function SearchDirectory() {
   const [myProfile, setMyProfile] = useState(null);
   const [savedIds, setSavedIds] = useState(new Set());
   const [superLikedIds, setSuperLikedIds] = useState(new Set());
-  const [sort, setSort] = useState("-cine_score");
+  const [sort, setSort] = useState("-spot_score");
   const [filters, setFilters] = useState({
     role: "",
     location: "",
@@ -147,8 +147,8 @@ export default function SearchDirectory() {
     // Matching algorithm: boost super-liked profiles and profiles matching user's history
     if (user && superLikedIds.size > 0) {
       data = data.sort((a, b) => {
-        const aScore = (superLikedIds.has(a.id) ? 30 : 0) + (savedIds.has(a.id) ? 10 : 0) + (a.cine_score || 0);
-        const bScore = (superLikedIds.has(b.id) ? 30 : 0) + (savedIds.has(b.id) ? 10 : 0) + (b.cine_score || 0);
+        const aScore = (superLikedIds.has(a.id) ? 30 : 0) + (savedIds.has(a.id) ? 10 : 0) + (a.spot_score || 0);
+        const bScore = (superLikedIds.has(b.id) ? 30 : 0) + (savedIds.has(b.id) ? 10 : 0) + (b.spot_score || 0);
         return bScore - aScore;
       });
     }
@@ -163,6 +163,7 @@ export default function SearchDirectory() {
 
   const handleSave = async (profileId) => {
     if (!user) { base44.auth.redirectToLogin(); return; }
+    if (myProfile?.id === profileId) return; // prevent self-save
     // Optimistic update
     const wasSaved = savedIds.has(profileId);
     setSavedIds((prev) => { const next = new Set(prev); wasSaved ? next.delete(profileId) : next.add(profileId); return next; });

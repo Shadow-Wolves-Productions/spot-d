@@ -72,7 +72,7 @@ export default function Dashboard() {
     );
   }
 
-  const profileCompleteness = profile ? Math.min(profile.cine_score || 0, 100) : 0;
+  const profileCompleteness = profile ? Math.min(profile.spot_score || 0, 100) : 0;
 
   return (
     <div className="pt-24 pb-20 px-4">
@@ -111,10 +111,10 @@ export default function Dashboard() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
           {/* SpotScore */}
           <div className="bg-card border border-border/60 rounded-xl p-5 flex items-center gap-4">
-            <SpotScoreBadge score={profile?.cine_score || 0} size="md" />
+            <SpotScoreBadge score={profile?.spot_score || 0} size="md" />
             <div>
               <p className="text-xs uppercase tracking-[0.08em] font-mono text-muted-foreground">SpotScore</p>
-              <p className="font-display text-xl font-bold text-foreground">{profile?.cine_score || 0}</p>
+              <p className="font-display text-xl font-bold text-foreground">{profile?.spot_score || 0}</p>
             </div>
           </div>
 

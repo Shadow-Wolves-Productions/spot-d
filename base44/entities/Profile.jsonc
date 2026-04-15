@@ -264,7 +264,7 @@
       "type": "boolean",
       "default": false
     },
-    "cine_score": {
+    "spot_score": {
       "type": "number",
       "default": 0
     },

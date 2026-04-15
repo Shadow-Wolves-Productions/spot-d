@@ -102,10 +102,10 @@ export default function ProfileCard({ profile, onSave, isSaved, index = 0, featu
                   {availabilityStyle.label}
                 </span>
               )}
-              {profile.cine_score > 0 && (
+              {profile.spot_score > 0 && (
                 <div className="flex items-center gap-1">
                   <span className="text-[9px] uppercase tracking-[0.08em]" style={{ color: "#888" }}>Spot Score</span>
-                  <span className="font-display font-semibold text-sm" style={{ color: "#E8FF47" }}>{profile.cine_score}</span>
+                  <span className="font-display font-semibold text-sm" style={{ color: "#E8FF47" }}>{profile.spot_score}</span>
                 </div>
               )}
             </div>

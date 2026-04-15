@@ -10,15 +10,15 @@ export default function FeaturedProfiles() {
 
   useEffect(() => {
     const load = async () => {
-      const boosted = await base44.entities.Profile.filter({ is_boosted: true }, "-cine_score", 8);
+      const boosted = await base44.entities.Profile.filter({ is_boosted: true }, "-spot_score", 8);
       let data = boosted;
       if (data.length < 4) {
-        const pro = await base44.entities.Profile.filter({ is_pro: true }, "-cine_score", 8);
+        const pro = await base44.entities.Profile.filter({ is_pro: true }, "-spot_score", 8);
         const extra = pro.filter((p) => !data.find((b) => b.id === p.id));
         data = [...data, ...extra].slice(0, 8);
       }
       if (data.length < 4) {
-        const top = await base44.entities.Profile.list("-cine_score", 8);
+        const top = await base44.entities.Profile.list("-spot_score", 8);
         const extra = top.filter((p) => !data.find((b) => b.id === p.id));
         data = [...data, ...extra].slice(0, 8);
       }

@@ -65,6 +65,7 @@ export default function ProfilePage() {
 
   const handleSave = async () => {
     if (!user) { base44.auth.redirectToLogin(); return; }
+    if (myProfile?.id === profile?.id) return; // prevent self-save
     // Optimistic update
     const wasSaved = isSaved;
     setIsSaved(!wasSaved);

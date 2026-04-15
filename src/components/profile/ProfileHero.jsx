@@ -126,7 +126,7 @@ export default function ProfileHero({ profile }) {
 
           {/* SpotScore */}
           <div className="flex-shrink-0 flex flex-col items-center gap-1">
-            <SpotScoreBadge score={profile.cine_score || 0} size="lg" />
+            <SpotScoreBadge score={profile.spot_score || 0} size="lg" />
             <span className="text-[10px] uppercase tracking-[0.08em] font-mono text-muted-foreground">SpotScore</span>
           </div>
         </div>
