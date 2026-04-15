@@ -61,16 +61,18 @@ export default function PricingPreview() {
               viewport={{ once: true }}
               transition={{ delay: i * 0.1 }}
               className="relative p-7 rounded-xl border"
+              className={`relative p-7 rounded-xl border ${tier.highlight ? "border-primary" : tier.dark ? "" : "border-border"}`}
               style={{
                 background: "hsl(var(--card))",
-                borderColor: tier.highlight ? "#E8FC6C" : tier.dark ? "#534AB7" : "hsl(var(--border))",
+                borderColor: tier.dark ? "#534AB7" : undefined,
               }}
             >
               {tier.label && (
                 <div className="absolute -top-3 left-4">
                   <span
                     className="text-[10px] uppercase tracking-[0.08em] font-bold px-3 py-1 rounded-full whitespace-nowrap"
-                    style={tier.highlight ? { background: "#E8FC6C", color: "#0D0D0D" } : { background: "#534AB7", color: "#fff" }}
+                    className={tier.highlight ? "bg-primary text-primary-foreground" : ""}
+                    style={!tier.highlight ? { background: "#534AB7", color: "#fff" } : undefined}
                   >
                     {tier.label}
                   </span>
@@ -84,7 +86,8 @@ export default function PricingPreview() {
                 {tier.priceSub && <span className="text-sm font-normal text-muted-foreground">{tier.priceSub}</span>}
               </div>
               {tier.monthly && (
-                <p className="text-xs font-semibold mt-0.5" style={{ color: tier.dark ? "#534AB7" : "#E8FC6C" }}>{tier.monthly}</p>
+                <p className={`text-xs font-semibold mt-0.5 ${tier.dark ? "" : "text-primary"}`}
+                  style={tier.dark ? { color: "#534AB7" } : undefined}>{tier.monthly}</p>
               )}
               <p className="text-sm mt-2 mb-5 text-muted-foreground leading-[1.7]">{tier.desc}</p>
               <div className="space-y-2 mb-6">
@@ -97,15 +100,9 @@ export default function PricingPreview() {
               </div>
               <Link to={tier.ctaLink}>
                 <Button
-                  className="w-full font-semibold rounded-full text-sm"
-                  style={
-                    tier.highlight
-                      ? { background: "#E8FC6C", color: "#0D0D0D" }
-                      : tier.dark
-                      ? { background: "#534AB7", color: "#fff" }
-                      : undefined
-                  }
-                  variant="outline"
+                  className={`w-full font-semibold rounded-full text-sm ${tier.highlight ? "bg-primary text-primary-foreground hover:bg-primary/90" : ""}`}
+                  style={tier.dark ? { background: "#534AB7", color: "#fff" } : undefined}
+                  variant={tier.highlight || tier.dark ? "default" : "outline"}
                 >
                   {tier.cta} {(tier.highlight || tier.dark) && <ArrowRight className="w-3.5 h-3.5 ml-1" />}
                 </Button>

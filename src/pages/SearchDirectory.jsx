@@ -227,7 +227,7 @@ export default function SearchDirectory() {
                   className="pl-10 bg-secondary/50 border-border/50 h-11"
                 />
               </div>
-              <Button className="h-11 px-6 font-semibold rounded-full" style={{ background: "#E8FC6C", color: "#000" }}>
+              <Button className="h-11 px-6 font-semibold rounded-full bg-primary text-primary-foreground hover:bg-primary/90">
                 <Search className="w-4 h-4 mr-2" />
                 Search
               </Button>
@@ -246,10 +246,9 @@ export default function SearchDirectory() {
                   onClick={() => setFilters((f) => ({ ...f, [toggle.key]: !f[toggle.key] }))}
                   className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
                     filters[toggle.key]
-                      ? "text-black"
+                      ? "bg-primary text-primary-foreground"
                       : "bg-secondary/50 text-muted-foreground hover:text-foreground hover:bg-secondary"
                   }`}
-                  style={filters[toggle.key] ? { background: "#E8FC6C" } : {}}
                 >
                   {toggle.label}
                 </button>
@@ -330,7 +329,7 @@ export default function SearchDirectory() {
                      isSaved={savedIds.has(profile.id)}
                    />
                    {profile._distKm !== undefined && (
-                     <div className="absolute top-3 left-3 px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold text-black z-10" style={{ background: "#E8FC6C" }}>
+                     <div className="absolute top-3 left-3 px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold bg-primary text-primary-foreground z-10">
                        {profile._distKm} km
                      </div>
                    )}

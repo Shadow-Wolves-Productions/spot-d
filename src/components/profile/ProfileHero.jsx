@@ -36,9 +36,9 @@ export default function ProfileHero({ profile }) {
               )}
             </div>
             {profile.is_pro && (
-              <div className="absolute -bottom-2 -right-2 px-2.5 py-1 rounded-full flex items-center gap-1" style={{ background: "#E8FC6C" }}>
-                <Crown className="w-3.5 h-3.5 text-black" />
-                <span className="text-[10px] font-bold text-black uppercase tracking-[0.08em]">PRO</span>
+              <div className="absolute -bottom-2 -right-2 px-2.5 py-1 rounded-full flex items-center gap-1 bg-primary">
+                <Crown className="w-3.5 h-3.5 text-primary-foreground" />
+                <span className="text-[10px] font-bold text-primary-foreground uppercase tracking-[0.08em]">PRO</span>
               </div>
             )}
           </div>

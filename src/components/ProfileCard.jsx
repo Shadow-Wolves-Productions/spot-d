@@ -48,7 +48,7 @@ export default function ProfileCard({ profile, subscription, onSave, isSaved, in
             <div className="absolute top-3 left-3 right-3 flex items-start justify-between">
               <div className="flex gap-1.5 flex-wrap">
                 {featured && (
-                  <span className="px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em] rounded" style={{ background: "#E8FF47", color: "#000" }}>
+                  <span className="px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em] rounded bg-primary text-primary-foreground">
                     Featured
                   </span>
                 )}
@@ -71,7 +71,7 @@ export default function ProfileCard({ profile, subscription, onSave, isSaved, in
 
             {/* Hover CTA */}
             <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-              <span className="px-4 py-2 rounded-full text-xs font-semibold" style={{ background: "#E8FF47", color: "#000" }}>
+              <span className="px-4 py-2 rounded-full text-xs font-semibold bg-primary text-primary-foreground">
                 Spot this person
               </span>
             </div>

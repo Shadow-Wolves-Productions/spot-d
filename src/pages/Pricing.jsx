@@ -95,17 +95,15 @@ export default function Pricing() {
               </button>
               <button
                 onClick={() => setAnnual(!annual)}
-                className="relative w-12 h-6 rounded-full transition-colors"
-                style={{ background: annual ? "#E8FC6C" : "#333" }}
+                className="relative w-12 h-6 rounded-full transition-colors bg-primary"
               >
-                <div className={`absolute top-1 w-4 h-4 rounded-full shadow transition-transform ${annual ? "left-7" : "left-1"}`}
-                  style={{ background: annual ? "#000" : "#fff" }} />
+                <div className={`absolute top-1 w-4 h-4 rounded-full shadow transition-transform bg-primary-foreground ${annual ? "left-7" : "left-1"}`} />
               </button>
               <button
                 onClick={() => setAnnual(true)}
                 className={`text-sm font-normal transition-colors ${annual ? "text-foreground" : "text-muted-foreground"}`}
               >
-                Annual <span className="text-xs ml-1 font-semibold" style={{ color: "#E8FC6C" }}>Save ~30%</span>
+                Annual <span className="text-xs ml-1 font-semibold text-primary">Save ~30%</span>
               </button>
             </div>
           </motion.div>
@@ -140,28 +138,26 @@ export default function Pricing() {
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="relative rounded-2xl p-7 md:-mt-4 md:-mb-4 border"
-            style={{ background: "hsl(var(--card))", borderColor: "#E8FC6C" }}
+            className="relative rounded-2xl p-7 md:-mt-4 md:-mb-4 border border-primary"
+            style={{ background: "hsl(var(--card))" }}
           >
             <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-              <span className="px-4 py-1 rounded-full text-[11px] font-bold uppercase tracking-[0.08em] whitespace-nowrap"
-                style={{ background: "#E8FC6C", color: "#0D0D0D" }}>
+              <span className="px-4 py-1 rounded-full text-[11px] font-bold uppercase tracking-[0.08em] whitespace-nowrap bg-primary text-primary-foreground">
                 Recommended
               </span>
             </div>
-            <p className="text-[11px] uppercase tracking-[0.08em] font-bold mb-3 mt-2" style={{ color: "#E8FC6C" }}>PRO</p>
+            <p className="text-[11px] uppercase tracking-[0.08em] font-bold mb-3 mt-2 text-primary">PRO</p>
             <div className="flex items-end gap-1">
               <span className="font-display text-5xl font-semibold text-foreground" style={{ letterSpacing: "-1px" }}>
                 {annual ? "$79" : "$9.99"}
               </span>
               <span className="text-muted-foreground mb-2">/{annual ? "year" : "month"}</span>
             </div>
-            <p className="text-xs font-semibold mt-1" style={{ color: "#E8FC6C" }}>
+            <p className="text-xs font-semibold mt-1 text-primary">
               {annual ? "~$6.58/month · best value" : "or $79/year — save 30%"}
             </p>
             <p className="text-sm text-muted-foreground mt-3 leading-[1.7]">Unlock full access and get seen</p>
-            <Button className="w-full mt-6 h-11 text-sm font-semibold rounded-full"
-              style={{ background: "#E8FC6C", color: "#0D0D0D" }}>
+            <Button className="w-full mt-6 h-11 text-sm font-semibold rounded-full bg-primary text-primary-foreground hover:bg-primary/90">
               <Crown className="w-4 h-4 mr-2" /> Get Spot'd PRO
             </Button>
             <FeatureList features={PRO_FEATURES} />
@@ -206,8 +202,8 @@ export default function Pricing() {
           transition={{ delay: 0.4 }}
           className="max-w-2xl mx-auto mt-24"
         >
-          <div className="relative rounded-2xl p-10 text-center overflow-hidden border"
-            style={{ background: "hsl(var(--card))", borderColor: "#E8FC6C", boxShadow: "0 0 0 1px rgba(232,252,108,0.12), 0 4px 24px rgba(232,252,108,0.07)" }}>
+          <div className="relative rounded-2xl p-10 text-center overflow-hidden border border-primary"
+            style={{ background: "hsl(var(--card))" }}>
             <div className="relative">
               <span className="text-primary text-2xl mb-3 block">✦</span>
               <h3 className="font-display text-2xl font-500 text-foreground" style={{ letterSpacing: "-0.5px" }}>Founding member offer</h3>
@@ -237,8 +233,7 @@ export default function Pricing() {
                 <Button
                   size="lg"
                   disabled={spotsLeft === 0}
-                  className="font-bold px-10 h-12 text-sm rounded-full"
-                  style={{ background: "#E8FC6C", color: "#0D0D0D" }}
+                  className="font-bold px-10 h-12 text-sm rounded-full bg-primary text-primary-foreground hover:bg-primary/90"
                 >
                   <Sparkles className="w-4 h-4 mr-2" /> Claim your spot
                 </Button>

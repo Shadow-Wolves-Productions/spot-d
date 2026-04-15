@@ -33,7 +33,7 @@ export default function HeroSection() {
             {/* Headline */}
             <h1 className="font-display font-500 text-foreground leading-[1.0]" style={{ letterSpacing: "-1.5px" }}>
               <span className="block text-5xl sm:text-6xl lg:text-7xl">The indie film world,</span>
-              <span className="block text-5xl sm:text-6xl lg:text-7xl" style={{ color: "#E8FC6C" }}>finally visible.</span>
+              <span className="block text-5xl sm:text-6xl lg:text-7xl text-primary">finally visible.</span>
             </h1>
 
             <p className="mt-8 text-base text-muted-foreground max-w-lg leading-[1.7]">
@@ -106,9 +106,9 @@ export default function HeroSection() {
               </div>
 
               {/* Floating badge */}
-              <div className="absolute -bottom-4 -left-4 rounded-lg px-4 py-3 shadow-xl" style={{ background: "#E8FC6C" }}>
-                <div className="text-[10px] uppercase tracking-[0.08em] font-semibold text-black/60">Founding members</div>
-                <div className="font-display font-bold text-lg leading-none mt-0.5 text-black">Free PRO</div>
+              <div className="absolute -bottom-4 -left-4 rounded-lg px-4 py-3 shadow-xl bg-primary">
+                <div className="text-[10px] uppercase tracking-[0.08em] font-semibold text-primary-foreground/70">Founding members</div>
+                <div className="font-display font-bold text-lg leading-none mt-0.5 text-primary-foreground">Free PRO</div>
               </div>
             </div>
           </motion.div>

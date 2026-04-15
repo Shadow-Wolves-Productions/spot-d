@@ -66,18 +66,18 @@ export default function Landing() {
                 The first 500 members get lifetime free PRO access, a founding member badge, and priority listing in the directory.
               </p>
             </div>
-            <div className="p-10 lg:p-14 flex flex-col justify-center" style={{ background: "#E8FC6C" }}>
-              <div className="text-[11px] uppercase tracking-[0.08em] text-black/50 mb-4">What you get</div>
+            <div className="p-10 lg:p-14 flex flex-col justify-center bg-primary">
+              <div className="text-[11px] uppercase tracking-[0.08em] text-primary-foreground/60 mb-4">What you get</div>
               <ul className="space-y-2 mb-8">
                 {["Free PRO access forever", "Founding member badge", "Verified profile status", "Priority search placement"].map((item) => (
-                  <li key={item} className="text-sm text-black flex items-center gap-2">
-                    <div className="w-1 h-1 rounded-full bg-black/40 flex-shrink-0" />
+                  <li key={item} className="text-sm text-primary-foreground flex items-center gap-2">
+                    <div className="w-1 h-1 rounded-full bg-primary-foreground/40 flex-shrink-0" />
                     {item}
                   </li>
                 ))}
               </ul>
               <Link to="/create-profile">
-                <Button size="lg" className="bg-black text-white font-semibold hover:bg-black/80 rounded-full w-full sm:w-auto px-10">
+                <Button size="lg" className="bg-foreground text-background font-semibold hover:bg-foreground/80 rounded-full w-full sm:w-auto px-10">
                   Claim your spot
                 </Button>
               </Link>

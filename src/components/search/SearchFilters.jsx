@@ -40,10 +40,10 @@ export default function SearchFilters({ filters, onChange, isProUser, proximity,
       <div>
         <Label className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground mb-2 block">Role</Label>
         <Select value={filters.role || ""} onValueChange={(v) => updateFilter("role", v)}>
-          <SelectTrigger className="border text-sm h-9" style={{ background: "#111", borderColor: "#333" }}>
+          <SelectTrigger className="border text-sm h-9 bg-background border-border">
             <SelectValue placeholder="All roles" />
           </SelectTrigger>
-          <SelectContent style={{ background: "#161616", borderColor: "#333" }}>
+          <SelectContent className="bg-card border-border">
             <SelectItem value="all_roles">All roles</SelectItem>
             {ROLES.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}
           </SelectContent>
@@ -54,11 +54,10 @@ export default function SearchFilters({ filters, onChange, isProUser, proximity,
       <div>
         <Label className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground mb-2 block">Location</Label>
         <Input
-          placeholder="City, state, or country"
-          value={filters.location || ""}
-          onChange={(e) => updateFilter("location", e.target.value)}
-          className="border text-sm h-9"
-          style={{ background: "#111", borderColor: "#333" }}
+        placeholder="City, state, or country"
+        value={filters.location || ""}
+        onChange={(e) => updateFilter("location", e.target.value)}
+        className="border text-sm h-9 bg-background border-border"
         />
       </div>
 
@@ -66,10 +65,10 @@ export default function SearchFilters({ filters, onChange, isProUser, proximity,
       <div>
         <Label className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground mb-2 block">Availability</Label>
         <Select value={filters.availability || ""} onValueChange={(v) => updateFilter("availability", v)}>
-          <SelectTrigger className="border text-sm h-9" style={{ background: "#111", borderColor: "#333" }}>
+          <SelectTrigger className="border text-sm h-9 bg-background border-border">
             <SelectValue placeholder="Any availability" />
           </SelectTrigger>
-          <SelectContent style={{ background: "#161616", borderColor: "#333" }}>
+          <SelectContent className="bg-card border-border">
             <SelectItem value="any_availability">Any availability</SelectItem>
             {AVAILABILITY.map((a) => <SelectItem key={a} value={a}>{a}</SelectItem>)}
           </SelectContent>
@@ -80,10 +79,10 @@ export default function SearchFilters({ filters, onChange, isProUser, proximity,
       <div>
         <Label className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground mb-2 block">Union affiliation</Label>
         <Select value={filters.union || ""} onValueChange={(v) => updateFilter("union", v)}>
-          <SelectTrigger className="border text-sm h-9" style={{ background: "#111", borderColor: "#333" }}>
+          <SelectTrigger className="border text-sm h-9 bg-background border-border">
             <SelectValue placeholder="Any union" />
           </SelectTrigger>
-          <SelectContent style={{ background: "#161616", borderColor: "#333" }}>
+          <SelectContent className="bg-card border-border">
             <SelectItem value="any_union">Any union</SelectItem>
             {UNIONS.map((u) => <SelectItem key={u} value={u}>{u}</SelectItem>)}
           </SelectContent>
@@ -94,10 +93,10 @@ export default function SearchFilters({ filters, onChange, isProUser, proximity,
       <div>
         <Label className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground mb-2 block">Languages</Label>
         <Select value={filters.language || ""} onValueChange={(v) => updateFilter("language", v)}>
-          <SelectTrigger className="border text-sm h-9" style={{ background: "#111", borderColor: "#333" }}>
+          <SelectTrigger className="border text-sm h-9 bg-background border-border">
             <SelectValue placeholder="Any language" />
           </SelectTrigger>
-          <SelectContent style={{ background: "#161616", borderColor: "#333" }}>
+          <SelectContent className="bg-card border-border">
             <SelectItem value="any_language">Any language</SelectItem>
             {LANGUAGES.map((l) => <SelectItem key={l} value={l}>{l}</SelectItem>)}
           </SelectContent>
@@ -110,10 +109,10 @@ export default function SearchFilters({ filters, onChange, isProUser, proximity,
           Experience level {!isProUser && <span className="text-primary text-[10px]">PRO</span>}
         </Label>
         <Select value={filters.experience || ""} onValueChange={(v) => updateFilter("experience", v)} disabled={!isProUser}>
-          <SelectTrigger className="border text-sm h-9" style={{ background: "#111", borderColor: "#333" }}>
+          <SelectTrigger className="border text-sm h-9 bg-background border-border">
             <SelectValue placeholder="Any level" />
           </SelectTrigger>
-          <SelectContent style={{ background: "#161616", borderColor: "#333" }}>
+          <SelectContent className="bg-card border-border">
             <SelectItem value="any_level">Any level</SelectItem>
             {EXPERIENCE_LEVELS.map((l) => <SelectItem key={l} value={l}>{l}</SelectItem>)}
           </SelectContent>
@@ -154,7 +153,7 @@ export default function SearchFilters({ filters, onChange, isProUser, proximity,
     <>
       {/* Desktop sidebar */}
       <div className="hidden lg:block w-64 flex-shrink-0">
-        <div className="sticky top-24 rounded-xl p-5 border" style={{ background: "#111", borderColor: "#222" }}>
+        <div className="sticky top-24 rounded-xl p-5 border bg-card border-border">
           <div className="flex items-center justify-between mb-5">
             <h3 className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Filters</h3>
             {activeCount > 0 && (
@@ -168,7 +167,7 @@ export default function SearchFilters({ filters, onChange, isProUser, proximity,
       {/* Mobile filter drawer */}
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
         <SheetTrigger asChild className="lg:hidden">
-          <Button variant="outline" size="sm" className="border-border gap-2" style={{ background: "#111", borderColor: "#333" }}>
+          <Button variant="outline" size="sm" className="border-border gap-2 bg-card text-foreground">
             <SlidersHorizontal className="w-4 h-4" />
             Filters
             {activeCount > 0 && (
@@ -176,7 +175,7 @@ export default function SearchFilters({ filters, onChange, isProUser, proximity,
             )}
           </Button>
         </SheetTrigger>
-        <SheetContent side="bottom" className="border-border rounded-t-2xl max-h-[85vh]" style={{ background: "#111" }}>
+        <SheetContent side="bottom" className="border-border rounded-t-2xl max-h-[85vh] bg-card">
           <SheetHeader className="pb-2">
             <SheetTitle className="font-display text-sm uppercase tracking-[0.08em]">Filters</SheetTitle>
           </SheetHeader>

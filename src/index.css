@@ -90,34 +90,34 @@
     --card-foreground: 0 0% 5%;
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 5%;
-    --primary: 72 95% 70%;          /* #E8FC6C — used as FILL only, never as text on white */
-    --primary-foreground: 0 0% 5%;  /* #0D0D0D */
+    --primary: 14 100% 60%;         /* #FF5C35 signal orange — light mode accent */
+    --primary-foreground: 0 0% 100%; /* #FFFFFF — white text on orange */
     --secondary: 0 0% 93%;          /* #EDEDED */
     --secondary-foreground: 0 0% 5%;
     --muted: 0 0% 90%;
     --muted-foreground: 0 0% 33%;   /* #555 */
-    --accent: 72 95% 70%;
-    --accent-foreground: 0 0% 5%;
-    --destructive: 14 100% 60%;     /* #FF5C35 */
+    --accent: 14 100% 60%;          /* #FF5C35 */
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 85% 50%;       /* Red for destructive actions */
     --destructive-foreground: 0 0% 100%;
     --border: 0 0% 88%;             /* #E0E0E0 */
     --input: 0 0% 88%;
-    --ring: 72 95% 70%;
+    --ring: 14 100% 60%;
     --success: 142 60% 35%;
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 0 0% 5%;
-    --sidebar-primary: 72 95% 70%;
-    --sidebar-primary-foreground: 0 0% 5%;
+    --sidebar-primary: 14 100% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 0 0% 93%;
     --sidebar-accent-foreground: 0 0% 5%;
     --sidebar-border: 0 0% 88%;
-    --sidebar-ring: 72 95% 70%;
+    --sidebar-ring: 14 100% 60%;
 
-    --chart-1: 0 0% 5%;
+    --chart-1: 14 100% 60%;
     --chart-2: 142 60% 35%;
-    --chart-3: 14 100% 60%;
-    --chart-4: 220 55% 50%;
+    --chart-3: 220 55% 50%;
+    --chart-4: 0 0% 5%;
     --chart-5: 0 0% 53%;
   }
 
@@ -198,14 +198,8 @@
 /* In light mode, lime (#E8FC6C) is used as a FILL/BACKGROUND colour only.
    Any text that uses text-primary in light mode will be lime-on-white which is low contrast.
    Fix this by using a dark text token in light mode. */
-/* In light mode: lime used as BG fill only. Text that inherits --primary colour
-   would be lime-on-white (poor contrast). We remap the text token to near-black. */
-html.light .text-primary,
-html.light a.text-primary,
-html.light span.text-primary,
-html.light p.text-primary {
-  color: hsl(0 0% 10%) !important;
-}
+/* Light mode: --primary is #FF5C35 (signal orange). No overrides needed — the
+   CSS variable remapping above handles all text-primary / bg-primary usages. */
 
 .editorial-line {
   border-top: 2px solid hsl(var(--foreground));

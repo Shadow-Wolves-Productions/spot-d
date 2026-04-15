@@ -23,11 +23,13 @@ const NAV_LINKS = [
   { path: "/contact", label: "Contact & FAQ" },
 ];
 
-// Logo component — apostrophe always in lime
-function SpotdLogo({ dark = false }) {
+// Logo component — apostrophe in lime (dark) or signal orange (light)
+function SpotdLogo() {
+  const { theme } = useTheme();
+  const apostropheColor = theme === "light" ? "#FF5C35" : "#E8FC6C";
   return (
-    <span className={`font-display text-lg font-bold tracking-tight ${dark ? "text-foreground" : "text-foreground"}`}>
-      Spot<span style={{ color: "#E8FC6C" }}>'</span>d
+    <span className="font-display text-lg font-bold tracking-tight text-foreground">
+      Spot<span style={{ color: apostropheColor }}>'</span>d
     </span>
   );
 }
