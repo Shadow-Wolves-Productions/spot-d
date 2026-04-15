@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import AIAssistant from "../components/profile/AIAssistant";
 import InlineVerificationButton from "../components/profile/InlineVerificationButton";
+import SpotScoreChecklist from "../components/profile/SpotScoreChecklist";
 
 const ROLES = ["Actor", "Director", "Producer", "Cinematographer", "Editor", "Writer", "Sound Designer", "Production Designer", "Costume Designer", "Makeup Artist", "Gaffer", "Grip", "1st AD", "2nd AD", "Line Producer", "Production Manager", "Script Supervisor", "Stunt Coordinator", "VFX Artist", "Colorist", "Composer", "Sound Mixer", "Boom Operator", "Art Director", "Set Designer", "Props Master", "Location Manager", "Casting Director", "Dialect Coach", "Choreographer", "Other"];
 const EXPERIENCE_LEVELS = ["Entry", "Mid", "Senior", "Expert"];
@@ -184,10 +185,12 @@ export default function CreateProfile() {
       }
     }
 
-    const data = { ...form, profile_slug: slug, user_id: me.id, spot_score: calculateCineScore(form) };
+    const data = { ...form, profile_slug: slug, user_id: me.id };
 
     if (existingProfile) {
       await base44.entities.Profile.update(existingProfile.id, data);
+      // Recalculate score via backend (authoritative formula)
+      await base44.functions.invoke("recalculateSpotScore", { profile_id: existingProfile.id });
       toast.success("Profile updated!");
       navigate(`/profile/${existingProfile.id}`);
     } else {
@@ -205,6 +208,8 @@ export default function CreateProfile() {
           can_boost: false,
         });
       }
+      // Recalculate score via backend after creation
+      await base44.functions.invoke("recalculateSpotScore", { profile_id: created.id });
       toast.success("Profile created!");
       navigate(`/profile/${created.id}`);
     }
@@ -642,16 +647,25 @@ export default function CreateProfile() {
             <div className="border-t border-border pt-6">
               <div className="glass-effect rounded-xl p-6 text-center">
                 <p className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Your Spot Score</p>
-                <span className="font-display text-4xl font-bold text-primary">{calculateCineScore(form)}</span>
-                <p className="text-xs text-muted-foreground mt-2">Complete more fields to improve your score.</p>
+                <span className="font-display text-4xl font-bold text-primary">{existingProfile?.spot_score ?? "—"}</span>
+                <p className="text-xs text-muted-foreground mt-2">Score is recalculated when you save your profile.</p>
               </div>
             </div>
 
-            {/* AI Assistant — Improve your Spot Score */}
+            {/* Spot Score Checklist */}
             <div className="border-t border-border pt-6">
               <div className="mb-3">
                 <h3 className="font-display text-base font-semibold text-foreground">Improve Your Spot Score</h3>
-                <p className="text-xs text-muted-foreground mt-1">Let AI review your profile and suggest improvements to help you rank higher and get discovered faster.</p>
+                <p className="text-xs text-muted-foreground mt-1">Complete these items to rank higher and get discovered faster.</p>
+              </div>
+              <SpotScoreChecklist form={form} />
+            </div>
+
+            {/* AI Assistant */}
+            <div className="border-t border-border pt-6">
+              <div className="mb-3">
+                <h3 className="font-display text-base font-semibold text-foreground">AI Profile Assistant</h3>
+                <p className="text-xs text-muted-foreground mt-1">Let AI help craft your bio, suggest skills, credits and day rate.</p>
               </div>
               <AIAssistant form={form} onApply={(updates) => setForm((f) => ({ ...f, ...updates }))} />
             </div>

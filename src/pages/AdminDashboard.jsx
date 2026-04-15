@@ -207,7 +207,27 @@ export default function AdminDashboard() {
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-medium text-foreground text-sm">{p.full_name}</span>
                         <span className="text-xs text-muted-foreground">{p.primary_role}</span>
-                        <Badge variant="outline" className="text-[10px] border-primary/30 text-primary">CS: {p.spot_score || 0}</Badge>
+                        <span
+                          title={`Spot Score: ${p.spot_score || 0}`}
+                          className="inline-flex items-center gap-1 text-[10px] text-muted-foreground"
+                        >
+                          <span
+                            className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                            style={{
+                              background: (p.spot_score || 0) >= 70
+                                ? "#4ade80"
+                                : (p.spot_score || 0) >= 40
+                                ? "#facc15"
+                                : "#f87171",
+                              boxShadow: (p.spot_score || 0) >= 70
+                                ? "0 0 6px #4ade8088"
+                                : (p.spot_score || 0) >= 40
+                                ? "0 0 6px #facc1588"
+                                : "0 0 6px #f8717188",
+                            }}
+                          />
+                          {p.spot_score || 0}
+                        </span>
                         {/* PRO badge now comes from Subscription — shown via tier */}
                         {p.is_boosted && <Badge className="text-[10px] bg-yellow-500/20 text-yellow-400 border-0">Boosted</Badge>}
                       </div>
