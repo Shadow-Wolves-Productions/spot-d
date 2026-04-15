@@ -184,7 +184,7 @@ export default function CreateProfile() {
       }
     }
 
-    const data = { ...form, profile_slug: slug, user_id: me.id, cine_score: calculateCineScore(form) };
+    const data = { ...form, profile_slug: slug, user_id: me.id, spot_score: calculateCineScore(form) };
 
     if (existingProfile) {
       await base44.entities.Profile.update(existingProfile.id, data);
