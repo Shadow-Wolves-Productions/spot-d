@@ -65,7 +65,7 @@ Deno.serve(async (req) => {
     ]);
 
     const newScore = calculateCineScore(updatedProfile, endorsements.length, castingApps.length);
-    updateData.cine_score = newScore;
+    updateData.spot_score = newScore;
 
     await base44.asServiceRole.entities.Profile.update(profile.id, updateData);
   }
