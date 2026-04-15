@@ -6,8 +6,17 @@
       "type": "string"
     },
     "creator_profile_id": {
+      "type": "string"
+    },
+    "company_name": {
+      "type": "string"
+    },
+    "company_logo": {
       "type": "string",
-      "description": "Links to the Profile record of the creator"
+      "format": "uri"
+    },
+    "contact_email": {
+      "type": "string"
     },
     "project_title": {
       "type": "string"
@@ -23,83 +32,146 @@
         "Documentary",
         "Web Series",
         "Theatre",
+        "Animation",
+        "Podcast",
         "Other"
       ]
     },
     "description": {
       "type": "string"
     },
-    "roles_needed": {
-      "type": "array",
-      "items": {
-        "type": "string",
-        "enum": [
-          "Actor",
-          "Director",
-          "Producer",
-          "Cinematographer",
-          "Editor",
-          "Writer",
-          "Sound Designer",
-          "Production Designer",
-          "Costume Designer",
-          "Makeup Artist",
-          "Gaffer",
-          "Grip",
-          "1st AD",
-          "2nd AD",
-          "Line Producer",
-          "Production Manager",
-          "Script Supervisor",
-          "Stunt Coordinator",
-          "VFX Artist",
-          "Colorist",
-          "Composer",
-          "Sound Mixer",
-          "Boom Operator",
-          "Art Director",
-          "Set Designer",
-          "Props Master",
-          "Location Manager",
-          "Casting Director",
-          "Dialect Coach",
-          "Choreographer",
-          "Other"
-        ]
-      }
+    "budget_range": {
+      "type": "string"
     },
-    "experience_level": {
+    "union_status": {
       "type": "string",
       "enum": [
-        "Entry",
-        "Mid",
-        "Senior",
-        "Expert",
-        "Any"
+        "Union and Non-Union",
+        "Union Only",
+        "Non-Union Only",
+        "N/A"
       ]
-    },
-    "location": {
-      "type": "string"
     },
     "shoot_dates": {
       "type": "string"
     },
-    "budget_range": {
+    "location": {
       "type": "string"
     },
-    "union_required": {
-      "type": "boolean",
-      "default": false
-    },
-    "compensation": {
+    "talent_search_scope": {
       "type": "string",
       "enum": [
-        "Paid",
-        "Deferred",
-        "Credits / Reel",
-        "Union Scale",
-        "TBD"
+        "Local",
+        "Nationwide",
+        "Worldwide",
+        "Doesn't Matter"
       ]
+    },
+    "roles": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "role_name": {
+            "type": "string"
+          },
+          "role_type": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "age_min": {
+            "type": "number"
+          },
+          "age_max": {
+            "type": "number"
+          },
+          "gender": {
+            "type": "string"
+          },
+          "ethnicity": {
+            "type": "string"
+          },
+          "skills": {
+            "type": "string"
+          },
+          "nudity": {
+            "type": "boolean"
+          },
+          "explicit_content": {
+            "type": "boolean"
+          },
+          "recording_location": {
+            "type": "string"
+          },
+          "accent": {
+            "type": "string"
+          },
+          "language": {
+            "type": "string"
+          },
+          "voice_style": {
+            "type": "string"
+          },
+          "crew_type": {
+            "type": "string"
+          },
+          "job_title": {
+            "type": "string"
+          },
+          "proficiency": {
+            "type": "string"
+          },
+          "compensation_type": {
+            "type": "string"
+          },
+          "rate_type": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "pay_amount": {
+            "type": "number"
+          },
+          "pay_range_min": {
+            "type": "number"
+          },
+          "pay_range_max": {
+            "type": "number"
+          },
+          "expected_hours": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "application_method": {
+      "type": "string",
+      "enum": [
+        "spot_button",
+        "self_tape",
+        "external"
+      ]
+    },
+    "self_tape_instructions": {
+      "type": "string"
+    },
+    "submission_email": {
+      "type": "string"
+    },
+    "submission_link": {
+      "type": "string"
+    },
+    "submission_link_password": {
+      "type": "string"
     },
     "deadline": {
       "type": "string",
@@ -109,18 +181,6 @@
       "type": "boolean",
       "default": true
     },
-    "gender_preference": {
-      "type": "string"
-    },
-    "age_range_min": {
-      "type": "number"
-    },
-    "age_range_max": {
-      "type": "number"
-    },
-    "contact_email": {
-      "type": "string"
-    },
     "view_count": {
       "type": "number",
       "default": 0
@@ -129,14 +189,30 @@
       "type": "number",
       "default": 0
     },
-    "project_id": {
-      "type": "string",
-      "description": "Optional grouping ID for linking multiple casting calls to the same project"
+    "roles_needed": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "experience_level": {
+      "type": "string"
+    },
+    "compensation": {
+      "type": "string"
+    },
+    "gender_preference": {
+      "type": "string"
+    },
+    "age_range_min": {
+      "type": "number"
+    },
+    "age_range_max": {
+      "type": "number"
     }
   },
   "required": [
     "project_title",
-    "description",
-    "roles_needed"
+    "description"
   ]
 }
