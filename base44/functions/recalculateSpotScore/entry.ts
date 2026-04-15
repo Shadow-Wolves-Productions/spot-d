@@ -3,7 +3,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 function calculateSpotScore(profile, endorsementCount, savedByCount, revealedByCount, recentLogin, appliedToCasting, postedCasting, confirmedSpottedWith) {
   let score = 0;
 
-  // PROFILE COMPLETENESS (max 25)
+  // PROFILE COMPLETENESS
   if (profile.profile_photo) score += 5;
   if (profile.bio) score += 5;
   if (profile.primary_role) score += 3;
@@ -11,24 +11,24 @@ function calculateSpotScore(profile, endorsementCount, savedByCount, revealedByC
   if (profile.imdb_link) score += 5;
   if (profile.showreel_link) score += 5;
 
-  // VERIFIED IDENTITY (max 15)
+  // VERIFIED IDENTITY
   if (profile.email_verified) score += 7;
   if (profile.phone_verified) score += 8;
 
-  // ENDORSEMENTS / SPOTS (max 25, highest bracket only)
+  // ENDORSEMENTS / SPOTS
   if (endorsementCount >= 10) score += 25;
   else if (endorsementCount >= 6) score += 20;
   else if (endorsementCount >= 3) score += 14;
   else if (endorsementCount >= 1) score += 8;
 
-  // SOCIAL CREDIBILITY (max 25: saved 17 + reveal 5 + spottedWith 3)
+  // SOCIAL CREDIBILITY
   if (savedByCount >= 15) score += 17;
   else if (savedByCount >= 5) score += 12;
   else if (savedByCount >= 1) score += 5;
   if (revealedByCount >= 3) score += 5;
   if (confirmedSpottedWith >= 1) score += 3;
 
-  // APP ENGAGEMENT (max 10)
+  // APP ENGAGEMENT
   if (recentLogin) score += 3;
   if (appliedToCasting) score += 4;
   if (postedCasting) score += 3;

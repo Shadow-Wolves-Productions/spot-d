@@ -168,29 +168,30 @@ export default function Pricing() {
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="relative rounded-2xl p-7 overflow-hidden border"
-            style={{ background: "hsl(var(--card))", borderColor: "#534AB7" }}
+            className="relative rounded-2xl p-7 overflow-hidden border border-primary"
+            style={{ background: "hsl(var(--card))" }}
           >
             <div className="relative">
-              <div className="flex items-center gap-2 mb-3">
-                <Shield className="w-4 h-4" style={{ color: "#534AB7" }} />
-                <p className="text-[11px] uppercase tracking-[0.08em] font-bold" style={{ color: "#534AB7" }}>Elite</p>
+              <div className="absolute -top-4 left-1/2 -translate-x-1/2">
+                <span className="px-4 py-1 rounded-full text-[11px] font-bold uppercase tracking-[0.08em] whitespace-nowrap bg-primary text-primary-foreground">
+                  Best for serious talent
+                </span>
               </div>
+              <p className="text-[11px] uppercase tracking-[0.08em] font-bold mb-3 mt-2 text-primary">Elite</p>
               <div className="flex items-end gap-1">
                 <span className="font-display text-5xl font-semibold text-foreground" style={{ letterSpacing: "-1px" }}>
                   {annual ? "$149" : "$14.99"}
                 </span>
                 <span className="text-muted-foreground mb-2">/{annual ? "year" : "month"}</span>
               </div>
-              <p className="text-xs font-semibold mt-1" style={{ color: "#534AB7" }}>
+              <p className="text-xs font-semibold mt-1 text-primary">
                 {annual ? "~$12.42/month · best value" : "or $149/year — save 16%"}
               </p>
               <p className="text-sm text-muted-foreground mt-3 leading-[1.7]">Stand out and get ahead of the competition</p>
-              <Button className="w-full mt-6 h-11 text-sm font-semibold rounded-full"
-                style={{ background: "#534AB7", color: "#fff" }}>
+              <Button className="w-full mt-6 h-11 text-sm font-semibold rounded-full bg-primary text-primary-foreground hover:bg-primary/90">
                 <Star className="w-4 h-4 mr-2" /> Go Elite
               </Button>
-              <FeatureList features={ELITE_FEATURES} dark />
+              <FeatureList features={ELITE_FEATURES} />
             </div>
           </motion.div>
         </div>

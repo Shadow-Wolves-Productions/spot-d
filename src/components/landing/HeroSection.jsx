@@ -4,10 +4,10 @@ import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 
 const DIRECTORY_PREVIEW = [
-  { role: "Director", status: "Available now", score: "92" },
-  { role: "Cinematographer", status: "Available now", score: "87" },
-  { role: "Actor", status: "Available soon", score: "79" },
-  { role: "Producer", status: "Available now", score: "95" },
+  { role: "Director", status: "Available now" },
+  { role: "Cinematographer", status: "Available now" },
+  { role: "Actor", status: "Available soon" },
+  { role: "Producer", status: "Available now" },
 ];
 
 export default function HeroSection() {
@@ -56,18 +56,18 @@ export default function HeroSection() {
             </div>
 
             {/* Stats row */}
-            <div className="mt-12 flex items-center gap-10">
-              {[
-                { label: "Roles covered", value: "30+" },
-                { label: "Verified profiles", value: "100%" },
-                { label: "Direct contact", value: "Instant" },
-              ].map((stat) => (
-                <div key={stat.label}>
-                  <div className="font-display text-2xl font-semibold text-foreground" style={{ letterSpacing: "-0.5px" }}>{stat.value}</div>
-                  <div className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground mt-0.5">{stat.label}</div>
-                </div>
-              ))}
-            </div>
+             <div className="mt-12 flex items-center gap-10">
+               {[
+                 { label: "Roles covered", value: "30+" },
+                 { label: "Verified profiles only", value: "✓" },
+                 { label: "Direct contact", value: "Instant" },
+               ].map((stat) => (
+                 <div key={stat.label}>
+                   <div className="font-display text-2xl font-semibold text-foreground" style={{ letterSpacing: "-0.5px" }}>{stat.value}</div>
+                   <div className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground mt-0.5">{stat.label}</div>
+                 </div>
+               ))}
+             </div>
           </motion.div>
 
           {/* Right: directory preview panel */}
@@ -92,10 +92,6 @@ export default function HeroSection() {
                       <div>
                         <div className="text-sm font-medium text-foreground">{item.role}</div>
                         <div className="text-xs text-muted-foreground mt-0.5">{item.status}</div>
-                      </div>
-                      <div className="flex flex-col items-end gap-1">
-                        <div className="text-[10px] uppercase tracking-[0.08em] text-muted-foreground">Spot Score</div>
-                        <span className="font-display font-semibold text-sm text-primary">{item.score}</span>
                       </div>
                     </div>
                   ))}

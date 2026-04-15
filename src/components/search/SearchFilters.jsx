@@ -105,8 +105,8 @@ export default function SearchFilters({ filters, onChange, isProUser, proximity,
 
       {/* Experience Level */}
       <div className={!isProUser ? "opacity-50" : ""}>
-        <Label className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground mb-2 block">
-          Experience level {!isProUser && <span className="text-primary text-[10px]">PRO</span>}
+        <Label className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground mb-2 block flex items-center gap-1.5">
+          Experience level {!isProUser && <Badge variant="outline" className="text-primary border-primary/30 text-[9px] px-1.5">PRO</Badge>}
         </Label>
         <Select value={filters.experience || ""} onValueChange={(v) => updateFilter("experience", v)} disabled={!isProUser}>
           <SelectTrigger className="border text-sm h-9 bg-background border-border">

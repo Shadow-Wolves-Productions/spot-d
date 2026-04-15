@@ -10,7 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import AIAssistant from "../components/profile/AIAssistant";
+
 import InlineVerificationButton from "../components/profile/InlineVerificationButton";
 import SpotScoreChecklist from "../components/profile/SpotScoreChecklist";
 
@@ -661,14 +661,7 @@ export default function CreateProfile() {
               <SpotScoreChecklist form={form} />
             </div>
 
-            {/* AI Assistant */}
-            <div className="border-t border-border pt-6">
-              <div className="mb-3">
-                <h3 className="font-display text-base font-semibold text-foreground">AI Profile Assistant</h3>
-                <p className="text-xs text-muted-foreground mt-1">Let AI help craft your bio, suggest skills, credits and day rate.</p>
-              </div>
-              <AIAssistant form={form} onApply={(updates) => setForm((f) => ({ ...f, ...updates }))} />
-            </div>
+
           </div>
         )}
 

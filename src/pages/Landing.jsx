@@ -11,8 +11,8 @@ const FEATURES = [
   { icon: Search, title: "Smart search", desc: "Filter by role, location, experience, availability, union status, and more." },
   { icon: Shield, title: "Spot Score trust", desc: "Credibility scores based on verification, credits, and real connections." },
   { icon: Film, title: "IMDb integration", desc: "Link your IMDb profile and showcase your top credits directly." },
-  { icon: Users, title: "Worked with", desc: "Professional connection confirmations from real collaborators you've worked with." },
-  { icon: Star, title: "Endorsements", desc: "Structured professional endorsements from your network — no empty words." },
+  { icon: Users, title: "Frequently Spotted with", desc: "Automatic crew connections from shared project credits — no claiming, no gatekeeping." },
+  { icon: Star, title: "Spots", desc: "Peer Spots from real collaborators. Request one, earn one, or give one." },
   { icon: Camera, title: "PRO profiles", desc: "Stand out with portfolio, priority placement, and unlimited contact reveals." },
 ];
 

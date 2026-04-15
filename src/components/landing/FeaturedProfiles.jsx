@@ -3,6 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import ProfileCard from "../ProfileCard";
+import { useQuery } from "@tanstack/react-query";
 
 export default function FeaturedProfiles() {
   const [profiles, setProfiles] = useState([]);
@@ -10,19 +11,8 @@ export default function FeaturedProfiles() {
 
   useEffect(() => {
     const load = async () => {
-      const boosted = await base44.entities.Profile.filter({ is_boosted: true }, "-spot_score", 8);
-      let data = boosted;
-      if (data.length < 4) {
-        const pro = await base44.entities.Profile.filter({ is_pro: true }, "-spot_score", 8);
-        const extra = pro.filter((p) => !data.find((b) => b.id === p.id));
-        data = [...data, ...extra].slice(0, 8);
-      }
-      if (data.length < 4) {
-        const top = await base44.entities.Profile.list("-spot_score", 8);
-        const extra = top.filter((p) => !data.find((b) => b.id === p.id));
-        data = [...data, ...extra].slice(0, 8);
-      }
-      setProfiles(data);
+      const top = await base44.entities.Profile.list("-spot_score", 8);
+      setProfiles(top);
       setLoading(false);
     };
     load();
@@ -59,10 +49,10 @@ export default function FeaturedProfiles() {
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-          {profiles.slice(0, 8).map((profile, i) => (
-            <ProfileCard key={profile.id} profile={profile} index={i} featured={profile.is_boosted} />
-          ))}
-        </div>
+           {profiles.slice(0, 8).map((profile, i) => (
+             <ProfileCard key={profile.id} profile={profile} index={i} featured={profile.is_boosted} subscription={null} />
+           ))}
+         </div>
 
         <div className="mt-8 sm:hidden">
           <Link to="/search" className="flex items-center justify-center gap-2 text-sm font-medium text-foreground border border-border rounded-full py-3 hover:border-primary transition-colors">

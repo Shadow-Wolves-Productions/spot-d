@@ -270,15 +270,19 @@ export default function AdminDashboard() {
                         <Film className="w-3 h-3 mr-1" /> Verify IMDb
                       </Button>
                     )}
-                    <Button 
-                      size="sm" 
-                      variant="outline" 
-                      className={`text-xs h-7 ${p._sub?.tier === "pro" ? "border-primary/60 bg-primary/10 text-primary" : "border-primary/30 text-primary/60"}`}
-                      onClick={() => togglePro(p)}
-                    >
-                      <Crown className="w-3 h-3 mr-1" /> 
-                      {p._sub?.tier === "pro" ? "PRO ✓" : "Free"}
-                    </Button>
+                    {p._sub?.tier === "founder" || p._sub?.tier === "elite" ? (
+                      <div className="text-xs text-destructive">Protected tier</div>
+                    ) : (
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className={`text-xs h-7 ${p._sub?.tier === "pro" ? "border-primary/60 bg-primary/10 text-primary" : "border-primary/30 text-primary/60"}`}
+                        onClick={() => togglePro(p)}
+                      >
+                        <Crown className="w-3 h-3 mr-1" /> 
+                        {p._sub?.tier === "pro" ? "PRO ✓" : "Free"}
+                      </Button>
+                    )}
                     <Button size="sm" variant="outline" className={`text-xs h-7 ${p.is_boosted ? "border-destructive/40 text-destructive" : "border-yellow-500/30 text-yellow-400"}`}
                       onClick={() => toggleBoost(p)}>
                       <Zap className="w-3 h-3 mr-1" /> {p.is_boosted ? "Remove Boost" : "Boost"}
