@@ -1,0 +1,64 @@
+{
+  "name": "Subscription",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "Links to the User"
+    },
+    "tier": {
+      "type": "string",
+      "enum": [
+        "free",
+        "pro",
+        "founder",
+        "elite"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "trialing",
+        "expired",
+        "cancelled"
+      ],
+      "default": "active"
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Null means never expires (founder lifetime access)"
+    },
+    "contact_reveal_limit": {
+      "type": "number",
+      "description": "Monthly reveal allowance. -1 = unlimited. free=5, pro=20, founder=-1, elite=-1"
+    },
+    "casting_call_limit": {
+      "type": "number",
+      "description": "Active casting calls allowed at once. -1 = unlimited. free=1, pro=5, founder=-1, elite=-1"
+    },
+    "can_boost": {
+      "type": "boolean",
+      "default": false
+    },
+    "payment_reference": {
+      "type": "string",
+      "description": "External payment ID for future billing integration"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Admin notes field"
+    }
+  },
+  "required": [
+    "user_id",
+    "tier",
+    "status",
+    "started_at"
+  ]
+}

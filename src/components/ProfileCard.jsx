@@ -1,13 +1,21 @@
 import { Link } from "react-router-dom";
-import { MapPin, Crown, CheckCircle, Film, Bookmark } from "lucide-react";
+import { MapPin, Crown, CheckCircle, Film, Bookmark, Zap } from "lucide-react";
 import { motion } from "framer-motion";
 
-export default function ProfileCard({ profile, onSave, isSaved, index = 0, featured = false }) {
+const TIER_BADGE = {
+  pro:     { label: "PRO",     bg: "#B8860B", color: "#fff" },
+  founder: { label: "Founder", bg: "#22c55e", color: "#000" },
+  elite:   { label: "Elite",   bg: "#534AB7", color: "#fff" },
+};
+
+export default function ProfileCard({ profile, subscription, onSave, isSaved, index = 0, featured = false }) {
   const availabilityStyle = profile.availability_status === "Available Now"
     ? { background: "#E8FF47", color: "#000", label: "Available now" }
     : profile.availability_status === "Available Soon"
     ? { background: "#534AB7", color: "#fff", label: "Available soon" }
     : { background: "#333", color: "#888", label: "Unavailable" };
+
+  const tierBadge = subscription ? TIER_BADGE[subscription.tier] : null;
 
   return (
     <motion.div
@@ -43,14 +51,9 @@ export default function ProfileCard({ profile, onSave, isSaved, index = 0, featu
                     Featured
                   </span>
                 )}
-                {profile.is_pro && (
-                  <span className="px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em] rounded flex items-center gap-1" style={{ background: "#E8FF47", color: "#000" }}>
-                    <Crown className="w-2.5 h-2.5" /> PRO
-                  </span>
-                )}
-                {profile.is_founding_member && (
-                  <span className="px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em] rounded" style={{ background: "#534AB7", color: "#fff" }}>
-                    Founder
+                {tierBadge && (
+                  <span className="px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em] rounded flex items-center gap-1" style={{ background: tierBadge.bg, color: tierBadge.color }}>
+                    <Crown className="w-2.5 h-2.5" /> {tierBadge.label}
                   </span>
                 )}
               </div>

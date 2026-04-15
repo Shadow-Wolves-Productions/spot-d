@@ -44,7 +44,7 @@ export default function AdminDashboard() {
       profiles: allProfiles.length,
       verified_email: allProfiles.filter((p) => p.email_verified).length,
       verified_phone: allProfiles.filter((p) => p.phone_verified).length,
-      pro: allProfiles.filter((p) => p.is_pro).length,
+      pro: allProfiles.filter((p) => p.is_boosted).length,
       boosted: allProfiles.filter((p) => p.is_boosted).length,
       endorsements: endorsements.length,
       casting_calls: castingCalls.length,
@@ -65,8 +65,29 @@ export default function AdminDashboard() {
   };
 
   const togglePro = async (profile) => {
-    await base44.entities.Profile.update(profile.id, { is_pro: !profile.is_pro });
-    toast.success(`PRO status ${!profile.is_pro ? "granted" : "removed"}`);
+    // PRO is now managed via Subscription entity
+    const subs = await base44.entities.Subscription.filter({ user_id: profile.user_id, status: "active" });
+    if (subs.length > 0) {
+      const newTier = subs[0].tier === "pro" ? "free" : "pro";
+      await base44.entities.Subscription.update(subs[0].id, {
+        tier: newTier,
+        contact_reveal_limit: newTier === "pro" ? 20 : 5,
+        casting_call_limit: newTier === "pro" ? 5 : 1,
+        can_boost: newTier !== "free",
+      });
+      toast.success(`Tier changed to ${newTier}`);
+    } else {
+      await base44.entities.Subscription.create({
+        user_id: profile.user_id,
+        tier: "pro",
+        status: "active",
+        started_at: new Date().toISOString(),
+        contact_reveal_limit: 20,
+        casting_call_limit: 5,
+        can_boost: true,
+      });
+      toast.success("PRO subscription created");
+    }
     await fetchData();
   };
 
@@ -187,7 +208,7 @@ export default function AdminDashboard() {
                         <span className="font-medium text-foreground text-sm">{p.full_name}</span>
                         <span className="text-xs text-muted-foreground">{p.primary_role}</span>
                         <Badge variant="outline" className="text-[10px] border-primary/30 text-primary">CS: {p.spot_score || 0}</Badge>
-                        {p.is_pro && <Badge className="text-[10px] bg-primary/20 text-primary border-0">PRO</Badge>}
+                        {/* PRO badge now comes from Subscription — shown via tier */}
                         {p.is_boosted && <Badge className="text-[10px] bg-yellow-500/20 text-yellow-400 border-0">Boosted</Badge>}
                       </div>
                       <div className="flex gap-2 mt-1 flex-wrap">
@@ -223,9 +244,9 @@ export default function AdminDashboard() {
                         <Film className="w-3 h-3 mr-1" /> Verify IMDb
                       </Button>
                     )}
-                    <Button size="sm" variant="outline" className={`text-xs h-7 ${p.is_pro ? "border-destructive/40 text-destructive" : "border-primary/30 text-primary"}`}
+                    <Button size="sm" variant="outline" className="text-xs h-7 border-primary/30 text-primary"
                       onClick={() => togglePro(p)}>
-                      <Crown className="w-3 h-3 mr-1" /> {p.is_pro ? "Remove PRO" : "Grant PRO"}
+                      <Crown className="w-3 h-3 mr-1" /> Toggle PRO
                     </Button>
                     <Button size="sm" variant="outline" className={`text-xs h-7 ${p.is_boosted ? "border-destructive/40 text-destructive" : "border-yellow-500/30 text-yellow-400"}`}
                       onClick={() => toggleBoost(p)}>

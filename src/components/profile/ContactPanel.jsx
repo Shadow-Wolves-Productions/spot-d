@@ -8,12 +8,19 @@ export default function ContactPanel({ profile, user, myProfile }) {
   const [revealed, setRevealed] = useState(false);
   const [revealCount, setRevealCount] = useState(0);
   const [loading, setLoading] = useState(false);
-  const FREE_LIMIT = 5;
+  const [revealLimit, setRevealLimit] = useState(5);
 
   useEffect(() => {
     if (!user) return;
     const checkReveals = async () => {
       const monthKey = new Date().toISOString().slice(0, 7);
+
+      // Load subscription to get reveal limit
+      const subs = await base44.entities.Subscription.filter({ user_id: user.id, status: "active" });
+      if (subs.length > 0) {
+        setRevealLimit(subs[0].contact_reveal_limit ?? 5);
+      }
+
       const existing = await base44.entities.ContactReveal.filter({
         viewer_id: user.id,
         profile_id: profile.id,
@@ -46,8 +53,8 @@ export default function ContactPanel({ profile, user, myProfile }) {
     setLoading(false);
   };
 
-  const isPro = myProfile?.is_pro;
-  const canReveal = isPro || revealCount < FREE_LIMIT;
+  const isUnlimited = revealLimit === -1;
+  const canReveal = isUnlimited || revealCount < revealLimit;
   const isOwnProfile = user && profile.user_id === user.id;
 
   const contactMethods = [
@@ -138,7 +145,7 @@ export default function ContactPanel({ profile, user, myProfile }) {
                 <div className="text-center space-y-3">
                   <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
                     <Lock className="w-4 h-4" />
-                    <span>You've used all {FREE_LIMIT} free reveals this month</span>
+                    <span>You've used all {revealLimit} free reveals this month</span>
                   </div>
                   <Button className="w-full bg-primary text-primary-foreground">
                     <Crown className="w-4 h-4 mr-2" />
@@ -147,9 +154,9 @@ export default function ContactPanel({ profile, user, myProfile }) {
                 </div>
               )}
 
-              {!isPro && canReveal && (
+              {!isUnlimited && canReveal && (
                 <p className="text-center text-xs text-muted-foreground">
-                  {FREE_LIMIT - revealCount} free reveals remaining this month
+                  {revealLimit - revealCount} free reveals remaining this month
                 </p>
               )}
             </motion.div>

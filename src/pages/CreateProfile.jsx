@@ -192,6 +192,19 @@ export default function CreateProfile() {
       navigate(`/profile/${existingProfile.id}`);
     } else {
       const created = await base44.entities.Profile.create(data);
+      // Auto-create free subscription for new users
+      const existingSub = await base44.entities.Subscription.filter({ user_id: me.id });
+      if (existingSub.length === 0) {
+        await base44.entities.Subscription.create({
+          user_id: me.id,
+          tier: "free",
+          status: "active",
+          started_at: new Date().toISOString(),
+          contact_reveal_limit: 5,
+          casting_call_limit: 1,
+          can_boost: false,
+        });
+      }
       toast.success("Profile created!");
       navigate(`/profile/${created.id}`);
     }
@@ -605,7 +618,7 @@ export default function CreateProfile() {
             {/* CineScore preview */}
             <div className="border-t border-border pt-6">
               <div className="glass-effect rounded-xl p-6 text-center">
-                <p className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Your CineScore</p>
+                <p className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Your Spot Score</p>
                 <span className="font-display text-4xl font-bold text-primary">{calculateCineScore(form)}</span>
                 <p className="text-xs text-muted-foreground mt-2">Complete more fields to improve your score.</p>
               </div>
