@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Check, ArrowRight } from "lucide-react";
+import { Check, ArrowRight, Crown, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 
@@ -7,38 +7,40 @@ const TIERS = [
   {
     name: "Free",
     price: "$0",
-    desc: "Get listed. Start exploring.",
-    features: ["Basic profile creation", "1 headshot upload", "Browse casting calls", "2 contact reveals / month"],
+    desc: "Get started and explore opportunities",
+    features: ["Basic profile creation", "1 headshot upload", "Browse casting calls", "2 contact reveals per month", "Limited search visibility"],
     cta: "Get started",
     ctaLink: "/create-profile",
     highlight: false,
-    dark: false,
+    elite: false,
   },
   {
     name: "PRO",
     label: "Recommended",
     price: "$79",
     priceSub: "/year",
-    monthly: "~$6.58/mo",
-    desc: "Unlock full access and get seen faster.",
-    features: ["Unlimited contact reveals", "Full portfolio uploads", "Advanced search filters", "Priority placement", "Save favourite profiles"],
+    monthly: "~$6.58/month · best value",
+    desc: "Unlock full access and get seen",
+    features: ["Unlimited contact reveals", "Multiple headshots + full portfolio", "Advanced search filters", "IMDb profile visibility", "Increased search visibility"],
     cta: "Get Spot'd PRO",
     ctaLink: "/pricing",
     highlight: true,
-    dark: false,
+    elite: false,
+    icon: Crown,
   },
   {
     name: "Elite",
     label: "Best for serious talent",
     price: "$149",
     priceSub: "/year",
-    monthly: "~$12.42/mo",
-    desc: "Stand out. Get cast. Stay ahead.",
-    features: ["Everything in Pro", "Highest priority placement", "Rotating homepage spotlight", "Analytics & engagement insights", "Premium verified badge"],
+    monthly: "~$12.42/month · best value",
+    desc: "Stand out and get ahead of the competition",
+    features: ["Everything in Pro", "Highest priority search placement", "Rotating homepage spotlight", "Advanced analytics & engagement insights", "Premium verified badge"],
     cta: "Go Elite",
     ctaLink: "/pricing",
     highlight: false,
     elite: true,
+    icon: Star,
   },
 ];
 
@@ -52,64 +54,81 @@ export default function PricingPreview() {
           <p className="text-muted-foreground mt-3 text-base leading-[1.7]">Start free. Upgrade when you're ready to be seen.</p>
         </div>
 
-        <div className="grid sm:grid-cols-3 gap-5 max-w-4xl">
-          {TIERS.map((tier, i) => (
-            <motion.div
-              key={tier.name}
-              initial={{ opacity: 0, y: 16 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.1 }}
-              className="relative p-7 rounded-xl border"
-              className={`relative p-7 rounded-xl border ${tier.highlight ? "border-primary" : tier.elite ? "" : "border-border"}`}
-              style={{
-                background: "hsl(var(--card))",
-                borderColor: tier.elite ? "#E8FC6C" : undefined,
-              }}
-            >
-              {tier.label && (
-                <div className="absolute -top-3 left-4">
-                  <span
-                    className="text-[10px] uppercase tracking-[0.08em] font-bold px-3 py-1 rounded-full whitespace-nowrap"
-                    className={tier.highlight ? "bg-primary text-primary-foreground" : tier.elite ? "text-black" : ""}
-                      style={tier.elite ? { background: "#E8FC6C", color: "#0D0D0D" } : undefined}
-                  >
-                    {tier.label}
-                  </span>
-                </div>
-              )}
-              <div className="text-[10px] uppercase tracking-[0.08em] font-medium mb-2 mt-1 text-muted-foreground">
-                {tier.name}
-              </div>
-              <div className="font-display text-3xl font-semibold text-foreground" style={{ letterSpacing: "-0.5px" }}>
-                {tier.price}
-                {tier.priceSub && <span className="text-sm font-normal text-muted-foreground">{tier.priceSub}</span>}
-              </div>
-              {tier.monthly && (
-                <p className={`text-xs font-semibold mt-0.5 ${tier.elite ? "" : "text-primary"}`}
-                  style={tier.elite ? { color: "#E8FC6C" } : undefined}>{tier.monthly}</p>
-              )}
-              <p className="text-sm mt-2 mb-5 text-muted-foreground leading-[1.7]">{tier.desc}</p>
-              <div className="space-y-2 mb-6">
-                {tier.features.map((f) => (
-                  <div key={f} className="flex items-center gap-2.5 text-sm text-foreground/80">
-                    <Check className="w-3.5 h-3.5 text-primary flex-shrink-0" />
-                    {f}
-                  </div>
-                ))}
-              </div>
-              <Link to={tier.ctaLink}>
-                <Button
-                  className={`w-full font-semibold rounded-full text-sm ${tier.highlight ? "bg-primary text-primary-foreground hover:bg-primary/90" : ""}`}
-                  style={tier.elite ? { background: "#E8FC6C", color: "#0D0D0D" } : undefined}
-                  variant={tier.highlight || tier.elite ? "default" : "outline"}
-                >
-                  {tier.cta} {(tier.highlight || tier.elite) && <ArrowRight className="w-3.5 h-3.5 ml-1" />}
-                </Button>
-              </Link>
-            </motion.div>
-          ))}
-        </div>
+        <div className="grid sm:grid-cols-3 gap-6 items-start max-w-5xl">
+           {TIERS.map((tier, i) => {
+             const Icon = tier.icon;
+             return (
+               <motion.div
+                 key={tier.name}
+                 initial={{ opacity: 0, y: 24 }}
+                 whileInView={{ opacity: 1, y: 0 }}
+                 viewport={{ once: true }}
+                 transition={{ delay: i * 0.1 }}
+                 className={`relative rounded-2xl p-7 border ${tier.highlight ? "sm:-mt-4 sm:-mb-4" : ""}`}
+                 style={{
+                   background: "hsl(var(--card))",
+                   borderColor: tier.highlight ? "#FF5C35" : tier.elite ? "#E8FC6C" : "hsl(var(--border))",
+                 }}
+               >
+                 {tier.label && (
+                   <div className={`absolute -top-4 left-1/2 -translate-x-1/2 ${tier.highlight ? "" : ""}`}>
+                     <span
+                       className="px-4 py-1 rounded-full text-[11px] font-bold uppercase tracking-[0.08em] whitespace-nowrap"
+                       style={{
+                         background: tier.highlight ? "#FF5C35" : tier.elite ? "#E8FC6C" : undefined,
+                         color: tier.highlight ? "white" : tier.elite ? "black" : undefined,
+                       }}
+                     >
+                       {tier.label}
+                     </span>
+                   </div>
+                 )}
+                 <p className="text-[11px] uppercase tracking-[0.08em] font-bold mb-3 mt-2" style={{
+                   color: tier.highlight ? "#FF5C35" : tier.elite ? "#E8FC6C" : "hsl(var(--muted-foreground))",
+                 }}>
+                   {tier.name}
+                 </p>
+                 <div className="flex items-end gap-1">
+                   <span className="font-display text-5xl font-semibold text-foreground" style={{ letterSpacing: "-1px" }}>
+                     {tier.price}
+                   </span>
+                   {tier.priceSub && <span className="text-muted-foreground mb-2">{tier.priceSub}</span>}
+                 </div>
+                 {tier.monthly && (
+                   <p className="text-xs font-semibold mt-1" style={{
+                     color: tier.highlight ? "#FF5C35" : tier.elite ? "#E8FC6C" : undefined,
+                   }}>
+                     {tier.monthly}
+                   </p>
+                 )}
+                 <p className="text-sm text-muted-foreground mt-3 leading-[1.7] mb-6">{tier.desc}</p>
+                 <Link to={tier.ctaLink}>
+                   <Button
+                     className="w-full h-11 text-sm font-semibold rounded-full"
+                     style={{
+                       background: tier.highlight ? "#FF5C35" : tier.elite ? "#E8FC6C" : undefined,
+                       color: tier.highlight ? "white" : tier.elite ? "black" : undefined,
+                     }}
+                     variant={tier.highlight || tier.elite ? "default" : "outline"}
+                   >
+                     {Icon && <Icon className="w-4 h-4 mr-2" />}
+                     {tier.cta}
+                   </Button>
+                 </Link>
+                 <ul className="space-y-3 mt-6">
+                   {tier.features.map((f) => (
+                     <li key={f} className="flex items-start gap-3 text-sm text-foreground">
+                       <Check className="w-4 h-4 flex-shrink-0 mt-0.5" style={{
+                         color: tier.highlight ? "#FF5C35" : tier.elite ? "#E8FC6C" : "hsl(var(--primary))",
+                       }} />
+                       {f}
+                     </li>
+                   ))}
+                 </ul>
+               </motion.div>
+             );
+           })}
+         </div>
       </div>
     </section>
   );
