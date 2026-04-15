@@ -22,6 +22,11 @@
     "used": {
       "type": "boolean",
       "default": false
+    },
+    "attempts": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of incorrect code submission attempts"
     }
   },
   "required": [

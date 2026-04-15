@@ -67,15 +67,19 @@ export default function ProfilePage() {
 
   const handleSave = async () => {
     if (!user) { base44.auth.redirectToLogin(); return; }
-    if (myProfile?.id === profile?.id) return; // prevent self-save
-    // Optimistic update
+    // Self-save prevention
+    if (!profile || profile.user_id === user.id) return;
     const wasSaved = isSaved;
     setIsSaved(!wasSaved);
     if (wasSaved) {
       const saved = await base44.entities.SavedProfile.filter({ user_id: user.id, profile_id: profileParam });
       if (saved.length > 0) await base44.entities.SavedProfile.delete(saved[0].id);
     } else {
-      await base44.entities.SavedProfile.create({ user_id: user.id, profile_id: profileParam });
+      await base44.entities.SavedProfile.create({
+        user_id: user.id,
+        profile_id: profileParam,
+        saved_at: new Date().toISOString(),
+      });
     }
   };
 

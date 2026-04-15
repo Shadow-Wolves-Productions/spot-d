@@ -16,16 +16,14 @@ export default function VerificationPanel({ profile, onVerified }) {
   const sendCode = async (type) => {
     setSending(true);
     setCode("");
-    try {
-      const res = await base44.functions.invoke("sendVerificationCode", {
-        type,
-        phone: profile.phone,
-      });
-      if (res.data?.error) throw new Error(res.data.error);
+    const res = await base44.functions.invoke("sendVerificationCode", { type, phone: profile.phone });
+    if (res.data?.rate_limited) {
+      toast.error(res.data.error);
+    } else if (res.data?.error) {
+      toast.error(res.data.error);
+    } else {
       setActive(type);
       toast.success(type === "email" ? "Code sent to your email!" : "SMS code sent to " + profile.phone);
-    } catch (e) {
-      toast.error(e?.response?.data?.error || e?.message || "Failed to send code");
     }
     setSending(false);
   };
@@ -33,15 +31,18 @@ export default function VerificationPanel({ profile, onVerified }) {
   const confirmCode = async (type) => {
     if (code.length !== 6) return;
     setVerifying(true);
-    try {
-      const res = await base44.functions.invoke("verifyCode", { type, code });
-      if (res.data?.error) throw new Error(res.data.error);
+    const res = await base44.functions.invoke("verifyCode", { type, code });
+    if (res.data?.max_attempts) {
+      toast.error(res.data.error);
+      setActive(null);
+      setCode("");
+    } else if (res.data?.error) {
+      toast.error(res.data.error);
+    } else {
       toast.success(`${type === "email" ? "Email" : "Phone"} verified! SpotScore updated.`);
       setActive(null);
       setCode("");
       onVerified();
-    } catch (e) {
-      toast.error(e?.response?.data?.error || e?.message || "Invalid or expired code");
     }
     setVerifying(false);
   };

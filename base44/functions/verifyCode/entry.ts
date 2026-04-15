@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 function calculateCineScore(profile, endorsementCount, castingCount) {
   let score = 0;
@@ -38,21 +38,38 @@ Deno.serve(async (req) => {
   const { type, code } = await req.json();
 
   const codes = await base44.asServiceRole.entities.VerificationCode.filter({ user_id: user.id, type, used: false });
-  const valid = codes.find((c) => c.code === code && new Date(c.expires_at) > new Date());
+  const active = codes.find((c) => new Date(c.expires_at) > new Date());
 
-  if (!valid) return Response.json({ error: 'Invalid or expired code' }, { status: 400 });
+  if (!active) {
+    return Response.json({ error: 'Invalid or expired code' }, { status: 400 });
+  }
 
-  await base44.asServiceRole.entities.VerificationCode.update(valid.id, { used: true });
+  // Increment attempt counter
+  const attempts = (active.attempts || 0) + 1;
+
+  // Too many wrong attempts — invalidate
+  if (attempts >= 5 && active.code !== code) {
+    await base44.asServiceRole.entities.VerificationCode.update(active.id, { used: true, attempts });
+    return Response.json({
+      error: 'Too many incorrect attempts. Please request a new code.',
+      max_attempts: true,
+    }, { status: 400 });
+  }
+
+  if (active.code !== code) {
+    await base44.asServiceRole.entities.VerificationCode.update(active.id, { attempts });
+    return Response.json({ error: 'Invalid or expired code' }, { status: 400 });
+  }
+
+  // Code is correct
+  await base44.asServiceRole.entities.VerificationCode.update(active.id, { used: true, attempts });
 
   const profiles = await base44.asServiceRole.entities.Profile.filter({ user_id: user.id });
   if (profiles.length > 0) {
     const profile = profiles[0];
     const updateData = type === 'email' ? { email_verified: true } : { phone_verified: true };
-
-    // Apply verification flag to profile object for score calculation
     const updatedProfile = { ...profile, ...updateData };
 
-    // Auto-verify union if union number is set and has a real union membership
     const hasUnion = profile.union_status?.some((u) => u !== 'Non-Union');
     if (profile.union_number && hasUnion) {
       updateData.union_verified = true;
@@ -64,9 +81,7 @@ Deno.serve(async (req) => {
       base44.asServiceRole.entities.CastingApplication.filter({ applicant_user_id: user.id }),
     ]);
 
-    const newScore = calculateCineScore(updatedProfile, endorsements.length, castingApps.length);
-    updateData.spot_score = newScore;
-
+    updateData.spot_score = calculateCineScore(updatedProfile, endorsements.length, castingApps.length);
     await base44.asServiceRole.entities.Profile.update(profile.id, updateData);
   }
 

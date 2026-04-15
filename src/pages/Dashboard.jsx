@@ -12,6 +12,7 @@ import SpotScoreBadge from "../components/SpotScoreBadge";
 import ProfileCard from "../components/ProfileCard";
 import SpotScoreBreakdown, { PercentileBadge } from "../components/SpotScoreBreakdown";
 import SpotRequestsPanel from "../components/dashboard/SpotRequestsPanel";
+import SavedProfilesPanel from "../components/dashboard/SavedProfilesPanel";
 
 export default function Dashboard() {
   const [user, setUser] = useState(null);
@@ -61,7 +62,7 @@ export default function Dashboard() {
       setSavedProfiles(saved);
 
       if (saved.length > 0) {
-        const detailPromises = saved.slice(0, 6).map(async (s) => {
+        const detailPromises = saved.map(async (s) => {
           const p = await base44.entities.Profile.filter({ id: s.profile_id });
           return p[0];
         });
@@ -196,26 +197,30 @@ export default function Dashboard() {
             )}
 
             {/* Saved Profiles */}
-            {savedProfileDetails.length > 0 && (
+            {savedProfiles.length > 0 && (
               <div>
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-display text-sm font-semibold text-foreground uppercase tracking-wider">
-                    Saved Profiles
+                    Saved Profiles ({savedProfiles.length})
                   </h3>
-                  <div className="flex items-center gap-3">
-                  <Link to="/search" className="text-xs text-primary hover:underline flex items-center gap-1">
-                    View All <ChevronRight className="w-3 h-3" />
-                  </Link>
                   <Link to="/analytics" className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1">
                     <BarChart2 className="w-3 h-3" /> Analytics
                   </Link>
                 </div>
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                  {savedProfileDetails.map((p, i) => (
-                    <ProfileCard key={p.id} profile={p} index={i} />
-                  ))}
-                </div>
+                <SavedProfilesPanel
+                  savedRecords={savedProfiles}
+                  profileDetails={savedProfileDetails}
+                  myProfileId={profile?.id}
+                  onRefresh={async () => {
+                    const saved = await base44.entities.SavedProfile.filter({ user_id: user.id });
+                    setSavedProfiles(saved);
+                    const details = (await Promise.all(saved.map(async (s) => {
+                      const p = await base44.entities.Profile.filter({ id: s.profile_id });
+                      return p[0];
+                    }))).filter(Boolean);
+                    setSavedProfileDetails(details);
+                  }}
+                />
               </div>
             )}
           </div>

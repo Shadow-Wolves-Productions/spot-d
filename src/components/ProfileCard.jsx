@@ -58,7 +58,7 @@ export default function ProfileCard({ profile, subscription, onSave, isSaved, in
                   </span>
                 )}
               </div>
-              {onSave && (
+              {onSave && !profile._isOwnProfile && (
                 <button
                   onClick={(e) => { e.preventDefault(); e.stopPropagation(); onSave(profile.id); }}
                   className="w-7 h-7 rounded-full flex items-center justify-center transition-colors"
