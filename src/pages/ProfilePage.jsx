@@ -52,7 +52,7 @@ export default function ProfilePage() {
         if (p.primary_role) {
           const similar = await base44.entities.Profile.filter(
             { primary_role: p.primary_role },
-            "-cine_score",
+            "-spot_score",
             5
           );
           setSimilarProfiles(similar.filter((s) => s.id !== p.id).slice(0, 4));
