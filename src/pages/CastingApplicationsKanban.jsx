@@ -57,7 +57,7 @@ function ApplicantCard({ app, profileMap, onMove, moving }) {
       {profile?.cine_score > 0 && (
         <div className="flex items-center gap-1">
           <span className="text-[10px] text-muted-foreground font-mono">SpotScore</span>
-          <span className="text-xs font-bold font-mono" style={{ color: "#E8FC6C" }}>{profile.cine_score}</span>
+          <span className="text-xs font-bold font-mono" style={{ color: "#E8FC6C" }}>{profile.spot_score}</span>
         </div>
       )}
 
