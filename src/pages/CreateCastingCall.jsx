@@ -255,7 +255,7 @@ export default function CreateCastingCall() {
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
                 <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">Shoot Dates</Label>
-                <Input value={form.shoot_dates} onChange={(e) => update("shoot_dates", e.target.value)} placeholder="e.g. March 2025 or 10–14 Feb" className="bg-secondary border-border" />
+                <Input type="date" value={form.shoot_dates} onChange={(e) => update("shoot_dates", e.target.value)} className="bg-secondary border-border" />
               </div>
               <div>
                 <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">Location</Label>

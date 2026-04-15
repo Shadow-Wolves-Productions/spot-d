@@ -386,7 +386,6 @@ export default function CreateProfile() {
               </div>
             </div>
 
-            <AIAssistant form={form} onApply={(updates) => setForm((f) => ({ ...f, ...updates }))} />
           </div>
         )}
 
@@ -646,6 +645,15 @@ export default function CreateProfile() {
                 <span className="font-display text-4xl font-bold text-primary">{calculateCineScore(form)}</span>
                 <p className="text-xs text-muted-foreground mt-2">Complete more fields to improve your score.</p>
               </div>
+            </div>
+
+            {/* AI Assistant — Improve your Spot Score */}
+            <div className="border-t border-border pt-6">
+              <div className="mb-3">
+                <h3 className="font-display text-base font-semibold text-foreground">Improve Your Spot Score</h3>
+                <p className="text-xs text-muted-foreground mt-1">Let AI review your profile and suggest improvements to help you rank higher and get discovered faster.</p>
+              </div>
+              <AIAssistant form={form} onApply={(updates) => setForm((f) => ({ ...f, ...updates }))} />
             </div>
           </div>
         )}

@@ -7,6 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 
 const CURRENCIES = ["AUD","USD","GBP","EUR","NZD","CAD"];
+const GENDERS = ["Any","Male","Female","Non-Binary","Other"];
+const ETHNICITIES = ["Any / Open","Aboriginal or Torres Strait Islander","Asian","Black / African","East Asian","Hispanic / Latino","Indigenous","Mediterranean","Middle Eastern","Mixed / Multiracial","Pacific Islander","South Asian","South-East Asian","White / Caucasian","Other"];
 const RATE_TYPES = ["Flat Rate","Hourly","Daily","Weekly"];
 const PROFICIENCY = ["Beginner","Developing","Intermediate","Advanced","Expert"];
 const ACTOR_ROLE_TYPES = ["Lead","Supporting","Day Player","Background/Extra","Featured Extra","Stunt","Cameo"];
@@ -21,12 +23,13 @@ const CREW_JOB_TITLES = [
 
 function IndieWarning() {
   return (
-    <div className="rounded-xl border border-yellow-500/30 bg-yellow-500/5 p-4 mt-3">
+    <div className="rounded-xl border p-4 mt-3"
+      style={{ borderColor: "hsl(14 100% 60% / 0.35)", background: "hsl(14 100% 60% / 0.07)" }}>
       <div className="flex items-start gap-2">
-        <AlertTriangle className="w-4 h-4 text-yellow-400 mt-0.5 flex-shrink-0" />
+        <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: "#FF5C35" }} />
         <div>
-          <p className="text-xs font-semibold text-yellow-300 mb-1">Deferred or Unpaid? Indie Mode Activated.</p>
-          <p className="text-xs text-yellow-200/70 leading-relaxed">
+          <p className="text-xs font-semibold mb-1" style={{ color: "#FF5C35" }}>Deferred or Unpaid? Indie Mode Activated.</p>
+          <p className="text-xs leading-relaxed" style={{ color: "hsl(14 100% 60% / 0.75)" }}>
             We get it. Every filmmaker's done it… not all of them did it legally.
             Laws around deferred and unpaid work vary by country, state, and region, so do your homework.
             Exposure, credit, meals, and "great networking" don't magically replace pay.
@@ -43,23 +46,30 @@ function CompensationBlock({ role, onChange }) {
   const showWarning = role.compensation_type === "Deferred" || role.compensation_type === "Unpaid";
   const isPaid = role.compensation_type === "Paid";
 
+  const btnStyle = (opt) => {
+    if (role.compensation_type === opt) {
+      if (opt === "Paid") return { className: "bg-primary/15 border-primary/50 text-primary" };
+      return { style: { background: "hsl(14 100% 60% / 0.1)", borderColor: "hsl(14 100% 60% / 0.4)", color: "#FF5C35" } };
+    }
+    return { className: "bg-secondary border-border text-muted-foreground hover:text-foreground" };
+  };
+
   return (
     <div className="space-y-3 border-t border-border pt-4 mt-4">
       <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Compensation</p>
       <div className="grid sm:grid-cols-3 gap-3">
-        {["Paid", "Deferred", "Unpaid"].map((opt) => (
+        {["Paid", "Deferred", "Unpaid"].map((opt) => {
+          const s = btnStyle(opt);
+          return (
           <button
             key={opt}
             type="button"
             onClick={() => onChange("compensation_type", opt)}
-            className={`px-3 py-2 rounded-lg border text-sm font-medium transition-all ${
-              role.compensation_type === opt
-                ? opt === "Paid" ? "bg-primary/15 border-primary/50 text-primary"
-                  : "bg-yellow-500/10 border-yellow-500/30 text-yellow-300"
-                : "bg-secondary border-border text-muted-foreground hover:text-foreground"
-            }`}
+            className={`px-3 py-2 rounded-lg border text-sm font-medium transition-all ${s.className || ""}`}
+            style={s.style}
           >{opt}</button>
-        ))}
+          );
+        })}
       </div>
       {showWarning && <IndieWarning />}
       {isPaid && (
@@ -147,13 +157,19 @@ function ActorFields({ role, onChange }) {
         </div>
         <div>
           <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-1.5 block">Gender</Label>
-          <Input value={role.gender || ""} onChange={(e) => onChange("gender", e.target.value)} placeholder="Any" className="bg-secondary border-border h-9 text-sm" />
+          <Select value={role.gender || ""} onValueChange={(v) => onChange("gender", v)}>
+            <SelectTrigger className="bg-secondary border-border h-9 text-sm"><SelectValue placeholder="Any" /></SelectTrigger>
+            <SelectContent className="bg-card border-border">{GENDERS.map((g) => <SelectItem key={g} value={g}>{g}</SelectItem>)}</SelectContent>
+          </Select>
         </div>
       </div>
       <div className="grid sm:grid-cols-2 gap-3">
         <div>
           <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-1.5 block">Ethnicity</Label>
-          <Input value={role.ethnicity || ""} onChange={(e) => onChange("ethnicity", e.target.value)} placeholder="Open / Any" className="bg-secondary border-border h-9 text-sm" />
+          <Select value={role.ethnicity || ""} onValueChange={(v) => onChange("ethnicity", v)}>
+            <SelectTrigger className="bg-secondary border-border h-9 text-sm"><SelectValue placeholder="Any / Open" /></SelectTrigger>
+            <SelectContent className="bg-card border-border">{ETHNICITIES.map((e) => <SelectItem key={e} value={e}>{e}</SelectItem>)}</SelectContent>
+          </Select>
         </div>
         <div>
           <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-1.5 block">Special Skills</Label>
@@ -199,7 +215,10 @@ function VoiceoverFields({ role, onChange }) {
         </div>
         <div>
           <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-1.5 block">Gender</Label>
-          <Input value={role.gender || ""} onChange={(e) => onChange("gender", e.target.value)} placeholder="Any" className="bg-secondary border-border h-9 text-sm" />
+          <Select value={role.gender || ""} onValueChange={(v) => onChange("gender", v)}>
+            <SelectTrigger className="bg-secondary border-border h-9 text-sm"><SelectValue placeholder="Any" /></SelectTrigger>
+            <SelectContent className="bg-card border-border">{GENDERS.map((g) => <SelectItem key={g} value={g}>{g}</SelectItem>)}</SelectContent>
+          </Select>
         </div>
       </div>
       <div>
@@ -272,7 +291,10 @@ function ModelFields({ role, onChange }) {
         </div>
         <div>
           <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-1.5 block">Gender</Label>
-          <Input value={role.gender || ""} onChange={(e) => onChange("gender", e.target.value)} placeholder="Any" className="bg-secondary border-border h-9 text-sm" />
+          <Select value={role.gender || ""} onValueChange={(v) => onChange("gender", v)}>
+            <SelectTrigger className="bg-secondary border-border h-9 text-sm"><SelectValue placeholder="Any" /></SelectTrigger>
+            <SelectContent className="bg-card border-border">{GENDERS.map((g) => <SelectItem key={g} value={g}>{g}</SelectItem>)}</SelectContent>
+          </Select>
         </div>
       </div>
       <div className="grid grid-cols-2 gap-3">
@@ -288,7 +310,10 @@ function ModelFields({ role, onChange }) {
       <div className="grid sm:grid-cols-2 gap-3">
         <div>
           <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-1.5 block">Ethnicity</Label>
-          <Input value={role.ethnicity || ""} onChange={(e) => onChange("ethnicity", e.target.value)} placeholder="Open / Any" className="bg-secondary border-border h-9 text-sm" />
+          <Select value={role.ethnicity || ""} onValueChange={(v) => onChange("ethnicity", v)}>
+            <SelectTrigger className="bg-secondary border-border h-9 text-sm"><SelectValue placeholder="Any / Open" /></SelectTrigger>
+            <SelectContent className="bg-card border-border">{ETHNICITIES.map((e) => <SelectItem key={e} value={e}>{e}</SelectItem>)}</SelectContent>
+          </Select>
         </div>
         <div>
           <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-1.5 block">Special Requirements</Label>
