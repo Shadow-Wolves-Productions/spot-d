@@ -4,9 +4,9 @@ import { motion } from "framer-motion";
 import { PercentileBadge } from "./SpotScoreBreakdown";
 
 const TIER_BADGE = {
-  pro:     { label: "PRO",     bg: "#B8860B", color: "#fff" },
-  founder: { label: "Founder", bg: "#22c55e", color: "#000" },
-  elite:   { label: "Elite",   bg: "#534AB7", color: "#fff" },
+  pro:     { label: "PRO",     bg: "#FF5C35", color: "#fff" },
+  founder: { label: "FOUNDER", bg: "#E8FC6C", color: "#0D0D0D" },
+  elite:   { label: "ELITE",   bg: "#E8FC6C", color: "#0D0D0D" },
 };
 
 export default function ProfileCard({ profile, subscription, onSave, isSaved, index = 0, featured = false }) {
@@ -122,7 +122,7 @@ export default function ProfileCard({ profile, subscription, onSave, isSaved, in
             {/* Verification row */}
             <div className="flex items-center gap-1.5 pt-0.5">
               {profile.email_verified && <CheckCircle className="w-3 h-3 text-green-500" title="Email verified" />}
-              {profile.phone_verified && <CheckCircle className="w-3 h-3" style={{ color: "#534AB7" }} title="Phone verified" />}
+              {profile.phone_verified && <CheckCircle className="w-3 h-3" style={{ color: "#FF5C35" }} title="Phone verified" />}
               {profile.imdb_verified && <CheckCircle className="w-3 h-3 text-primary" title="IMDb verified" />}
               {profile.imdb_link && <Film className="w-3 h-3 text-primary/50" title="IMDb linked" />}
             </div>

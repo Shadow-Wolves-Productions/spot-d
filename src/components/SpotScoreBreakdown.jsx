@@ -4,8 +4,8 @@ import { CheckCircle2, Circle, TrendingUp } from "lucide-react";
 const PERCENTILE_BADGE = (percentile) => {
   if (percentile >= 99) return { label: "Top 1%", bg: "#0D0D0D", color: "#E8FC6C", border: "#E8FC6C" };
   if (percentile >= 95) return { label: "Top 5%", bg: "#E8FC6C", color: "#0D0D0D", border: "#E8FC6C" };
-  if (percentile >= 90) return { label: "Top 10%", bg: "#22c55e", color: "#000", border: "#22c55e" };
-  if (percentile >= 75) return { label: "Top 25%", bg: "#555", color: "#fff", border: "#555" };
+  if (percentile >= 90) return { label: "Top 10%", bg: "#FF5C35", color: "#fff", border: "#FF5C35" };
+  if (percentile >= 75) return { label: "Top 25%", bg: "#FF5C35", color: "#fff", border: "#FF5C35" };
   return null;
 };
 

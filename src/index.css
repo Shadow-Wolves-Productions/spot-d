@@ -188,9 +188,9 @@
   box-shadow: 0 0 0 1px hsl(var(--primary) / 0.15), 0 4px 24px hsl(var(--primary) / 0.08);
 }
 
-/* purple-glow kept ONLY for Elite tier */
+/* elite-glow uses yellow now */
 .elite-glow {
-  box-shadow: 0 0 0 1px rgba(83, 74, 183, 0.3), 0 4px 16px rgba(83, 74, 183, 0.15);
+  box-shadow: 0 0 0 1px rgba(232, 252, 108, 0.3), 0 4px 16px rgba(232, 252, 108, 0.15);
 }
 
 /* Legacy aliases */
