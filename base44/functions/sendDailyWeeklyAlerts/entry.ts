@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
-// Called on schedule: daily at 8am UTC and weekly Monday 8am UTC
+// Runs at 17:00 UTC — targets ~4am AEST for AU-first launch.
+// Revisit with per-user timezone scheduling when user base grows internationally.
 // mode: "daily" or "weekly" passed via function_args
 Deno.serve(async (req) => {
   const base44 = createClientFromRequest(req);
