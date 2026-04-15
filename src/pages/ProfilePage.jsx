@@ -107,6 +107,14 @@ export default function ProfilePage() {
     toast.success('Profile link copied!');
   };
 
+  // Auto-open spot modal if ?spot=1
+  useEffect(() => {
+    if (profile && user && myProfile && myProfile.id !== profile.id) {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("spot") === "1") setSpotModalOpen(true);
+    }
+  }, [profile, user, myProfile]);
+
   if (loading) {
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-background">
@@ -123,14 +131,6 @@ export default function ProfilePage() {
       </div>
     );
   }
-
-  // Auto-open spot modal if ?spot=1
-  useEffect(() => {
-    if (profile && user && myProfile && myProfile.id !== profile.id) {
-      const params = new URLSearchParams(window.location.search);
-      if (params.get("spot") === "1") setSpotModalOpen(true);
-    }
-  }, [profile, user, myProfile]);
 
   return (
     <div className="pb-20">
