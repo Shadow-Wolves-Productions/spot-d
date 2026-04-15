@@ -186,7 +186,7 @@ export default function AdminDashboard() {
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-medium text-foreground text-sm">{p.full_name}</span>
                         <span className="text-xs text-muted-foreground">{p.primary_role}</span>
-                        <Badge variant="outline" className="text-[10px] border-primary/30 text-primary">CS: {p.cine_score || 0}</Badge>
+                        <Badge variant="outline" className="text-[10px] border-primary/30 text-primary">CS: {p.spot_score || 0}</Badge>
                         {p.is_pro && <Badge className="text-[10px] bg-primary/20 text-primary border-0">PRO</Badge>}
                         {p.is_boosted && <Badge className="text-[10px] bg-yellow-500/20 text-yellow-400 border-0">Boosted</Badge>}
                       </div>
