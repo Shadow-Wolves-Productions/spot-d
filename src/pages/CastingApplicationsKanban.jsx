@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Link } from "react-router-dom";
-import { ArrowLeft, MapPin, Users, Loader2, ExternalLink } from "lucide-react";
+import { ArrowLeft, MapPin, Users, Loader2, ExternalLink, Film } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
@@ -17,6 +18,9 @@ const COLUMNS = [
 
 function ApplicantCard({ app, profileMap, onMove, moving }) {
   const profile = profileMap[app.profile_id];
+
+  const tsField = { viewed: 'viewed_at', shortlisted: 'shortlisted_at', rejected: 'rejected_at', booked: 'booked_at' }[app.status];
+  const tsValue = tsField && app[tsField];
 
   return (
     <div className="rounded-lg border border-border/60 p-3 space-y-2" style={{ background: "#161616" }}>
@@ -38,6 +42,13 @@ function ApplicantCard({ app, profileMap, onMove, moving }) {
         </Link>
       </div>
 
+      {/* Role applied for */}
+      {app.role_applied_for && (
+        <div className="text-[11px] px-2 py-0.5 rounded bg-primary/10 text-primary inline-block">
+          → {app.role_applied_for}
+        </div>
+      )}
+
       {/* Location */}
       {profile?.city && (
         <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
@@ -46,20 +57,35 @@ function ApplicantCard({ app, profileMap, onMove, moving }) {
         </div>
       )}
 
+      {/* Showreel */}
+      {app.submitted_showreel && (
+        <a href={app.submitted_showreel} target="_blank" rel="noopener noreferrer"
+          className="flex items-center gap-1 text-[11px] text-primary hover:underline">
+          <Film className="w-3 h-3" /> View Showreel
+        </a>
+      )}
+
       {/* Note */}
-      {app.note && (
+      {(app.submitted_note || app.note) && (
         <p className="text-[11px] text-muted-foreground italic border-l-2 border-border pl-2 line-clamp-2">
-          "{app.note}"
+          "{app.submitted_note || app.note}"
         </p>
       )}
 
-      {/* SpotScore */}
-      {profile?.spot_score > 0 && (
-        <div className="flex items-center gap-1">
-          <span className="text-[10px] text-muted-foreground font-mono">SpotScore</span>
-          <span className="text-xs font-bold font-mono" style={{ color: "#E8FC6C" }}>{profile.spot_score}</span>
-        </div>
-      )}
+      {/* SpotScore + timestamp */}
+      <div className="flex items-center justify-between">
+        {profile?.spot_score > 0 && (
+          <div className="flex items-center gap-1">
+            <span className="text-[10px] text-muted-foreground font-mono">SpotScore</span>
+            <span className="text-xs font-bold font-mono" style={{ color: "#E8FC6C" }}>{profile.spot_score}</span>
+          </div>
+        )}
+        {tsValue && (
+          <span className="text-[10px] text-muted-foreground ml-auto">
+            {formatDistanceToNow(new Date(tsValue), { addSuffix: true })}
+          </span>
+        )}
+      </div>
 
       {/* Move buttons */}
       <div className="flex flex-wrap gap-1 pt-1 border-t border-border/60">
@@ -123,8 +149,12 @@ export default function CastingApplicationsKanban() {
 
   const moveApp = async (appId, newStatus) => {
     setMoving(appId);
-    await base44.entities.CastingApplication.update(appId, { status: newStatus });
-    setApplications((prev) => prev.map((a) => a.id === appId ? { ...a, status: newStatus } : a));
+    const now = new Date().toISOString();
+    const tsField = { viewed: 'viewed_at', shortlisted: 'shortlisted_at', rejected: 'rejected_at', booked: 'booked_at' }[newStatus];
+    const update = { status: newStatus };
+    if (tsField) update[tsField] = now;
+    await base44.entities.CastingApplication.update(appId, update);
+    setApplications((prev) => prev.map((a) => a.id === appId ? { ...a, ...update } : a));
     setMoving(null);
     toast.success(`Moved to ${COLUMNS.find((c) => c.key === newStatus)?.label}`);
   };

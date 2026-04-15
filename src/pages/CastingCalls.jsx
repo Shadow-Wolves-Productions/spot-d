@@ -17,8 +17,10 @@ const TYPE_COLORS = {
   "Documentary": "text-orange-400 bg-orange-500/10 border-orange-500/20",
 };
 
-function CastingCallCard({ call, myProfile, index, user }) {
+function CastingCallCard({ call, myProfile, index, user, appliedCallIds }) {
   const [applyOpen, setApplyOpen] = useState(false);
+  const alreadyApplied = appliedCallIds?.has(call.id);
+  const isCreator = user?.id === call.creator_user_id;
 
   return (
     <motion.div
@@ -81,12 +83,19 @@ function CastingCallCard({ call, myProfile, index, user }) {
         </div>
 
         <div className="flex-shrink-0 flex flex-col gap-2 items-end">
-          {user?.id === call.creator_user_id ? (
+          {call.application_count > 0 && (
+            <span className="text-[10px] text-muted-foreground font-mono">{call.application_count} application{call.application_count !== 1 ? "s" : ""}</span>
+          )}
+          {isCreator ? (
             <Link to={`/casting/applications?call=${call.id}`}>
               <Button size="sm" variant="outline" className="border-border gap-1.5 text-xs">
                 <Settings2 className="w-3.5 h-3.5" /> Manage Applications
               </Button>
             </Link>
+          ) : alreadyApplied ? (
+            <span className="text-xs px-3 py-1 rounded-full bg-green-500/10 text-green-400 border border-green-500/20 font-medium">
+              ✓ Applied
+            </span>
           ) : myProfile ? (
             <Button
               onClick={() => setApplyOpen(true)}
@@ -124,15 +133,21 @@ export default function CastingCalls() {
   const [user, setUser] = useState(null);
   const [myProfile, setMyProfile] = useState(null);
   const [filter, setFilter] = useState("all");
+  const [appliedCallIds, setAppliedCallIds] = useState(new Set());
 
   const load = useCallback(async () => {
     setLoading(true);
     const isAuth = await base44.auth.isAuthenticated();
+    let me = null;
     if (isAuth) {
-      const me = await base44.auth.me();
+      me = await base44.auth.me();
       setUser(me);
-      const profiles = await base44.entities.Profile.filter({ user_id: me.id });
+      const [profiles, myApps] = await Promise.all([
+        base44.entities.Profile.filter({ user_id: me.id }),
+        base44.entities.CastingApplication.filter({ applicant_user_id: me.id }),
+      ]);
       if (profiles.length > 0) setMyProfile(profiles[0]);
+      setAppliedCallIds(new Set(myApps.map((a) => a.casting_call_id)));
     }
     const data = await base44.entities.CastingCall.filter({ is_active: true }, "-created_date", 50);
     setCalls(data);
@@ -230,7 +245,7 @@ export default function CastingCalls() {
         ) : (
           <div className="space-y-4 pb-20">
             {filtered.map((call, i) => (
-              <CastingCallCard key={call.id} call={call} myProfile={myProfile} index={i} user={user} />
+              <CastingCallCard key={call.id} call={call} myProfile={myProfile} index={i} user={user} appliedCallIds={appliedCallIds} />
             ))}
           </div>
         )}
