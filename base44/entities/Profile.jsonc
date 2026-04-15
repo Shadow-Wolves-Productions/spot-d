@@ -260,6 +260,11 @@
       "type": "number",
       "default": 0
     },
+    "spot_percentile": {
+      "type": "number",
+      "default": 0,
+      "description": "Percentile rank 0-100 among all profiles"
+    },
     "agent_name": {
       "type": "string"
     },

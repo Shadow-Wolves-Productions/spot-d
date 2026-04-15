@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import SpotScoreBadge from "../components/SpotScoreBadge";
 import ProfileCard from "../components/ProfileCard";
+import SpotScoreBreakdown, { PercentileBadge } from "../components/SpotScoreBreakdown";
 
 export default function Dashboard() {
   const [user, setUser] = useState(null);
@@ -19,6 +20,9 @@ export default function Dashboard() {
   const [revealCount, setRevealCount] = useState(0);
   const [workedWithCount, setWorkedWithCount] = useState(0);
   const [endorsementCount, setEndorsementCount] = useState(0);
+  const [savedByCount, setSavedByCount] = useState(0);
+  const [revealedByCount, setRevealedByCount] = useState(0);
+  const [subscription, setSubscription] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activatingBoost, setActivatingBoost] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -41,7 +45,16 @@ export default function Dashboard() {
 
         const end = await base44.entities.Endorsement.filter({ profile_id: p.id });
         setEndorsementCount(end.length);
+
+        const savedBy = await base44.entities.SavedProfile.filter({ profile_id: p.id });
+        setSavedByCount(savedBy.length);
+
+        const revealedBy = await base44.entities.ContactReveal.filter({ profile_id: p.id });
+        setRevealedByCount(revealedBy.length);
       }
+
+      const subs = await base44.entities.Subscription.filter({ user_id: me.id, status: "active" });
+      if (subs.length > 0) setSubscription(subs[0]);
 
       const monthKey = new Date().toISOString().slice(0, 7);
       const reveals = await base44.entities.ContactReveal.filter({ viewer_id: me.id, month_key: monthKey });
@@ -114,7 +127,10 @@ export default function Dashboard() {
             <SpotScoreBadge score={profile?.spot_score || 0} size="md" />
             <div>
               <p className="text-xs uppercase tracking-[0.08em] font-mono text-muted-foreground">SpotScore</p>
-              <p className="font-display text-xl font-bold text-foreground">{profile?.spot_score || 0}</p>
+              <p className="font-display text-xl font-bold text-foreground">{profile?.spot_score || 0}<span className="text-xs font-normal text-muted-foreground ml-1">/100</span></p>
+              {(profile?.spot_percentile || 0) >= 75 && (
+                <div className="mt-1"><PercentileBadge percentile={profile.spot_percentile} /></div>
+              )}
             </div>
           </div>
 
@@ -126,7 +142,7 @@ export default function Dashboard() {
             </div>
             <p className="font-display text-xl font-bold text-foreground">{revealCount}</p>
             <p className="text-xs text-muted-foreground mt-1">
-              {profile?.is_pro ? "Unlimited" : `${5 - revealCount} remaining this month`}
+              {subscription?.contact_reveal_limit === -1 ? "Unlimited" : `${(subscription?.contact_reveal_limit || 5) - revealCount} remaining this month`}
             </p>
           </div>
 
@@ -153,19 +169,18 @@ export default function Dashboard() {
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Main column */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Profile Completion */}
+            {/* SpotScore Breakdown */}
             {profile && (
               <div className="bg-card border border-border/60 rounded-xl p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-display text-sm font-semibold text-foreground uppercase tracking-wider">
-                    Profile Completion
-                  </h3>
-                  <span className="text-sm text-primary font-medium">{profileCompleteness}%</span>
-                </div>
-                <Progress value={profileCompleteness} className="h-2 bg-secondary" />
-                <p className="text-xs text-muted-foreground mt-3">
-                  Complete more fields to improve your SpotScore and visibility.
-                </p>
+                <h3 className="font-display text-sm font-semibold text-foreground uppercase tracking-wider mb-4">
+                  Your SpotScore
+                </h3>
+                <SpotScoreBreakdown
+                  profile={profile}
+                  endorsementCount={endorsementCount}
+                  savedByCount={savedByCount}
+                  revealedByCount={revealedByCount}
+                />
               </div>
             )}
 
@@ -229,7 +244,7 @@ export default function Dashboard() {
             )}
 
             {/* PRO upgrade */}
-            {profile && !profile.is_pro && (
+            {profile && subscription?.tier === "free" && (
               <div className="glass-effect rounded-xl p-6 gold-glow">
                 <Crown className="w-6 h-6 text-primary mb-3" />
                 <h3 className="font-display text-base font-semibold text-foreground">Upgrade to PRO</h3>
@@ -301,13 +316,13 @@ export default function Dashboard() {
               </div>
             )}
 
-            {/* PRO badge */}
-            {profile?.is_pro && (
+            {/* Tier badge */}
+            {subscription && subscription.tier !== "free" && (
               <div className="glass-gold rounded-xl p-6 text-center">
                 <Crown className="w-8 h-8 text-primary-foreground mx-auto mb-2" />
-                <p className="font-display text-lg font-bold text-primary-foreground">PRO Member</p>
-                {profile.is_founding_member && (
-                  <Badge className="bg-white/20 text-white mt-2">Founding Member</Badge>
+                <p className="font-display text-lg font-bold text-primary-foreground capitalize">{subscription.tier} Member</p>
+                {subscription.notes && (
+                  <Badge className="bg-white/20 text-white mt-2 text-xs">{subscription.notes}</Badge>
                 )}
               </div>
             )}

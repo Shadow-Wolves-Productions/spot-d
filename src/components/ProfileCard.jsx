@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
-import { MapPin, Crown, CheckCircle, Film, Bookmark, Zap } from "lucide-react";
+import { MapPin, Crown, CheckCircle, Film, Bookmark, Info } from "lucide-react";
 import { motion } from "framer-motion";
+import { PercentileBadge } from "./SpotScoreBreakdown";
 
 const TIER_BADGE = {
   pro:     { label: "PRO",     bg: "#B8860B", color: "#fff" },
@@ -105,12 +106,17 @@ export default function ProfileCard({ profile, subscription, onSave, isSaved, in
                   {availabilityStyle.label}
                 </span>
               )}
-              {profile.spot_score > 0 && (
-                <div className="flex items-center gap-1">
-                  <span className="text-[9px] uppercase tracking-[0.08em]" style={{ color: "#888" }}>Spot Score</span>
-                  <span className="font-display font-semibold text-sm" style={{ color: "#E8FF47" }}>{profile.spot_score}</span>
-                </div>
-              )}
+              <div className="flex items-center gap-1.5">
+                {profile.spot_score > 0 && (
+                  <div className="flex items-center gap-1" title="Spot Score — profile quality ranking out of 100">
+                    <span className="font-display font-semibold text-sm" style={{ color: "#E8FF47" }}>{profile.spot_score}</span>
+                    <span className="text-[9px] uppercase tracking-[0.08em]" style={{ color: "#888" }}>/100</span>
+                  </div>
+                )}
+                {profile.spot_percentile >= 75 && (
+                  <PercentileBadge percentile={profile.spot_percentile} />
+                )}
+              </div>
             </div>
 
             {/* Verification row */}
