@@ -592,7 +592,7 @@ export default function CreateProfile() {
               <h3 className="font-display text-lg font-semibold text-foreground mb-1">Your Profile URL</h3>
               <p className="text-xs text-muted-foreground mb-3">Customise your profile link to match your brand or social handles.</p>
               <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground whitespace-nowrap">cineconnect.com/profile/</span>
+                <span className="text-xs text-muted-foreground whitespace-nowrap">spotd.app/u/</span>
                 <input
                   value={form.profile_slug}
                   onChange={(e) => handleSlugChange(e.target.value)}
@@ -604,7 +604,7 @@ export default function CreateProfile() {
               {checkingSlug && <p className="text-xs text-muted-foreground mt-1">Checking availability…</p>}
               {!checkingSlug && slugAvailable === true && <p className="text-xs text-green-400 mt-1">✓ Available</p>}
               {!checkingSlug && slugAvailable === false && <p className="text-xs text-destructive mt-1">✗ Already taken — try another</p>}
-              <p className="text-[11px] text-muted-foreground mt-1">Only letters, numbers, hyphens, underscores. Leave blank to auto-generate.</p>
+              <p className="text-[11px] text-muted-foreground mt-1">3–30 characters. Letters, numbers, hyphens, underscores only.</p>
             </div>
 
             <InlineVerification

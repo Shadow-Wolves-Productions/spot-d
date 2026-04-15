@@ -10,12 +10,19 @@ Deno.serve(async (req) => {
     return Response.json({ error: 'No casting call data' }, { status: 400 });
   }
 
+  if (!castingCall.is_active) return Response.json({ skipped: 'inactive' });
+
+  // Check deadline
+  if (castingCall.deadline && new Date(castingCall.deadline) < new Date()) {
+    return Response.json({ skipped: 'past deadline' });
+  }
+
   const callRoles = (castingCall.roles_needed || []).map((r) => r.toLowerCase());
   const callTitle = (castingCall.project_title || '').toLowerCase();
   const callDesc = (castingCall.description || '').toLowerCase();
   const callText = callTitle + ' ' + callDesc;
+  const callLocation = (castingCall.location || '').toLowerCase();
 
-  // Fetch all active role alerts
   const alerts = await base44.asServiceRole.entities.RoleAlert.filter({ is_active: true });
 
   let notifCount = 0;
@@ -23,29 +30,42 @@ Deno.serve(async (req) => {
   for (const alert of alerts) {
     const alertRoles = (alert.roles || []).map((r) => r.toLowerCase());
     const alertKeywords = (alert.keywords || []).map((k) => k.toLowerCase());
+    const alertLocations = (alert.locations || []).map((l) => l.toLowerCase());
 
-    const roleMatch = alertRoles.some((r) => callRoles.includes(r));
-    const keywordMatch = alertKeywords.some((k) => callText.includes(k));
+    // Role match: if alert has roles, at least one must match; if empty, match all
+    const roleMatch = alertRoles.length === 0 || alertRoles.some((r) => callRoles.includes(r));
+    if (!roleMatch) continue;
 
-    if (!roleMatch && !keywordMatch) continue;
+    // Keyword match: if alert has keywords, at least one must appear in title/desc
+    const keywordMatch = alertKeywords.length === 0 || alertKeywords.some((k) => callText.includes(k));
+    if (!keywordMatch) continue;
 
-    // Fetch the user to get their email
+    // Location match: if alert has locations, at least one must partially match
+    const locationMatch = alertLocations.length === 0 || alertLocations.some((l) => callLocation.includes(l));
+    if (!locationMatch) continue;
+
+    // Deduplicate — skip if already notified for this call
+    const existing = await base44.asServiceRole.entities.Notification.filter({
+      user_id: alert.user_id,
+      type: 'role_alert',
+    });
+    const alreadySent = existing.some((n) => n.meta?.casting_call_id === castingCall.id);
+    if (alreadySent) continue;
+
     const users = await base44.asServiceRole.entities.User.filter({ id: alert.user_id });
     const user = users?.[0];
     if (!user) continue;
 
     const notifTitle = `New casting call: ${castingCall.project_title}`;
-    const matchReason = roleMatch
-      ? `Matches your role alert`
-      : `Matches keyword in your alert`;
-    const notifBody = `${matchReason}. ${castingCall.project_type || 'Project'} · ${castingCall.location || 'Location TBD'} · ${castingCall.compensation || 'Compensation TBD'}`;
+    const notifBody = `${castingCall.project_type || 'Project'} · ${castingCall.location || 'Location TBD'} · ${castingCall.compensation || 'Compensation TBD'}`;
 
-    // Create in-app notification
+    // Always create in-app notification immediately
     await base44.asServiceRole.entities.Notification.create({
       user_id: alert.user_id,
       type: 'role_alert',
       title: notifTitle,
       body: notifBody,
+      action_url: '/casting',
       link: '/casting',
       is_read: false,
       meta: { casting_call_id: castingCall.id },
@@ -53,15 +73,14 @@ Deno.serve(async (req) => {
 
     notifCount++;
 
-    // Send email if opted in
-    if (alert.email_notifications && user.email) {
+    // Email: only send if frequency is "instant"
+    if (alert.email_notifications && alert.frequency === 'instant' && user.email) {
       const rolesStr = castingCall.roles_needed?.join(', ') || 'Various roles';
       await base44.asServiceRole.integrations.Core.SendEmail({
         to: user.email,
         from_name: "Spot'd Alerts",
         subject: `🎬 Role Alert: ${castingCall.project_title}`,
-        body: `
-Hi ${user.full_name || 'there'},
+        body: `Hi ${user.full_name || 'there'},
 
 A new casting call matches your Role Alert on Spot'd!
 
@@ -76,12 +95,14 @@ ${castingCall.shoot_dates ? 'Shoot dates: ' + castingCall.shoot_dates : ''}
 
 ${castingCall.description}
 
-Apply now → https://spotd.io/casting
+Apply now → https://spotd.app/casting
 
 ────────────────────────────
-You're receiving this because you have a Role Alert set up on Spot'd.
-To manage your alerts, visit your Dashboard.
-        `.trim(),
+You're receiving this because you have a Role Alert on Spot'd.
+Manage alerts at your Dashboard.`.trim(),
+      });
+      await base44.asServiceRole.entities.RoleAlert.update(alert.id, {
+        last_sent_at: new Date().toISOString(),
       });
     }
   }

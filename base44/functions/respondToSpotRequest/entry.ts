@@ -26,8 +26,10 @@ Deno.serve(async (req) => {
     responded_at: new Date().toISOString(),
   });
 
+  const requesterProfiles = await base44.asServiceRole.entities.Profile.filter({ id: spotReq.requester_profile_id });
+  const requesterUserId = requesterProfiles[0]?.user_id;
+
   if (action === 'accepted') {
-    // Create the Endorsement record
     await base44.asServiceRole.entities.Endorsement.create({
       profile_id: spotReq.requester_profile_id,
       endorser_id: user.id,
@@ -35,28 +37,25 @@ Deno.serve(async (req) => {
       endorsement_type: spotReq.spot_type,
     });
 
-    // Notify requester
-    const requesterProfiles = await base44.asServiceRole.entities.Profile.filter({ id: spotReq.requester_profile_id });
-    const requesterUserId = requesterProfiles[0]?.user_id;
     if (requesterUserId) {
       await base44.asServiceRole.entities.Notification.create({
         user_id: requesterUserId,
-        type: 'endorsement',
-        title: 'You were spotted!',
-        body: `${user.full_name} spotted you as "${spotReq.spot_type}"`,
+        type: 'spot_accepted',
+        title: `${user.full_name} spotted you!`,
+        body: `as "${spotReq.spot_type}" — your SpotScore has been updated`,
+        action_url: `/profile/${spotReq.requester_profile_id}`,
         link: `/profile/${spotReq.requester_profile_id}`,
+        is_read: false,
       });
     }
   } else {
-    // Declined — polite notification
-    const requesterProfiles = await base44.asServiceRole.entities.Profile.filter({ id: spotReq.requester_profile_id });
-    const requesterUserId = requesterProfiles[0]?.user_id;
     if (requesterUserId) {
       await base44.asServiceRole.entities.Notification.create({
         user_id: requesterUserId,
-        type: 'system',
+        type: 'spot_declined',
         title: 'Spot request update',
-        body: `Your Spot request to ${spotReq.target_profile_id ? user.full_name : 'someone'} was not accepted at this time.`,
+        body: `${user.full_name} isn't able to Spot you right now`,
+        is_read: false,
       });
     }
   }

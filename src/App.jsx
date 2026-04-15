@@ -18,6 +18,7 @@ import CreateCastingCall from './pages/CreateCastingCall';
 import AdminDashboard from './pages/AdminDashboard';
 import Analytics from './pages/Analytics';
 import CastingApplicationsKanban from './pages/CastingApplicationsKanban';
+import ProfileBySlug from './pages/ProfileBySlug';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -58,6 +59,7 @@ const AuthenticatedApp = () => {
         <Route path="/casting/applications" element={<CastingApplicationsKanban />} />
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/analytics" element={<Analytics />} />
+        <Route path="/u/:slug" element={<ProfileBySlug />} />
         <Route path="*" element={<PageNotFound />} />
       </Route>
     </Routes>

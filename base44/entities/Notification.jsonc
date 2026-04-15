@@ -12,7 +12,12 @@
         "role_alert",
         "endorsement",
         "casting_match",
-        "system"
+        "system",
+        "spot_request",
+        "spot_accepted",
+        "spot_declined",
+        "new_application",
+        "spotted_with"
       ],
       "default": "role_alert"
     },
@@ -22,9 +27,13 @@
     "body": {
       "type": "string"
     },
+    "action_url": {
+      "type": "string",
+      "description": "URL to navigate to on click"
+    },
     "link": {
       "type": "string",
-      "description": "Optional URL to navigate to"
+      "description": "Legacy alias for action_url"
     },
     "is_read": {
       "type": "boolean",

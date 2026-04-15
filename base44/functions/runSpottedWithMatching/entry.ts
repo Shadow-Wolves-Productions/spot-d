@@ -85,6 +85,23 @@ Deno.serve(async (req) => {
           confirmed: false,
         });
         created++;
+
+        // Notify both profiles
+        for (const pid of [idA, idB]) {
+          const otherProfile = pid === idA ? profileB : profileA;
+          const thisProfile = pid === idA ? profileA : profileB;
+          if (thisProfile.user_id) {
+            await base44.asServiceRole.entities.Notification.create({
+              user_id: thisProfile.user_id,
+              type: 'spotted_with',
+              title: `Frequently Spotted with ${otherProfile.preferred_name || otherProfile.full_name}`,
+              body: `You've both been credited on "${matchedProjects[0]}"`,
+              action_url: `/profile/${thisProfile.profile_slug || thisProfile.id}`,
+              link: `/profile/${thisProfile.profile_slug || thisProfile.id}`,
+              is_read: false,
+            });
+          }
+        }
       }
     }
   }

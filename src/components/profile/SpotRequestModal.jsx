@@ -40,6 +40,18 @@ export default function SpotRequestModal({ open, onClose, targetProfile, myProfi
       message: message.trim() || undefined,
       status: "pending",
     });
+
+    // Notify target user
+    await base44.entities.Notification.create({
+      user_id: targetProfile.user_id,
+      type: "spot_request",
+      title: `${myProfile.preferred_name || myProfile.full_name} wants you to Spot them`,
+      body: `as "${selectedType}"`,
+      action_url: "/dashboard",
+      link: "/dashboard",
+      is_read: false,
+    });
+
     toast.success("Spot request sent!");
     setSelectedType("");
     setMessage("");

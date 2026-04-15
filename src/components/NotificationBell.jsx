@@ -4,6 +4,25 @@ import { Bell } from "lucide-react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 
+function NotifContent({ n, timeAgo }) {
+  return (
+    <div className="flex items-start gap-2">
+      <div className={`mt-0.5 w-1.5 h-1.5 rounded-full flex-shrink-0 ${!n.is_read ? "bg-primary" : "bg-transparent"}`} />
+      <div className="min-w-0 flex-1">
+        <div className="flex items-start justify-between gap-2">
+          <p className={`text-xs font-semibold leading-snug ${n.is_read ? "text-muted-foreground" : "text-foreground"}`}>
+            {n.title}
+          </p>
+          {timeAgo && <span className="text-[10px] text-muted-foreground/60 shrink-0">{timeAgo}</span>}
+        </div>
+        <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed line-clamp-2">
+          {n.body}
+        </p>
+      </div>
+    </div>
+  );
+}
+
 export default function NotificationBell({ userId }) {
   const [notifications, setNotifications] = useState([]);
   const [open, setOpen] = useState(false);
@@ -81,37 +100,30 @@ export default function NotificationBell({ userId }) {
               {notifications.length === 0 ? (
                 <div className="px-4 py-8 text-center">
                   <Bell className="w-6 h-6 text-muted-foreground/30 mx-auto mb-2" />
-                  <p className="text-xs text-muted-foreground">No notifications yet</p>
+                  <p className="text-xs text-muted-foreground">You're all caught up</p>
                 </div>
               ) : (
-                notifications.map((n) => (
-                  <div
-                    key={n.id}
-                    className={`px-4 py-3 hover:bg-secondary/50 transition-colors cursor-pointer ${!n.is_read ? "border-l-2 border-primary" : "border-l-2 border-transparent"}`}
-                    onClick={() => markRead(n.id)}
-                  >
-                    <div className="flex items-start gap-2">
-                      <div className={`mt-0.5 w-1.5 h-1.5 rounded-full flex-shrink-0 ${!n.is_read ? "bg-primary" : "bg-transparent"}`} />
-                      <div className="min-w-0 flex-1">
-                        <p className={`text-xs font-semibold leading-snug ${n.is_read ? "text-muted-foreground" : "text-foreground"}`}>
-                          {n.title}
-                        </p>
-                        <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed line-clamp-2">
-                          {n.body}
-                        </p>
-                        {n.link && (
-                          <Link
-                            to={n.link}
-                            onClick={() => setOpen(false)}
-                            className="text-[11px] text-primary hover:underline mt-1 inline-block"
-                          >
-                            View →
-                          </Link>
-                        )}
-                      </div>
+                notifications.map((n) => {
+                  const url = n.action_url || n.link;
+                  const timeAgo = n.created_date
+                    ? (() => { try { const d = new Date(n.created_date); const mins = Math.floor((Date.now() - d) / 60000); if (mins < 1) return "just now"; if (mins < 60) return `${mins}m ago`; if (mins < 1440) return `${Math.floor(mins/60)}h ago`; return `${Math.floor(mins/1440)}d ago`; } catch { return ""; } })()
+                    : "";
+                  return (
+                    <div
+                      key={n.id}
+                      className={`px-4 py-3 hover:bg-secondary/50 transition-colors cursor-pointer ${!n.is_read ? "border-l-2 border-primary" : "border-l-2 border-transparent"}`}
+                      onClick={() => { markRead(n.id); if (url) setOpen(false); }}
+                    >
+                      {url ? (
+                        <Link to={url} className="block">
+                          <NotifContent n={n} timeAgo={timeAgo} />
+                        </Link>
+                      ) : (
+                        <NotifContent n={n} timeAgo={timeAgo} />
+                      )}
                     </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           </motion.div>
