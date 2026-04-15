@@ -91,8 +91,7 @@ export default function ProximityFilter({ proximity, onChange }) {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && applyPlace(input)}
-            className="pl-8 h-9 text-sm border"
-            style={{ background: "#111", borderColor: "#333" }}
+            className="pl-8 h-9 text-sm border bg-background border-border"
           />
           {proximity && (
             <button onClick={clear} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
@@ -105,8 +104,7 @@ export default function ProximityFilter({ proximity, onChange }) {
           variant="outline"
           onClick={() => applyPlace(input)}
           disabled={geocoding || !input.trim()}
-          className="h-9 px-2 border"
-          style={{ background: "#111", borderColor: "#333" }}
+          className="h-9 px-2 border bg-background border-border"
         >
           {geocoding ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Go"}
         </Button>
@@ -127,10 +125,10 @@ export default function ProximityFilter({ proximity, onChange }) {
           value={String(proximity.radius)}
           onValueChange={(v) => onChange({ ...proximity, radius: Number(v) })}
         >
-          <SelectTrigger className="h-8 text-xs border" style={{ background: "#111", borderColor: "#333" }}>
+          <SelectTrigger className="h-8 text-xs border bg-background border-border">
             <SelectValue />
           </SelectTrigger>
-          <SelectContent style={{ background: "#161616", borderColor: "#333" }}>
+          <SelectContent className="bg-card border-border">
             {RADIUS_OPTIONS.map((r) => (
               <SelectItem key={r.value} value={String(r.value)}>{r.label} radius</SelectItem>
             ))}

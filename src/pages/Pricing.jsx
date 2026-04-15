@@ -45,11 +45,11 @@ function FeatureList({ features, dark = false }) {
   return (
     <ul className="space-y-3 mt-6">
       {features.map((f) => (
-        <li key={f.text} className={`flex items-start gap-3 text-sm ${f.included ? (dark ? "text-white/80" : "text-foreground") : "text-muted-foreground/40"}`}>
+        <li key={f.text} className={`flex items-start gap-3 text-sm ${f.included ? (dark ? "text-white" : "text-foreground") : (dark ? "text-white/30" : "text-muted-foreground/40")}`}>
           {f.included ? (
-            <Check className="w-4 h-4 flex-shrink-0 mt-0.5 text-primary" />
+          <Check className={`w-4 h-4 flex-shrink-0 mt-0.5 ${dark ? "text-white/70" : "text-primary"}`} />
           ) : (
-            <X className="w-4 h-4 text-muted-foreground/20 flex-shrink-0 mt-0.5" />
+          <X className={`w-4 h-4 flex-shrink-0 mt-0.5 ${dark ? "text-white/20" : "text-muted-foreground/20"}`} />
           )}
           {f.text}
         </li>
@@ -212,8 +212,7 @@ export default function Pricing() {
               </p>
 
               {/* Spot counter */}
-              <div className="mt-6 inline-flex items-center gap-3 rounded-full px-5 py-2.5 border"
-                style={{ background: "#111", borderColor: "#333" }}>
+              <div className="mt-6 inline-flex items-center gap-3 rounded-full px-5 py-2.5 border border-border bg-secondary/60">
                 <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
                 <span className="text-sm font-medium text-foreground">
                   {spotsLeft === null ? (

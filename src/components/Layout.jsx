@@ -23,12 +23,12 @@ const NAV_LINKS = [
   { path: "/contact", label: "Contact & FAQ" },
 ];
 
-// Logo component — apostrophe in lime (dark) or signal orange (light)
-function SpotdLogo() {
+// Logo component — lime apostrophe in dark, signal orange in light
+function SpotdLogo({ size = "text-lg" }) {
   const { theme } = useTheme();
   const apostropheColor = theme === "light" ? "#FF5C35" : "#E8FC6C";
   return (
-    <span className="font-display text-lg font-bold tracking-tight text-foreground">
+    <span className={`font-display ${size} font-bold tracking-tight text-foreground`}>
       Spot<span style={{ color: apostropheColor }}>'</span>d
     </span>
   );
@@ -136,10 +136,14 @@ export default function Layout() {
                       <DropdownMenuTrigger asChild>
                         <button className="w-8 h-8 bg-secondary border border-border rounded-full flex items-center justify-center hover:border-primary/40 transition-colors overflow-hidden">
                           {profile?.profile_photo ? (
-                            <img src={profile.profile_photo} alt="" className="w-full h-full object-cover" />
-                          ) : (
-                            <User className="w-3.5 h-3.5 text-muted-foreground" />
-                          )}
+                            <img
+                              src={profile.profile_photo}
+                              alt=""
+                              className="w-full h-full object-cover"
+                              onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.nextSibling.style.display = 'flex'; }}
+                            />
+                          ) : null}
+                          <User className="w-3.5 h-3.5 text-muted-foreground" style={{ display: profile?.profile_photo ? 'none' : 'block' }} />
                         </button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-48 bg-card border-border rounded-lg shadow-xl">

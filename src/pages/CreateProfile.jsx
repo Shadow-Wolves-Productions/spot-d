@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import AIAssistant from "../components/profile/AIAssistant";
-import InlineVerification from "../components/profile/InlineVerification";
+import InlineVerificationButton from "../components/profile/InlineVerificationButton";
 
 const ROLES = ["Actor", "Director", "Producer", "Cinematographer", "Editor", "Writer", "Sound Designer", "Production Designer", "Costume Designer", "Makeup Artist", "Gaffer", "Grip", "1st AD", "2nd AD", "Line Producer", "Production Manager", "Script Supervisor", "Stunt Coordinator", "VFX Artist", "Colorist", "Composer", "Sound Mixer", "Boom Operator", "Art Director", "Set Designer", "Props Master", "Location Manager", "Casting Director", "Dialect Coach", "Choreographer", "Other"];
 const EXPERIENCE_LEVELS = ["Entry", "Mid", "Senior", "Expert"];
@@ -543,53 +543,10 @@ export default function CreateProfile() {
         {/* Step 3: Availability & Contact */}
         {step === 3 && (
           <div className="space-y-6">
-            <div>
-              <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">Availability Status</Label>
-              <Select value={form.availability_status} onValueChange={(v) => update("availability_status", v)}>
-                <SelectTrigger className="bg-secondary border-border"><SelectValue /></SelectTrigger>
-                <SelectContent className="bg-card border-border">
-                  {AVAILABILITY.map((a) => <SelectItem key={a} value={a}>{a}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">Availability Notes</Label>
-              <Textarea value={form.availability_notes} onChange={(e) => update("availability_notes", e.target.value)} rows={2} className="bg-secondary border-border" placeholder="Any additional availability details..." />
-            </div>
-            <div className="border-t border-border pt-6">
-              <h3 className="font-display text-lg font-semibold text-foreground mb-4">Contact Information</h3>
-              <div className="grid sm:grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">Email</Label>
-                  <Input value={form.email} onChange={(e) => update("email", e.target.value)} className="bg-secondary border-border" />
-                </div>
-                <div>
-                  <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">Phone</Label>
-                  <Input value={form.phone} onChange={(e) => update("phone", e.target.value)} className="bg-secondary border-border" />
-                </div>
-              </div>
-            </div>
-            <div className="border-t border-border pt-6">
-              <h3 className="font-display text-lg font-semibold text-foreground mb-4">Agent / Manager (Optional)</h3>
-              <div className="grid sm:grid-cols-3 gap-4">
-                <div>
-                  <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">Agent Name</Label>
-                  <Input value={form.agent_name} onChange={(e) => update("agent_name", e.target.value)} className="bg-secondary border-border" />
-                </div>
-                <div>
-                  <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">Agent Email</Label>
-                  <Input value={form.agent_email} onChange={(e) => update("agent_email", e.target.value)} className="bg-secondary border-border" />
-                </div>
-                <div>
-                  <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">Agent Phone</Label>
-                  <Input value={form.agent_phone} onChange={(e) => update("agent_phone", e.target.value)} className="bg-secondary border-border" />
-                </div>
-              </div>
-            </div>
 
-            {/* Profile URL slug */}
-            <div className="border-t border-border pt-6">
-              <h3 className="font-display text-lg font-semibold text-foreground mb-1">Your Profile URL</h3>
+            {/* Profile URL slug — moved to top */}
+            <div className="border border-border rounded-xl p-5">
+              <h3 className="font-display text-base font-semibold text-foreground mb-1">Your Profile URL</h3>
               <p className="text-xs text-muted-foreground mb-3">Customise your profile link to match your brand or social handles.</p>
               <div className="flex items-center gap-2">
                 <span className="text-xs text-muted-foreground whitespace-nowrap">spotd.app/u/</span>
@@ -607,13 +564,80 @@ export default function CreateProfile() {
               <p className="text-[11px] text-muted-foreground mt-1">3–30 characters. Letters, numbers, hyphens, underscores only.</p>
             </div>
 
-            <InlineVerification
-              form={form}
-              onVerified={(type) => {
-                if (type === 'email') update('email_verified', true);
-                if (type === 'phone') update('phone_verified', true);
-              }}
-            />
+            <div>
+              <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">Availability Status</Label>
+              <Select value={form.availability_status} onValueChange={(v) => update("availability_status", v)}>
+                <SelectTrigger className="bg-secondary border-border"><SelectValue /></SelectTrigger>
+                <SelectContent className="bg-card border-border">
+                  {AVAILABILITY.map((a) => <SelectItem key={a} value={a}>{a}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">Availability Notes</Label>
+              <Textarea value={form.availability_notes} onChange={(e) => update("availability_notes", e.target.value)} rows={2} className="bg-secondary border-border" placeholder="Any additional availability details..." />
+            </div>
+
+            {/* Contact Information with inline verification */}
+            <div className="border-t border-border pt-6">
+              <h3 className="font-display text-lg font-semibold text-foreground mb-4">Contact Information</h3>
+              <div className="space-y-4">
+                {/* Email */}
+                <div>
+                  <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">Email</Label>
+                  <div className="flex gap-2 items-center">
+                    <Input
+                      value={form.email}
+                      onChange={(e) => { update("email", e.target.value); if (form.email_verified) update("email_verified", false); }}
+                      className="bg-secondary border-border flex-1"
+                    />
+                    {form.email_verified ? (
+                      <span className="flex items-center gap-1 text-xs text-green-500 whitespace-nowrap font-medium">
+                        <Check className="w-3.5 h-3.5" /> Verified
+                      </span>
+                    ) : (
+                      <InlineVerificationButton type="email" form={form} onVerified={() => update("email_verified", true)} />
+                    )}
+                  </div>
+                </div>
+                {/* Phone */}
+                <div>
+                  <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">Phone</Label>
+                  <div className="flex gap-2 items-center">
+                    <Input
+                      value={form.phone}
+                      onChange={(e) => { update("phone", e.target.value); if (form.phone_verified) update("phone_verified", false); }}
+                      className="bg-secondary border-border flex-1"
+                    />
+                    {form.phone_verified ? (
+                      <span className="flex items-center gap-1 text-xs text-green-500 whitespace-nowrap font-medium">
+                        <Check className="w-3.5 h-3.5" /> Verified
+                      </span>
+                    ) : (
+                      <InlineVerificationButton type="phone" form={form} onVerified={() => update("phone_verified", true)} />
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="border-t border-border pt-6">
+              <h3 className="font-display text-lg font-semibold text-foreground mb-4">Agent / Manager (Optional)</h3>
+              <div className="grid sm:grid-cols-3 gap-4">
+                <div>
+                  <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">Agent Name</Label>
+                  <Input value={form.agent_name} onChange={(e) => update("agent_name", e.target.value)} className="bg-secondary border-border" />
+                </div>
+                <div>
+                  <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">Agent Email</Label>
+                  <Input value={form.agent_email} onChange={(e) => update("agent_email", e.target.value)} className="bg-secondary border-border" />
+                </div>
+                <div>
+                  <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">Agent Phone</Label>
+                  <Input value={form.agent_phone} onChange={(e) => update("agent_phone", e.target.value)} className="bg-secondary border-border" />
+                </div>
+              </div>
+            </div>
 
             {/* CineScore preview */}
             <div className="border-t border-border pt-6">
