@@ -38,7 +38,7 @@ const TIERS = [
     cta: "Go Elite",
     ctaLink: "/pricing",
     highlight: false,
-    dark: true,
+    elite: true,
   },
 ];
 
@@ -61,18 +61,18 @@ export default function PricingPreview() {
               viewport={{ once: true }}
               transition={{ delay: i * 0.1 }}
               className="relative p-7 rounded-xl border"
-              className={`relative p-7 rounded-xl border ${tier.highlight ? "border-primary" : tier.dark ? "" : "border-border"}`}
+              className={`relative p-7 rounded-xl border ${tier.highlight ? "border-primary" : tier.elite ? "" : "border-border"}`}
               style={{
                 background: "hsl(var(--card))",
-                borderColor: tier.dark ? "#534AB7" : undefined,
+                borderColor: tier.elite ? "#E8FC6C" : undefined,
               }}
             >
               {tier.label && (
                 <div className="absolute -top-3 left-4">
                   <span
                     className="text-[10px] uppercase tracking-[0.08em] font-bold px-3 py-1 rounded-full whitespace-nowrap"
-                    className={tier.highlight ? "bg-primary text-primary-foreground" : ""}
-                    style={!tier.highlight ? { background: "#534AB7", color: "#fff" } : undefined}
+                    className={tier.highlight ? "bg-primary text-primary-foreground" : tier.elite ? "text-black" : ""}
+                      style={tier.elite ? { background: "#E8FC6C", color: "#0D0D0D" } : undefined}
                   >
                     {tier.label}
                   </span>
@@ -86,8 +86,8 @@ export default function PricingPreview() {
                 {tier.priceSub && <span className="text-sm font-normal text-muted-foreground">{tier.priceSub}</span>}
               </div>
               {tier.monthly && (
-                <p className={`text-xs font-semibold mt-0.5 ${tier.dark ? "" : "text-primary"}`}
-                  style={tier.dark ? { color: "#534AB7" } : undefined}>{tier.monthly}</p>
+                <p className={`text-xs font-semibold mt-0.5 ${tier.elite ? "" : "text-primary"}`}
+                  style={tier.elite ? { color: "#E8FC6C" } : undefined}>{tier.monthly}</p>
               )}
               <p className="text-sm mt-2 mb-5 text-muted-foreground leading-[1.7]">{tier.desc}</p>
               <div className="space-y-2 mb-6">
@@ -101,10 +101,10 @@ export default function PricingPreview() {
               <Link to={tier.ctaLink}>
                 <Button
                   className={`w-full font-semibold rounded-full text-sm ${tier.highlight ? "bg-primary text-primary-foreground hover:bg-primary/90" : ""}`}
-                  style={tier.dark ? { background: "#534AB7", color: "#fff" } : undefined}
-                  variant={tier.highlight || tier.dark ? "default" : "outline"}
+                  style={tier.elite ? { background: "#E8FC6C", color: "#0D0D0D" } : undefined}
+                  variant={tier.highlight || tier.elite ? "default" : "outline"}
                 >
-                  {tier.cta} {(tier.highlight || tier.dark) && <ArrowRight className="w-3.5 h-3.5 ml-1" />}
+                  {tier.cta} {(tier.highlight || tier.elite) && <ArrowRight className="w-3.5 h-3.5 ml-1" />}
                 </Button>
               </Link>
             </motion.div>
