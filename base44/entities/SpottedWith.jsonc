@@ -1,0 +1,46 @@
+{
+  "name": "SpottedWith",
+  "type": "object",
+  "properties": {
+    "profile_id_a": {
+      "type": "string",
+      "description": "First profile (lexicographically smaller ID)"
+    },
+    "profile_id_b": {
+      "type": "string",
+      "description": "Second profile"
+    },
+    "project_title": {
+      "type": "string",
+      "description": "Primary matched project name"
+    },
+    "projects_matched": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "All matched project titles"
+    },
+    "match_confidence": {
+      "type": "string",
+      "enum": [
+        "exact",
+        "fuzzy"
+      ]
+    },
+    "confirmed": {
+      "type": "boolean",
+      "default": false
+    },
+    "times_matched": {
+      "type": "number",
+      "default": 1
+    }
+  },
+  "required": [
+    "profile_id_a",
+    "profile_id_b",
+    "project_title",
+    "match_confidence"
+  ]
+}

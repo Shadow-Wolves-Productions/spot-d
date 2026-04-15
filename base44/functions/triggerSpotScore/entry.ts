@@ -3,7 +3,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 // Automation-triggered score recalculation — receives entity event payload
 // Resolves profile_id from various entity types and calls recalculateSpotScore logic inline
 
-function calculateSpotScore(profile, endorsementCount, savedByCount, revealedByCount, recentLogin, appliedToCasting, postedCasting) {
+function calculateSpotScore(profile, endorsementCount, savedByCount, revealedByCount, recentLogin, appliedToCasting, postedCasting, confirmedSpottedWith = 0) {
   let score = 0;
   if (profile.profile_photo) score += 5;
   if (profile.bio) score += 5;
@@ -17,10 +17,11 @@ function calculateSpotScore(profile, endorsementCount, savedByCount, revealedByC
   else if (endorsementCount >= 6) score += 20;
   else if (endorsementCount >= 3) score += 14;
   else if (endorsementCount >= 1) score += 8;
-  if (savedByCount >= 15) score += 20;
+  if (savedByCount >= 15) score += 17;
   else if (savedByCount >= 5) score += 12;
   else if (savedByCount >= 1) score += 5;
   if (revealedByCount >= 3) score += 5;
+  if (confirmedSpottedWith >= 1) score += 3;
   if (recentLogin) score += 3;
   if (appliedToCasting) score += 4;
   if (postedCasting) score += 3;
@@ -39,17 +40,20 @@ async function recalculateForProfile(base44, profileId) {
   const profile = profiles[0];
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
-  const [endorsements, savedBy, revealedBy, castingApps, castingCalls, users] = await Promise.all([
+  const [endorsements, savedBy, revealedBy, castingApps, castingCalls, users, spottedA, spottedB] = await Promise.all([
     base44.asServiceRole.entities.Endorsement.filter({ profile_id: profileId }),
     base44.asServiceRole.entities.SavedProfile.filter({ profile_id: profileId }),
     base44.asServiceRole.entities.ContactReveal.filter({ profile_id: profileId }),
     base44.asServiceRole.entities.CastingApplication.filter({ applicant_user_id: profile.user_id }),
     base44.asServiceRole.entities.CastingCall.filter({ creator_user_id: profile.user_id }),
     base44.asServiceRole.entities.User.filter({ id: profile.user_id }),
+    base44.asServiceRole.entities.SpottedWith.filter({ profile_id_a: profileId }),
+    base44.asServiceRole.entities.SpottedWith.filter({ profile_id_b: profileId }),
   ]);
 
   const recentLogin = users.length > 0 && users[0].updated_date > sevenDaysAgo;
-  const newScore = calculateSpotScore(profile, endorsements.length, savedBy.length, revealedBy.length, recentLogin, castingApps.length > 0, castingCalls.length > 0);
+  const confirmedSpottedWith = [...spottedA, ...spottedB].filter(s => s.confirmed).length;
+  const newScore = calculateSpotScore(profile, endorsements.length, savedBy.length, revealedBy.length, recentLogin, castingApps.length > 0, castingCalls.length > 0, confirmedSpottedWith);
   await base44.asServiceRole.entities.Profile.update(profileId, { spot_score: newScore });
 }
 

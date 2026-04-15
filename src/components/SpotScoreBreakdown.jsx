@@ -22,7 +22,7 @@ export function PercentileBadge({ percentile }) {
   );
 }
 
-export default function SpotScoreBreakdown({ profile, endorsementCount = 0, savedByCount = 0, revealedByCount = 0 }) {
+export default function SpotScoreBreakdown({ profile, endorsementCount = 0, savedByCount = 0, revealedByCount = 0, confirmedSpottedWith = 0 }) {
   const p = profile;
 
   const items = [
@@ -48,11 +48,12 @@ export default function SpotScoreBreakdown({ profile, endorsementCount = 0, save
     {
       label: `Saved by others (${savedByCount})`,
       earned: savedByCount >= 1,
-      points: savedByCount >= 15 ? 20 : savedByCount >= 5 ? 12 : savedByCount >= 1 ? 5 : 0,
-      maxPoints: 20,
+      points: savedByCount >= 15 ? 17 : savedByCount >= 5 ? 12 : savedByCount >= 1 ? 5 : 0,
+      maxPoints: 17,
       tip: savedByCount < 15 ? "Improve your profile to get saved by more users" : null,
     },
     { label: "Contact revealed 3+ times", earned: revealedByCount >= 3, points: 5, tip: "Make your profile more discoverable" },
+    { label: "Confirmed SpottedWith connection", earned: confirmedSpottedWith >= 1, points: 3, tip: "Get your crew connections verified via SpottedWith" },
   ];
 
   const suggestions = items.filter(i => !i.earned && i.tip);

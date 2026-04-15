@@ -1,6 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
-function calculateSpotScore(profile, endorsementCount, savedByCount, revealedByCount, recentLogin, appliedToCasting, postedCasting) {
+function calculateSpotScore(profile, endorsementCount, savedByCount, revealedByCount, recentLogin, appliedToCasting, postedCasting, confirmedSpottedWith) {
   let score = 0;
 
   // PROFILE COMPLETENESS (max 25)
@@ -15,19 +15,18 @@ function calculateSpotScore(profile, endorsementCount, savedByCount, revealedByC
   if (profile.email_verified) score += 7;
   if (profile.phone_verified) score += 8;
 
-  // ENDORSEMENTS (max 25, highest bracket only)
+  // ENDORSEMENTS / SPOTS (max 25, highest bracket only)
   if (endorsementCount >= 10) score += 25;
   else if (endorsementCount >= 6) score += 20;
   else if (endorsementCount >= 3) score += 14;
   else if (endorsementCount >= 1) score += 8;
 
-  // SOCIAL CREDIBILITY (max 25)
-  // Saved brackets (highest qualifying)
-  if (savedByCount >= 15) score += 20;
+  // SOCIAL CREDIBILITY (max 25: saved 17 + reveal 5 + spottedWith 3)
+  if (savedByCount >= 15) score += 17;
   else if (savedByCount >= 5) score += 12;
   else if (savedByCount >= 1) score += 5;
-  // Contact reveal bonus (additive)
   if (revealedByCount >= 3) score += 5;
+  if (confirmedSpottedWith >= 1) score += 3;
 
   // APP ENGAGEMENT (max 10)
   if (recentLogin) score += 3;
@@ -49,16 +48,19 @@ async function recalculateForProfile(base44, profileId) {
 
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
-  const [endorsements, savedBy, revealedBy, castingApps, castingCalls, user] = await Promise.all([
+  const [endorsements, savedBy, revealedBy, castingApps, castingCalls, users, spottedA, spottedB] = await Promise.all([
     base44.asServiceRole.entities.Endorsement.filter({ profile_id: profileId }),
     base44.asServiceRole.entities.SavedProfile.filter({ profile_id: profileId }),
     base44.asServiceRole.entities.ContactReveal.filter({ profile_id: profileId }),
     base44.asServiceRole.entities.CastingApplication.filter({ applicant_user_id: profile.user_id }),
     base44.asServiceRole.entities.CastingCall.filter({ creator_user_id: profile.user_id }),
     base44.asServiceRole.entities.User.filter({ id: profile.user_id }),
+    base44.asServiceRole.entities.SpottedWith.filter({ profile_id_a: profileId }),
+    base44.asServiceRole.entities.SpottedWith.filter({ profile_id_b: profileId }),
   ]);
 
-  const recentLogin = user.length > 0 && user[0].updated_date > sevenDaysAgo;
+  const recentLogin = users.length > 0 && users[0].updated_date > sevenDaysAgo;
+  const confirmedSpottedWith = [...spottedA, ...spottedB].filter(s => s.confirmed).length;
 
   const newScore = calculateSpotScore(
     profile,
@@ -67,7 +69,8 @@ async function recalculateForProfile(base44, profileId) {
     revealedBy.length,
     recentLogin,
     castingApps.length > 0,
-    castingCalls.length > 0
+    castingCalls.length > 0,
+    confirmedSpottedWith
   );
 
   await base44.asServiceRole.entities.Profile.update(profileId, { spot_score: newScore });

@@ -2,14 +2,15 @@ import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
-import { Bookmark, Share2, Flag, ArrowLeft, ThumbsUp } from "lucide-react";
+import { Bookmark, Share2, ArrowLeft, Zap } from "lucide-react";
 import RecommendModal from "../components/profile/RecommendModal";
 import { Button } from "@/components/ui/button";
 import ProfileHero from "../components/profile/ProfileHero";
 import ContactPanel from "../components/profile/ContactPanel";
 import { AboutSection, ProfessionalDetails, SkillsSection, CreditsSection, PortfolioSection } from "../components/profile/ProfileSections";
-import WorkedWithSection from "../components/profile/WorkedWithSection";
 import EndorsementsSection from "../components/profile/EndorsementsSection";
+import SpottedWithSection from "../components/profile/SpottedWithSection";
+import SpotRequestModal from "../components/profile/SpotRequestModal";
 import SpotScoreBadge from "../components/SpotScoreBadge";
 import ProfileCard from "../components/ProfileCard";
 
@@ -21,6 +22,7 @@ export default function ProfilePage() {
   const [similarProfiles, setSimilarProfiles] = useState([]);
   const [isSaved, setIsSaved] = useState(false);
   const [recommendOpen, setRecommendOpen] = useState(false);
+  const [spotModalOpen, setSpotModalOpen] = useState(false);
 
   const profileParam = window.location.pathname.split("/profile/")[1];
   const isMongoId = /^[a-f0-9]{24}$/.test(profileParam);
@@ -77,6 +79,16 @@ export default function ProfilePage() {
     }
   };
 
+  const handleCopySpotMe = async () => {
+    const slug = profile.profile_slug || profile.id;
+    const url = `${window.location.origin}/profile/${slug}?spot=1`;
+    try { await navigator.clipboard.writeText(url); } catch {
+      const el = document.createElement('input'); el.value = url;
+      document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el);
+    }
+    toast.success('Spot Me link copied!');
+  };
+
   const handleShare = async () => {
     const slug = profile.profile_slug;
     const url = slug
@@ -112,9 +124,25 @@ export default function ProfilePage() {
     );
   }
 
+  // Auto-open spot modal if ?spot=1
+  useEffect(() => {
+    if (profile && user && myProfile && myProfile.id !== profile.id) {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("spot") === "1") setSpotModalOpen(true);
+    }
+  }, [profile, user, myProfile]);
+
   return (
     <div className="pb-20">
       <RecommendModal profile={profile} user={user} open={recommendOpen} onClose={() => setRecommendOpen(false)} />
+      {myProfile && myProfile.id !== profile?.id && (
+        <SpotRequestModal
+          open={spotModalOpen}
+          onClose={() => setSpotModalOpen(false)}
+          targetProfile={profile}
+          myProfile={myProfile}
+        />
+      )}
       <ProfileHero profile={profile} />
 
       {/* Actions strip */}
@@ -127,10 +155,17 @@ export default function ProfilePage() {
           </Link>
           <div className="flex-1" />
           {user && myProfile?.id !== profile?.id && (
-            <Button variant="outline" size="sm" onClick={() => setRecommendOpen(true)}
-              className="border-border hover:border-primary/30 font-semibold"
-              style={{ background: "transparent" }}>
-              <ThumbsUp className="w-4 h-4 mr-1" style={{ color: "#FF5C35" }} /> Spot this person
+            <Button
+              size="sm"
+              className="bg-primary text-primary-foreground font-semibold"
+              onClick={() => setSpotModalOpen(true)}
+            >
+              <Zap className="w-4 h-4 mr-1" /> Spot them
+            </Button>
+          )}
+          {user && myProfile?.id === profile?.id && (
+            <Button variant="outline" size="sm" className="border-border" onClick={handleCopySpotMe}>
+              <Share2 className="w-4 h-4 mr-1" /> Spot Me Link
             </Button>
           )}
           <Button variant="outline" size="sm" onClick={handleSave} className="border-border hover:border-primary/20">
@@ -173,7 +208,7 @@ export default function ProfilePage() {
 
             <CreditsSection profile={profile} />
             <PortfolioSection profile={profile} />
-            <WorkedWithSection profileId={profile.id} />
+            <SpottedWithSection profileId={profile.id} />
             <EndorsementsSection profileId={profile.id} />
           </div>
 

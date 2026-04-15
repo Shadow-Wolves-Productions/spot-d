@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Link } from "react-router-dom";
-import { Crown, Eye, Bookmark, Clock, ChevronRight, Edit, UserCheck, Zap, Moon, Sun, Trash2, AlertTriangle, BarChart2 } from "lucide-react";
+import { Crown, Eye, Bookmark, Clock, ChevronRight, Edit, Zap, Moon, Sun, Trash2, AlertTriangle, BarChart2 } from "lucide-react";
 import RoleAlertsPanel from "../components/RoleAlertsPanel";
 import { useTheme } from "../lib/useTheme";
 import VerificationPanel from "../components/VerificationPanel";
@@ -11,6 +11,7 @@ import { Progress } from "@/components/ui/progress";
 import SpotScoreBadge from "../components/SpotScoreBadge";
 import ProfileCard from "../components/ProfileCard";
 import SpotScoreBreakdown, { PercentileBadge } from "../components/SpotScoreBreakdown";
+import SpotRequestsPanel from "../components/dashboard/SpotRequestsPanel";
 
 export default function Dashboard() {
   const [user, setUser] = useState(null);
@@ -18,8 +19,7 @@ export default function Dashboard() {
   const [savedProfiles, setSavedProfiles] = useState([]);
   const [savedProfileDetails, setSavedProfileDetails] = useState([]);
   const [revealCount, setRevealCount] = useState(0);
-  const [workedWithCount, setWorkedWithCount] = useState(0);
-  const [endorsementCount, setEndorsementCount] = useState(0);
+  const [spotsCount, setSpotsCount] = useState(0);
   const [savedByCount, setSavedByCount] = useState(0);
   const [revealedByCount, setRevealedByCount] = useState(0);
   const [subscription, setSubscription] = useState(null);
@@ -40,11 +40,8 @@ export default function Dashboard() {
         const p = profiles[0];
         setProfile(p);
 
-        const ww = await base44.entities.WorkedWith.filter({ profile_id: p.id });
-        setWorkedWithCount(ww.length);
-
-        const end = await base44.entities.Endorsement.filter({ profile_id: p.id });
-        setEndorsementCount(end.length);
+        const spots = await base44.entities.Endorsement.filter({ profile_id: p.id });
+        setSpotsCount(spots.length);
 
         const savedBy = await base44.entities.SavedProfile.filter({ profile_id: p.id });
         setSavedByCount(savedBy.length);
@@ -155,20 +152,23 @@ export default function Dashboard() {
             <p className="font-display text-xl font-bold text-foreground">{savedProfiles.length}</p>
           </div>
 
-          {/* Connections */}
+          {/* Spots */}
           <div className="bg-card border border-border/60 rounded-xl p-5">
             <div className="flex items-center gap-2 mb-2">
-              <UserCheck className="w-4 h-4 text-primary" />
-              <p className="text-xs uppercase tracking-wider text-muted-foreground">Worked With</p>
+              <Zap className="w-4 h-4 text-primary" />
+              <p className="text-xs uppercase tracking-wider text-muted-foreground">Your Spots</p>
             </div>
-            <p className="font-display text-xl font-bold text-foreground">{workedWithCount}</p>
-            <p className="text-xs text-muted-foreground mt-1">{endorsementCount} endorsements</p>
+            <p className="font-display text-xl font-bold text-foreground">{spotsCount}</p>
+            <p className="text-xs text-muted-foreground mt-1">times spotted by others</p>
           </div>
         </div>
 
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Main column */}
           <div className="lg:col-span-2 space-y-6">
+            {/* Spot Requests */}
+            <SpotRequestsPanel user={user} profile={profile} />
+
             {/* SpotScore Breakdown */}
             {profile && (
               <div className="bg-card border border-border/60 rounded-xl p-6">
@@ -177,7 +177,7 @@ export default function Dashboard() {
                 </h3>
                 <SpotScoreBreakdown
                   profile={profile}
-                  endorsementCount={endorsementCount}
+                  endorsementCount={spotsCount}
                   savedByCount={savedByCount}
                   revealedByCount={revealedByCount}
                 />
