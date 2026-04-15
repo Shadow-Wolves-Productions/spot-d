@@ -5,6 +5,10 @@
     "creator_user_id": {
       "type": "string"
     },
+    "creator_profile_id": {
+      "type": "string",
+      "description": "Links to the Profile record of the creator"
+    },
     "project_title": {
       "type": "string"
     },
@@ -28,7 +32,40 @@
     "roles_needed": {
       "type": "array",
       "items": {
-        "type": "string"
+        "type": "string",
+        "enum": [
+          "Actor",
+          "Director",
+          "Producer",
+          "Cinematographer",
+          "Editor",
+          "Writer",
+          "Sound Designer",
+          "Production Designer",
+          "Costume Designer",
+          "Makeup Artist",
+          "Gaffer",
+          "Grip",
+          "1st AD",
+          "2nd AD",
+          "Line Producer",
+          "Production Manager",
+          "Script Supervisor",
+          "Stunt Coordinator",
+          "VFX Artist",
+          "Colorist",
+          "Composer",
+          "Sound Mixer",
+          "Boom Operator",
+          "Art Director",
+          "Set Designer",
+          "Props Master",
+          "Location Manager",
+          "Casting Director",
+          "Dialect Coach",
+          "Choreographer",
+          "Other"
+        ]
       }
     },
     "experience_level": {
@@ -83,6 +120,18 @@
     },
     "contact_email": {
       "type": "string"
+    },
+    "view_count": {
+      "type": "number",
+      "default": 0
+    },
+    "application_count": {
+      "type": "number",
+      "default": 0
+    },
+    "project_id": {
+      "type": "string",
+      "description": "Optional grouping ID for linking multiple casting calls to the same project"
     }
   },
   "required": [

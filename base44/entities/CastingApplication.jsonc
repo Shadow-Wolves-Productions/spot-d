@@ -11,8 +11,17 @@
     "profile_id": {
       "type": "string"
     },
-    "note": {
-      "type": "string"
+    "role_applied_for": {
+      "type": "string",
+      "description": "Which specific role from the casting call the applicant is applying for"
+    },
+    "submitted_showreel": {
+      "type": "string",
+      "description": "Showreel URL, pre-filled from applicant profile but editable"
+    },
+    "submitted_note": {
+      "type": "string",
+      "description": "Optional note from applicant"
     },
     "status": {
       "type": "string",
@@ -24,11 +33,32 @@
         "booked"
       ],
       "default": "pending"
+    },
+    "applied_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "viewed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "shortlisted_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "rejected_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "booked_at": {
+      "type": "string",
+      "format": "date-time"
     }
   },
   "required": [
     "casting_call_id",
     "applicant_user_id",
-    "profile_id"
+    "profile_id",
+    "role_applied_for"
   ]
 }

@@ -4,18 +4,26 @@ import { CheckCircle, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 
 export default function ApplyModal({ open, onClose, castingCall, myProfile }) {
+  const [roleAppliedFor, setRoleAppliedFor] = useState("");
+  const [showreel, setShowreel] = useState(myProfile?.showreel_link || "");
   const [note, setNote] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
 
   const handleApply = async () => {
+    if (!roleAppliedFor) {
+      toast.error("Please select a role you're applying for.");
+      return;
+    }
     setSubmitting(true);
     const me = await base44.auth.me();
 
-    // Check if already applied
     const existing = await base44.entities.CastingApplication.filter({
       casting_call_id: castingCall.id,
       applicant_user_id: me.id,
@@ -31,8 +39,11 @@ export default function ApplyModal({ open, onClose, castingCall, myProfile }) {
       casting_call_id: castingCall.id,
       applicant_user_id: me.id,
       profile_id: myProfile.id,
-      note: note.trim(),
+      role_applied_for: roleAppliedFor,
+      submitted_showreel: showreel.trim(),
+      submitted_note: note.trim(),
       status: "pending",
+      applied_at: new Date().toISOString(),
     });
 
     setDone(true);
@@ -40,10 +51,14 @@ export default function ApplyModal({ open, onClose, castingCall, myProfile }) {
   };
 
   const handleClose = () => {
+    setRoleAppliedFor("");
+    setShowreel(myProfile?.showreel_link || "");
     setNote("");
     setDone(false);
     onClose();
   };
+
+  const roles = castingCall?.roles_needed || [];
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -77,17 +92,43 @@ export default function ApplyModal({ open, onClose, castingCall, myProfile }) {
               </div>
             </div>
 
-            <p className="text-xs text-muted-foreground">
-              Your full profile card will be shared automatically. Optionally leave a brief note:
-            </p>
+            {/* Role selector */}
+            <div>
+              <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">Role Applying For *</Label>
+              <Select value={roleAppliedFor} onValueChange={setRoleAppliedFor}>
+                <SelectTrigger className="bg-secondary border-border">
+                  <SelectValue placeholder="Select a role" />
+                </SelectTrigger>
+                <SelectContent className="bg-card border-border">
+                  {roles.map((r) => (
+                    <SelectItem key={r} value={r}>{r}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-            <Textarea
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              rows={3}
-              placeholder="Optional: Why are you right for this role? (Keep it brief.)"
-              className="bg-secondary border-border text-sm resize-none"
-            />
+            {/* Showreel */}
+            <div>
+              <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">Showreel URL</Label>
+              <Input
+                value={showreel}
+                onChange={(e) => setShowreel(e.target.value)}
+                placeholder="https://vimeo.com/yourshowreel"
+                className="bg-secondary border-border text-sm"
+              />
+            </div>
+
+            {/* Note */}
+            <div>
+              <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">Optional Note</Label>
+              <Textarea
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                rows={3}
+                placeholder="Why are you right for this role? (Keep it brief.)"
+                className="bg-secondary border-border text-sm resize-none"
+              />
+            </div>
 
             <div className="flex gap-3">
               <Button variant="outline" className="flex-1 border-border" onClick={handleClose}>Cancel</Button>

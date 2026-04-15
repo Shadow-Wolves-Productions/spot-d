@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useNavigate, Link } from "react-router-dom";
-import { ArrowLeft, Plus, X } from "lucide-react";
+import { ArrowLeft, AlertTriangle, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,12 +13,18 @@ import { toast } from "sonner";
 const PROJECT_TYPES = ["Feature Film", "Short Film", "TV Series", "Commercial", "Music Video", "Documentary", "Web Series", "Theatre", "Other"];
 const EXPERIENCE_LEVELS = ["Any", "Entry", "Mid", "Senior", "Expert"];
 const COMPENSATION = ["Paid", "Deferred", "Credits / Reel", "Union Scale", "TBD"];
-const ROLES = ["Actor", "Director", "Producer", "Cinematographer", "Editor", "Writer", "Sound Designer", "Production Designer", "Costume Designer", "Makeup Artist", "Gaffer", "Grip", "1st AD", "2nd AD", "Stunt Coordinator", "VFX Artist", "Composer", "Other"];
+const ROLES = ["Actor", "Director", "Producer", "Cinematographer", "Editor", "Writer", "Sound Designer", "Production Designer", "Costume Designer", "Makeup Artist", "Gaffer", "Grip", "1st AD", "2nd AD", "Line Producer", "Production Manager", "Script Supervisor", "Stunt Coordinator", "VFX Artist", "Colorist", "Composer", "Sound Mixer", "Boom Operator", "Art Director", "Set Designer", "Props Master", "Location Manager", "Casting Director", "Dialect Coach", "Choreographer", "Other"];
+
+function defaultDeadline() {
+  const d = new Date();
+  d.setDate(d.getDate() + 30);
+  return d.toISOString().slice(0, 10);
+}
 
 export default function CreateCastingCall() {
   const navigate = useNavigate();
   const [saving, setSaving] = useState(false);
-  const [roleInput, setRoleInput] = useState("");
+  const [shootDateWarning, setShootDateWarning] = useState(false);
   const [form, setForm] = useState({
     project_title: "",
     project_type: "",
@@ -31,6 +37,7 @@ export default function CreateCastingCall() {
     compensation: "",
     union_required: false,
     contact_email: "",
+    deadline: defaultDeadline(),
     gender_preference: "",
     age_range_min: "",
     age_range_max: "",
@@ -39,14 +46,23 @@ export default function CreateCastingCall() {
 
   const update = (key, value) => setForm((f) => ({ ...f, [key]: value }));
 
-  const addRole = (role) => {
-    const val = role || roleInput.trim();
-    if (!val || form.roles_needed.includes(val)) return;
-    update("roles_needed", [...form.roles_needed, val]);
-    setRoleInput("");
+  const handleShootDateChange = (val) => {
+    update("shoot_dates", val);
+    if (val) {
+      const entered = new Date(val);
+      setShootDateWarning(entered < new Date());
+    } else {
+      setShootDateWarning(false);
+    }
   };
 
-  const removeRole = (role) => update("roles_needed", form.roles_needed.filter((r) => r !== role));
+  const toggleRole = (role) => {
+    if (form.roles_needed.includes(role)) {
+      update("roles_needed", form.roles_needed.filter((r) => r !== role));
+    } else {
+      update("roles_needed", [...form.roles_needed, role]);
+    }
+  };
 
   const handleSave = async () => {
     if (!form.project_title || !form.description || form.roles_needed.length === 0) {
@@ -55,7 +71,22 @@ export default function CreateCastingCall() {
     }
     setSaving(true);
     const me = await base44.auth.me();
-    await base44.entities.CastingCall.create({ ...form, creator_user_id: me.id });
+    const profiles = await base44.entities.Profile.filter({ user_id: me.id });
+    const creatorProfileId = profiles.length > 0 ? profiles[0].id : undefined;
+
+    const deadline = form.deadline
+      ? new Date(form.deadline).toISOString()
+      : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+
+    await base44.entities.CastingCall.create({
+      ...form,
+      contact_email: form.contact_email.trim(),
+      creator_user_id: me.id,
+      creator_profile_id: creatorProfileId,
+      deadline,
+      view_count: 0,
+      application_count: 0,
+    });
     toast.success("Casting call posted!");
     navigate("/casting");
     setSaving(false);
@@ -103,26 +134,38 @@ export default function CreateCastingCall() {
             <Textarea value={form.description} onChange={(e) => update("description", e.target.value)} rows={4} placeholder="Describe your project, tone, and what you're looking for..." className="bg-secondary border-border" />
           </div>
 
+          {/* Roles multi-select */}
           <div>
             <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">Roles Needed *</Label>
-            <div className="flex gap-2 mb-2">
-              <Select onValueChange={(v) => addRole(v)}>
-                <SelectTrigger className="bg-secondary border-border flex-1"><SelectValue placeholder="Select a role" /></SelectTrigger>
-                <SelectContent className="bg-card border-border max-h-64">
-                  {ROLES.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}
-                </SelectContent>
-              </Select>
-              <Input value={roleInput} onChange={(e) => setRoleInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addRole())} placeholder="Or type custom..." className="bg-secondary border-border flex-1" />
-              <Button type="button" variant="outline" size="icon" onClick={() => addRole()}><Plus className="w-4 h-4" /></Button>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 mb-3">
+              {ROLES.map((r) => {
+                const selected = form.roles_needed.includes(r);
+                return (
+                  <button
+                    key={r}
+                    type="button"
+                    onClick={() => toggleRole(r)}
+                    className={`text-xs px-2.5 py-1.5 rounded-md border text-left transition-all ${
+                      selected
+                        ? "bg-primary/10 border-primary/40 text-primary"
+                        : "bg-secondary border-border text-muted-foreground hover:text-foreground hover:border-border/80"
+                    }`}
+                  >
+                    {selected && <span className="mr-1">✓</span>}{r}
+                  </button>
+                );
+              })}
             </div>
-            <div className="flex flex-wrap gap-1.5">
-              {form.roles_needed.map((r) => (
-                <span key={r} className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-primary/10 text-primary text-xs">
-                  {r}
-                  <button onClick={() => removeRole(r)}><X className="w-3 h-3" /></button>
-                </span>
-              ))}
-            </div>
+            {form.roles_needed.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {form.roles_needed.map((r) => (
+                  <span key={r} className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-primary/10 text-primary text-xs">
+                    {r}
+                    <button onClick={() => toggleRole(r)}><X className="w-3 h-3" /></button>
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="grid sm:grid-cols-2 gap-4">
@@ -132,7 +175,17 @@ export default function CreateCastingCall() {
             </div>
             <div>
               <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">Shoot Dates</Label>
-              <Input value={form.shoot_dates} onChange={(e) => update("shoot_dates", e.target.value)} placeholder="e.g. March 2025 / TBD" className="bg-secondary border-border" />
+              <Input
+                type="date"
+                value={form.shoot_dates}
+                onChange={(e) => handleShootDateChange(e.target.value)}
+                className="bg-secondary border-border"
+              />
+              {shootDateWarning && (
+                <p className="text-xs text-yellow-400 flex items-center gap-1 mt-1">
+                  <AlertTriangle className="w-3 h-3" /> This date is in the past
+                </p>
+              )}
             </div>
           </div>
 
@@ -152,6 +205,28 @@ export default function CreateCastingCall() {
             </div>
           </div>
 
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div>
+              <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">Application Deadline</Label>
+              <Input
+                type="date"
+                value={form.deadline}
+                onChange={(e) => update("deadline", e.target.value)}
+                className="bg-secondary border-border"
+              />
+            </div>
+            <div>
+              <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">Contact Email</Label>
+              <Input
+                value={form.contact_email}
+                onChange={(e) => update("contact_email", e.target.value)}
+                onBlur={(e) => update("contact_email", e.target.value.trim())}
+                placeholder="casting@yourproduction.com"
+                className="bg-secondary border-border"
+              />
+            </div>
+          </div>
+
           <div className="grid sm:grid-cols-3 gap-4">
             <div>
               <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">Gender Preference</Label>
@@ -165,11 +240,6 @@ export default function CreateCastingCall() {
               <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">Age Max</Label>
               <Input type="number" value={form.age_range_max} onChange={(e) => update("age_range_max", e.target.value)} placeholder="40" className="bg-secondary border-border" />
             </div>
-          </div>
-
-          <div>
-            <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">Contact Email</Label>
-            <Input value={form.contact_email} onChange={(e) => update("contact_email", e.target.value)} placeholder="casting@yourproduction.com" className="bg-secondary border-border" />
           </div>
 
           <div className="flex items-center gap-3">
