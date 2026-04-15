@@ -30,21 +30,27 @@ export default function AdminDashboard() {
   }, []);
 
   const fetchData = async () => {
-    const [allUsers, allProfiles, endorsements, castingCalls, castingApps] = await Promise.all([
+    const [allUsers, allProfiles, subs, endorsements, castingCalls, castingApps] = await Promise.all([
       base44.entities.User.list(),
       base44.entities.Profile.list(),
+      base44.entities.Subscription.list(),
       base44.entities.Endorsement.list(),
       base44.entities.CastingCall.list(),
       base44.entities.CastingApplication.list(),
     ]);
+    // Attach subscription to each profile for easy lookup
+    const profilesWithSubs = allProfiles.map((p) => ({
+      ...p,
+      _sub: subs.find((s) => s.user_id === p.user_id && s.status === "active"),
+    }));
     setUsers(allUsers);
-    setProfiles(allProfiles);
+    setProfiles(profilesWithSubs);
     setStats({
       users: allUsers.length,
       profiles: allProfiles.length,
       verified_email: allProfiles.filter((p) => p.email_verified).length,
       verified_phone: allProfiles.filter((p) => p.phone_verified).length,
-      pro: allProfiles.filter((p) => p.is_boosted).length,
+      pro: subs.filter((s) => s.status === "active" && s.tier === "pro").length,
       boosted: allProfiles.filter((p) => p.is_boosted).length,
       endorsements: endorsements.length,
       casting_calls: castingCalls.length,
@@ -65,30 +71,30 @@ export default function AdminDashboard() {
   };
 
   const togglePro = async (profile) => {
-    // PRO is now managed via Subscription entity
-    const subs = await base44.entities.Subscription.filter({ user_id: profile.user_id, status: "active" });
-    if (subs.length > 0) {
-      const newTier = subs[0].tier === "pro" ? "free" : "pro";
-      await base44.entities.Subscription.update(subs[0].id, {
-        tier: newTier,
-        contact_reveal_limit: newTier === "pro" ? 20 : 5,
-        casting_call_limit: newTier === "pro" ? 5 : 1,
-        can_boost: newTier !== "free",
-      });
-      toast.success(`Tier changed to ${newTier}`);
-    } else {
-      await base44.entities.Subscription.create({
-        user_id: profile.user_id,
-        tier: "pro",
-        status: "active",
-        started_at: new Date().toISOString(),
-        contact_reveal_limit: 20,
-        casting_call_limit: 5,
-        can_boost: true,
-      });
-      toast.success("PRO subscription created");
-    }
-    await fetchData();
+   // PRO is now managed via Subscription entity
+   const subs = await base44.entities.Subscription.filter({ user_id: profile.user_id, status: "active" });
+   if (subs.length > 0) {
+     const newTier = subs[0].tier === "pro" ? "free" : "pro";
+     await base44.entities.Subscription.update(subs[0].id, {
+       tier: newTier,
+       contact_reveal_limit: newTier === "pro" ? 20 : 5,
+       casting_call_limit: newTier === "pro" ? 5 : 1,
+       can_boost: newTier !== "free",
+     });
+     toast.success(`Tier changed to ${newTier}`);
+   } else {
+     await base44.entities.Subscription.create({
+       user_id: profile.user_id,
+       tier: "pro",
+       status: "active",
+       started_at: new Date().toISOString(),
+       contact_reveal_limit: 20,
+       casting_call_limit: 5,
+       can_boost: true,
+     });
+     toast.success("PRO subscription created");
+   }
+   await fetchData();
   };
 
   const toggleBoost = async (profile) => {
@@ -264,9 +270,14 @@ export default function AdminDashboard() {
                         <Film className="w-3 h-3 mr-1" /> Verify IMDb
                       </Button>
                     )}
-                    <Button size="sm" variant="outline" className="text-xs h-7 border-primary/30 text-primary"
-                      onClick={() => togglePro(p)}>
-                      <Crown className="w-3 h-3 mr-1" /> Toggle PRO
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      className={`text-xs h-7 ${p._sub?.tier === "pro" ? "border-primary/60 bg-primary/10 text-primary" : "border-primary/30 text-primary/60"}`}
+                      onClick={() => togglePro(p)}
+                    >
+                      <Crown className="w-3 h-3 mr-1" /> 
+                      {p._sub?.tier === "pro" ? "PRO ✓" : "Free"}
                     </Button>
                     <Button size="sm" variant="outline" className={`text-xs h-7 ${p.is_boosted ? "border-destructive/40 text-destructive" : "border-yellow-500/30 text-yellow-400"}`}
                       onClick={() => toggleBoost(p)}>
