@@ -14,7 +14,7 @@ export default function ProfileUrlEditor({ profile, onUpdated }) {
   const [saving, setSaving] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  const currentUrl = `spotd.app/u/${profile?.profile_slug || profile?.id || ""}`;
+  const currentUrl = `getspotd.app/u/${profile?.profile_slug || profile?.id || ""}`;
 
   const handleSave = async () => {
     const cleaned = slug.trim().toLowerCase();
@@ -40,13 +40,13 @@ export default function ProfileUrlEditor({ profile, onUpdated }) {
     }
 
     await base44.entities.Profile.update(profile.id, { profile_slug: cleaned });
-    toast.success(`Profile URL updated — share it: spotd.app/u/${cleaned}`);
+    toast.success(`Profile URL updated — share it: getspotd.app/u/${cleaned}`);
     onUpdated && onUpdated(cleaned);
     setSaving(false);
   };
 
   const handleCopy = async () => {
-    const url = `https://spotd.app/u/${profile?.profile_slug || profile?.id}`;
+    const url = `https://getspotd.app/u/${profile?.profile_slug || profile?.id}`;
     try { await navigator.clipboard.writeText(url); } catch { /* fallback */ }
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -56,7 +56,7 @@ export default function ProfileUrlEditor({ profile, onUpdated }) {
     <div className="space-y-3">
       <Label className="text-xs uppercase tracking-wider text-muted-foreground block">Profile URL</Label>
       <div className="flex items-center gap-2 p-3 bg-secondary/40 rounded-lg text-xs text-muted-foreground">
-        <span className="text-muted-foreground/60">spotd.app/u/</span>
+        <span className="text-muted-foreground/60">getspotd.app/u/</span>
         <span className="text-foreground font-medium">{profile?.profile_slug || profile?.id}</span>
         <button onClick={handleCopy} className="ml-auto text-muted-foreground hover:text-primary transition-colors">
           {copied ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Copy className="w-3.5 h-3.5" />}
@@ -64,7 +64,7 @@ export default function ProfileUrlEditor({ profile, onUpdated }) {
       </div>
       <div className="flex gap-2">
         <div className="flex-1 relative">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground/60 pointer-events-none">spotd.app/u/</span>
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground/60 pointer-events-none">getspotd.app/u/</span>
           <Input
             value={slug}
             onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, ""))}

@@ -285,7 +285,7 @@ export default function Layout() {
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
             <div>
               <SpotdLogo />
-              <p className="text-xs text-muted-foreground mt-2">The indie film directory.</p>
+              <p className="text-xs text-muted-foreground mt-2">getspotd.app — The indie film directory.</p>
             </div>
             <div className="flex items-center gap-6 text-sm text-muted-foreground">
               <Link to="/search" className="hover:text-foreground transition-colors">Directory</Link>

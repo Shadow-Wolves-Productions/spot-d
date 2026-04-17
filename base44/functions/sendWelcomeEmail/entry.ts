@@ -111,7 +111,7 @@ Deno.serve(async (req) => {
             <td style="padding:28px 0;border-bottom:1px solid #2A2A2A;">
               <p style="margin:0 0 8px 0;font-size:14px;font-weight:600;color:#888888;text-transform:uppercase;letter-spacing:0.08em;">Access your profile</p>
               <p style="margin:0 0 16px 0;font-size:15px;color:#cccccc;line-height:1.6;">
-                Head to <a href="https://spotd.app/login" style="color:#E8FC6C;text-decoration:none;font-weight:600;">spotd.app/login</a> and enter your email address. We'll send you a one-time code to sign in — no password needed.
+                Head to <a href="https://getspotd.app/login" style="color:#E8FC6C;text-decoration:none;font-weight:600;">getspotd.app/login</a> and enter your email address. We'll send you a one-time code to sign in — no password needed.
               </p>
             </td>
           </tr>
@@ -162,7 +162,7 @@ Deno.serve(async (req) => {
           <!-- CTA Button -->
           <tr>
             <td style="padding-bottom:48px;">
-              <a href="https://spotd.app/u/${profileSlug}" style="display:inline-block;background-color:#E8FC6C;color:#0D0D0D;text-decoration:none;font-family:'Sora',Arial,sans-serif;font-size:15px;font-weight:700;padding:14px 32px;border-radius:8px;letter-spacing:-0.2px;">
+              <a href="https://getspotd.app/u/${profileSlug}" style="display:inline-block;background-color:#E8FC6C;color:#0D0D0D;text-decoration:none;font-family:'Sora',Arial,sans-serif;font-size:15px;font-weight:700;padding:14px 32px;border-radius:8px;letter-spacing:-0.2px;">
                 View your profile →
               </a>
             </td>
@@ -173,7 +173,7 @@ Deno.serve(async (req) => {
             <td style="border-top:1px solid #2A2A2A;padding-top:24px;">
               <p style="margin:0;font-size:12px;color:#555555;line-height:1.6;">
                 You're receiving this because your profile was created on Spot'd.<br/>
-                <a href="https://spotd.app" style="color:#555555;">spotd.app</a>
+                <a href="https://getspotd.app" style="color:#555555;">getspotd.app</a>
               </p>
             </td>
           </tr>
