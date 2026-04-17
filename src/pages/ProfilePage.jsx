@@ -20,7 +20,6 @@ export default function ProfilePage() {
   const [myProfile, setMyProfile] = useState(null);
   const [similarProfiles, setSimilarProfiles] = useState([]);
   const [isSaved, setIsSaved] = useState(false);
-  const [recommendOpen, setRecommendOpen] = useState(false);
   const [spotModalOpen, setSpotModalOpen] = useState(false);
   const [hasSpotted, setHasSpotted] = useState(false);
   const [spotting, setSpotting] = useState(false);
@@ -180,7 +179,7 @@ export default function ProfilePage() {
 
   return (
     <div className="pb-20">
-      <RecommendModal profile={profile} user={user} open={recommendOpen} onClose={() => setRecommendOpen(false)} />
+
       {myProfile && myProfile.id !== profile?.id && (
         <SpotRequestModal
           open={spotModalOpen}
@@ -271,7 +270,7 @@ export default function ProfilePage() {
             <CreditsSection profile={profile} />
             <PortfolioSection profile={profile} />
             <SpottedWithSection profileId={profile.id} />
-            <EndorsementsSection profileId={profile.id} />
+            <SpotsSection profileId={profile.id} />
           </div>
 
           {/* Right sticky panel */}
