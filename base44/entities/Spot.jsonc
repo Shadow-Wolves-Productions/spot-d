@@ -1,0 +1,28 @@
+{
+  "name": "Spot",
+  "type": "object",
+  "properties": {
+    "spotter_user_id": {
+      "type": "string",
+      "description": "User ID of who gave the spot"
+    },
+    "spotter_profile_id": {
+      "type": "string",
+      "description": "Profile ID of who gave the spot"
+    },
+    "spotted_profile_id": {
+      "type": "string",
+      "description": "Profile ID of who received the spot"
+    },
+    "spotted_user_id": {
+      "type": "string",
+      "description": "User ID of who received the spot"
+    }
+  },
+  "required": [
+    "spotter_user_id",
+    "spotter_profile_id",
+    "spotted_profile_id",
+    "spotted_user_id"
+  ]
+}

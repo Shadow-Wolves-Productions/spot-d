@@ -22,7 +22,9 @@ export function PercentileBadge({ percentile }) {
   );
 }
 
-export default function SpotScoreBreakdown({ profile, endorsementCount = 0, savedByCount = 0, revealedByCount = 0, confirmedSpottedWith = 0 }) {
+export default function SpotScoreBreakdown({ profile, endorsementCount = 0, spotCount, savedByCount = 0, revealedByCount = 0, confirmedSpottedWith = 0 }) {
+  // spotCount replaces endorsementCount when provided (new Spot entity)
+  const sc = spotCount !== undefined ? spotCount : endorsementCount;
   const p = profile;
 
   const items = [
@@ -36,13 +38,13 @@ export default function SpotScoreBreakdown({ profile, endorsementCount = 0, save
     // Verification
     { label: "Email verified", earned: !!p.email_verified, points: 7, tip: "Verify your email address" },
     { label: "Phone verified", earned: !!p.phone_verified, points: 8, tip: "Verify your phone number" },
-    // Endorsements
+    // Spots
     {
-      label: `Endorsements (${endorsementCount})`,
-      earned: endorsementCount >= 1,
-      points: endorsementCount >= 10 ? 25 : endorsementCount >= 6 ? 20 : endorsementCount >= 3 ? 14 : endorsementCount >= 1 ? 8 : 0,
+      label: `Spots received (${sc})`,
+      earned: sc >= 1,
+      points: sc >= 10 ? 25 : sc >= 6 ? 20 : sc >= 3 ? 14 : sc >= 1 ? 8 : 0,
       maxPoints: 25,
-      tip: endorsementCount === 0 ? "Ask colleagues to endorse you" : endorsementCount < 10 ? `Get ${10 - endorsementCount} more endorsements for max points` : null,
+      tip: sc === 0 ? "Get spotted by other users to boost your score" : sc < 10 ? `Get ${10 - sc} more spots for max points` : null,
     },
     // Social
     {

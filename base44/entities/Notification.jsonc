@@ -17,7 +17,8 @@
         "spot_accepted",
         "spot_declined",
         "new_application",
-        "spotted_with"
+        "spotted_with",
+        "spotted"
       ],
       "default": "role_alert"
     },

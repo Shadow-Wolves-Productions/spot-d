@@ -41,7 +41,7 @@ export default function Dashboard() {
         const p = profiles[0];
         setProfile(p);
 
-        const spots = await base44.entities.Endorsement.filter({ profile_id: p.id });
+        const spots = await base44.entities.Spot.filter({ spotted_profile_id: p.id });
         setSpotsCount(spots.length);
 
         const savedBy = await base44.entities.SavedProfile.filter({ profile_id: p.id });
@@ -178,7 +178,7 @@ export default function Dashboard() {
                 </h3>
                 <SpotScoreBreakdown
                   profile={profile}
-                  endorsementCount={spotsCount}
+                  spotCount={spotsCount}
                   savedByCount={savedByCount}
                   revealedByCount={revealedByCount}
                 />

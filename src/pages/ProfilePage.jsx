@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
-import { Bookmark, Share2, ArrowLeft, Zap } from "lucide-react";
+import { Bookmark, Share2, ArrowLeft, Zap, Check } from "lucide-react";
 import RecommendModal from "../components/profile/RecommendModal";
 import { Button } from "@/components/ui/button";
 import ProfileHero from "../components/profile/ProfileHero";
@@ -23,6 +23,8 @@ export default function ProfilePage() {
   const [isSaved, setIsSaved] = useState(false);
   const [recommendOpen, setRecommendOpen] = useState(false);
   const [spotModalOpen, setSpotModalOpen] = useState(false);
+  const [hasSpotted, setHasSpotted] = useState(false);
+  const [spotting, setSpotting] = useState(false);
 
   const profileParam = window.location.pathname.split("/profile/")[1];
   const isMongoId = /^[a-f0-9]{24}$/.test(profileParam);
@@ -42,6 +44,12 @@ export default function ProfilePage() {
           profile_id: profileParam,
         });
         setIsSaved(saved.length > 0);
+
+        const existingSpot = await base44.entities.Spot.filter({
+          spotter_user_id: me.id,
+          spotted_profile_id: profileParam,
+        });
+        setHasSpotted(existingSpot.length > 0);
       }
 
       const profiles = isMongoId
@@ -81,6 +89,41 @@ export default function ProfilePage() {
         saved_at: new Date().toISOString(),
       });
     }
+  };
+
+  const handleSpot = async () => {
+    if (!user) { base44.auth.redirectToLogin(); return; }
+    if (hasSpotted || spotting) return;
+    setSpotting(true);
+    // Check for duplicate
+    const existing = await base44.entities.Spot.filter({ spotter_user_id: user.id, spotted_profile_id: profile.id });
+    if (existing.length > 0) {
+      setHasSpotted(true);
+      setSpotting(false);
+      return;
+    }
+    await base44.entities.Spot.create({
+      spotter_user_id: user.id,
+      spotter_profile_id: myProfile?.id || "",
+      spotted_profile_id: profile.id,
+      spotted_user_id: profile.user_id,
+    });
+    // Notify the spotted user
+    const spotterName = myProfile?.preferred_name || myProfile?.full_name || user.full_name;
+    const spotterSlug = myProfile?.profile_slug || myProfile?.id;
+    await base44.entities.Notification.create({
+      user_id: profile.user_id,
+      type: "spotted",
+      title: `${spotterName} spotted you!`,
+      body: "Your SpotScore has been updated.",
+      action_url: spotterSlug ? `/profile/${spotterSlug}` : "/search",
+      is_read: false,
+    });
+    // Trigger SpotScore recalculation
+    base44.functions.invoke("recalculateSpotScore", { profile_id: profile.id }).catch(() => {});
+    setHasSpotted(true);
+    setSpotting(false);
+    toast.success("Spotted! ⚡");
   };
 
   const handleCopySpotMe = async () => {
@@ -159,13 +202,29 @@ export default function ProfilePage() {
           </Link>
           <div className="flex-1" />
           {user && myProfile?.id !== profile?.id && (
-            <Button
-              size="sm"
-              className="bg-primary text-primary-foreground font-semibold"
-              onClick={() => setSpotModalOpen(true)}
-            >
-              <Zap className="w-4 h-4 mr-1" /> Spot them
-            </Button>
+            <>
+              <Button
+                size="sm"
+                className={hasSpotted ? "bg-secondary text-muted-foreground cursor-default" : "bg-primary text-primary-foreground font-semibold"}
+                onClick={hasSpotted ? undefined : handleSpot}
+                disabled={spotting}
+              >
+                {spotting
+                  ? <div className="w-3.5 h-3.5 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
+                  : hasSpotted
+                  ? <><Check className="w-4 h-4 mr-1" /> Spotted</>
+                  : <><Zap className="w-4 h-4 mr-1" /> Spot them</>
+                }
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-border text-xs"
+                onClick={() => setSpotModalOpen(true)}
+              >
+                Request endorsement
+              </Button>
+            </>
           )}
           {user && myProfile?.id === profile?.id && (
             <Button variant="outline" size="sm" className="border-border" onClick={handleCopySpotMe}>

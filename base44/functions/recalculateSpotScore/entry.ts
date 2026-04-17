@@ -48,8 +48,8 @@ async function recalculateForProfile(base44, profileId) {
 
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
-  const [endorsements, savedBy, revealedBy, castingApps, castingCalls, users, spottedA, spottedB] = await Promise.all([
-    base44.asServiceRole.entities.Endorsement.filter({ profile_id: profileId }),
+  const [spots, savedBy, revealedBy, castingApps, castingCalls, users, spottedA, spottedB] = await Promise.all([
+    base44.asServiceRole.entities.Spot.filter({ spotted_profile_id: profileId }),
     base44.asServiceRole.entities.SavedProfile.filter({ profile_id: profileId }),
     base44.asServiceRole.entities.ContactReveal.filter({ profile_id: profileId }),
     base44.asServiceRole.entities.CastingApplication.filter({ applicant_user_id: profile.user_id }),
@@ -64,7 +64,7 @@ async function recalculateForProfile(base44, profileId) {
 
   const newScore = calculateSpotScore(
     profile,
-    endorsements.length,
+    spots.length,
     savedBy.length,
     revealedBy.length,
     recentLogin,

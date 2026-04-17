@@ -64,7 +64,7 @@ export default function SpotRequestModal({ open, onClose, targetProfile, myProfi
       <DialogContent className="bg-card border-border max-w-md">
         <DialogHeader>
           <DialogTitle className="font-display text-lg">
-            Spot {targetProfile?.preferred_name || targetProfile?.full_name}
+            Request Endorsement from {targetProfile?.preferred_name || targetProfile?.full_name}
           </DialogTitle>
         </DialogHeader>
         <p className="text-sm text-muted-foreground">
@@ -103,7 +103,7 @@ export default function SpotRequestModal({ open, onClose, targetProfile, myProfi
           >
             {sending
               ? <div className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
-              : <><Zap className="w-4 h-4 mr-1" /> Send Spot Request</>
+              : <><Zap className="w-4 h-4 mr-1" /> Send Endorsement Request</>
             }
           </Button>
         </div>

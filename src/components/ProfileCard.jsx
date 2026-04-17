@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { MapPin, Crown, CheckCircle, Film, Bookmark, Info } from "lucide-react";
+import { MapPin, Crown, CheckCircle, Film, Bookmark, Zap } from "lucide-react";
 import { motion } from "framer-motion";
 import { PercentileBadge } from "./SpotScoreBreakdown";
 
@@ -9,7 +9,7 @@ const TIER_BADGE = {
   elite:   { label: "ELITE",   bg: "#E8FC6C", color: "#0D0D0D" },
 };
 
-export default function ProfileCard({ profile, subscription, onSave, isSaved, index = 0, featured = false }) {
+export default function ProfileCard({ profile, subscription, onSave, isSaved, index = 0, featured = false, spotCount }) {
   const availabilityStyle = profile.availability_status === "Available Now"
     ? { background: "#E8FC6C", color: "#0D0D0D", label: "Available now" }
     : profile.availability_status === "Available Soon"
@@ -107,6 +107,12 @@ export default function ProfileCard({ profile, subscription, onSave, isSaved, in
                 </span>
               )}
               <div className="flex items-center gap-1.5">
+                {spotCount > 0 && (
+                  <div className="flex items-center gap-1 px-1.5 py-0.5 rounded" style={{ background: "rgba(255,92,53,0.15)" }} title={`${spotCount} spot${spotCount !== 1 ? "s" : ""}`}>
+                    <Zap className="w-2.5 h-2.5" style={{ color: "#FF5C35" }} />
+                    <span className="text-[10px] font-bold" style={{ color: "#FF5C35" }}>{spotCount}</span>
+                  </div>
+                )}
                 {profile.spot_score > 0 && (
                   <div className="flex items-center gap-1" title="Spot Score — profile quality ranking out of 100">
                     <span className="font-display font-semibold text-sm text-primary">{profile.spot_score}</span>

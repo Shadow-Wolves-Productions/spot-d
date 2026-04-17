@@ -20,6 +20,7 @@ const SORT_OPTIONS = [
 
 export default function SearchDirectory() {
   const [profiles, setProfiles] = useState([]);
+  const [spotCountMap, setSpotCountMap] = useState({});
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
   const [myProfile, setMyProfile] = useState(null);
@@ -154,6 +155,15 @@ export default function SearchDirectory() {
     }
 
     setProfiles(data);
+
+    // Build spot count map for visible profiles
+    if (data.length > 0) {
+      const allSpots = await base44.entities.Spot.list("-created_date", 500);
+      const countMap = {};
+      allSpots.forEach((s) => { countMap[s.spotted_profile_id] = (countMap[s.spotted_profile_id] || 0) + 1; });
+      setSpotCountMap(countMap);
+    }
+
     setLoading(false);
   }, [filters, sort, searchQuery, proximity]);
 
@@ -327,6 +337,7 @@ export default function SearchDirectory() {
                      index={i}
                      onSave={handleSave}
                      isSaved={savedIds.has(profile.id)}
+                     spotCount={spotCountMap[profile.id] || 0}
                    />
                    {profile._distKm !== undefined && (
                      <div className="absolute top-3 left-3 px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold bg-primary text-primary-foreground z-10">
