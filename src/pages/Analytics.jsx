@@ -234,7 +234,7 @@ export default function Analytics() {
             Profile Views &amp; Saves
           </h3>
           <ResponsiveContainer width="100%" height={220}>
-            <AreaChart data={slicedViews} margin={{ top: 4, right: 8, bottom: 0, left: -20 }}>
+            <AreaChart data={viewData} margin={{ top: 4, right: 8, bottom: 0, left: -20 }}>
               <defs>
                 <linearGradient id="viewGrad" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.2} />
