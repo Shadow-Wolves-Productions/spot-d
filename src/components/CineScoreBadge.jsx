@@ -42,7 +42,7 @@ export default function CineScoreBadge({ score, size = "md", showLabel = true })
             </div>
             {showLabel && (
               <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
-                CineScore
+                SpotScore
               </span>
             )}
           </div>

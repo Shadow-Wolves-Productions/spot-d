@@ -20,7 +20,7 @@
     },
     "linked_profile_id": {
       "type": "string",
-      "description": "If the person has a CineConnect profile"
+      "description": "If the person has a Spot'd profile"
     },
     "is_confirmed": {
       "type": "boolean",
