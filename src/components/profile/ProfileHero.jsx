@@ -33,7 +33,7 @@ export default function ProfileHero({ profile }) {
         <div className="flex flex-col lg:flex-row gap-8 items-start">
           {/* Photo */}
           <div className="relative flex-shrink-0">
-            <div className="w-36 h-36 sm:w-44 sm:h-44 rounded-2xl overflow-hidden border-2 border-border/60 shadow-2xl shadow-black/30">
+            <div className="w-44 h-56 sm:w-56 sm:h-72 rounded-2xl overflow-hidden border-2 border-border/60 shadow-2xl shadow-black/30">
               {profile.profile_photo ? (
                 <img src={profile.profile_photo} alt={profile.full_name} className="w-full h-full object-cover" />
               ) : (
@@ -125,35 +125,23 @@ export default function ProfileHero({ profile }) {
               </div>
             )}
 
-            {/* Verification icons */}
-            <div className="flex items-center gap-2 mt-4">
-              {profile.email_verified && (
-                <span className="flex items-center gap-1 text-xs text-green-400">
-                  <CheckCircle className="w-3.5 h-3.5" /> Email
-                </span>
-              )}
-              {profile.phone_verified && (
-                <span className="flex items-center gap-1 text-xs text-blue-400">
-                  <CheckCircle className="w-3.5 h-3.5" /> Phone
-                </span>
-              )}
-              {profile.imdb_verified && (
-                <span className="flex items-center gap-1 text-xs text-primary">
-                  <CheckCircle className="w-3.5 h-3.5" /> IMDb
-                </span>
-              )}
-              {profile.union_verified && (
-                <span className="flex items-center gap-1 text-xs text-purple-400">
-                  <CheckCircle className="w-3.5 h-3.5" /> Union
-                </span>
-              )}
-            </div>
+            {/* Unified verification badge */}
+            {(profile.email_verified || profile.phone_verified || profile.imdb_verified || profile.union_verified) && (
+              <div className="flex items-center gap-1.5 mt-4">
+                <CheckCircle className="w-4 h-4 text-primary" />
+                <span className="text-sm font-semibold text-primary">Verified</span>
+              </div>
+            )}
           </div>
 
           {/* SpotScore */}
-          <div className="flex-shrink-0 flex flex-col items-center gap-1">
-            <SpotScoreBadge score={profile.spot_score || 0} size="lg" />
-            <span className="text-[10px] uppercase tracking-[0.08em] font-mono text-muted-foreground">SpotScore</span>
+          <div className="flex-shrink-0 flex flex-col items-center gap-2">
+            <div className="flex flex-col items-center justify-center rounded-2xl border border-primary/30 px-6 py-5" style={{ background: "rgba(232,252,108,0.06)", minWidth: 100 }}>
+              <span className="font-display font-bold text-primary" style={{ fontSize: 52, lineHeight: 1, color: "hsl(var(--primary))" }}>
+                {profile.spot_score || 0}
+              </span>
+              <span className="text-[10px] uppercase tracking-[0.12em] font-mono text-muted-foreground mt-1">SpotScore</span>
+            </div>
           </div>
         </div>
       </div>

@@ -3,6 +3,17 @@ import { MapPin, Crown, CheckCircle, Film, Bookmark, Zap } from "lucide-react";
 import { motion } from "framer-motion";
 import { PercentileBadge } from "./SpotScoreBreakdown";
 
+// Score dot colour based on score value
+function ScoreDot({ score }) {
+  const color = score >= 80 ? "#E8FC6C" : score >= 55 ? "#FF5C35" : "#888";
+  return (
+    <div className="flex items-center gap-1" title={`SpotScore: ${score}`}>
+      <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: color }} />
+      <span className="font-display font-bold text-sm" style={{ color }}>{score}</span>
+    </div>
+  );
+}
+
 const TIER_BADGE = {
   pro:     { label: "PRO",     bg: "#FF5C35", color: "#fff" },
   founder: { label: "FOUNDER", bg: "#E8FC6C", color: "#0D0D0D" },
@@ -58,14 +69,11 @@ export default function ProfileCard({ profile, subscription, onSave, isSaved, in
                   </span>
                 )}
               </div>
-              {onSave && !profile._isOwnProfile && (
-                <button
-                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); onSave(profile.id); }}
-                  className="w-7 h-7 rounded-full flex items-center justify-center transition-colors"
-                  style={{ background: "rgba(0,0,0,0.6)" }}
-                >
-                  <Bookmark className={`w-3.5 h-3.5 ${isSaved ? "fill-primary text-primary" : "text-white"}`} />
-                </button>
+              {/* SpotScore dot in top-right of headshot */}
+              {profile.spot_score > 0 && (
+                <div className="px-1.5 py-0.5 rounded-md flex items-center gap-1" style={{ background: "rgba(0,0,0,0.65)" }}>
+                  <ScoreDot score={profile.spot_score} />
+                </div>
               )}
             </div>
 
@@ -113,37 +121,43 @@ export default function ProfileCard({ profile, subscription, onSave, isSaved, in
                     <span className="text-[10px] font-bold" style={{ color: "#FF5C35" }}>{spotCount}</span>
                   </div>
                 )}
-                {profile.spot_score > 0 && (
-                  <div className="flex items-center gap-1" title="Spot Score — profile quality ranking out of 100">
-                    <span className="font-display font-semibold text-sm text-primary">{profile.spot_score}</span>
-                    <span className="text-[9px] uppercase tracking-[0.08em]" style={{ color: "#888" }}>/100</span>
-                  </div>
-                )}
                 {profile.spot_percentile >= 75 && (
                   <PercentileBadge percentile={profile.spot_percentile} />
                 )}
               </div>
             </div>
 
-            {/* Verification row */}
+            {/* Bottom row: bookmark + verified + imdb */}
             <div className="flex items-center justify-between pt-0.5">
-              <div className="flex items-center gap-1.5">
-                {profile.email_verified && <CheckCircle className="w-3 h-3 text-green-500" title="Email verified" />}
-                {profile.phone_verified && <CheckCircle className="w-3 h-3" style={{ color: "#FF5C35" }} title="Phone verified" />}
-                {profile.imdb_verified && <CheckCircle className="w-3 h-3 text-primary" title="IMDb verified" />}
+              <div className="flex items-center gap-2">
+                {(profile.email_verified || profile.phone_verified || profile.imdb_verified || profile.union_verified) && (
+                  <div className="flex items-center gap-1">
+                    <CheckCircle className="w-3 h-3 text-primary" />
+                    <span className="text-[9px] font-bold uppercase tracking-[0.06em] text-primary">Verified</span>
+                  </div>
+                )}
+                {profile.imdb_link && (
+                  <a
+                    href={profile.imdb_link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[9px] font-bold hover:opacity-80 transition-opacity"
+                    style={{ background: "#F5C518", color: "#0D0D0D" }}
+                    title="View on IMDb"
+                  >
+                    <Film className="w-2.5 h-2.5" /> IMDb
+                  </a>
+                )}
               </div>
-              {profile.imdb_link && (
-                <a
-                  href={profile.imdb_link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={(e) => e.stopPropagation()}
-                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[9px] font-bold hover:opacity-80 transition-opacity"
-                  style={{ background: "#F5C518", color: "#0D0D0D" }}
-                  title="View on IMDb"
+              {onSave && !profile._isOwnProfile && (
+                <button
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); onSave(profile.id); }}
+                  className="w-6 h-6 rounded-full flex items-center justify-center transition-colors"
+                  style={{ background: "rgba(255,255,255,0.08)" }}
                 >
-                  <Film className="w-2.5 h-2.5" /> IMDb
-                </a>
+                  <Bookmark className={`w-3 h-3 ${isSaved ? "fill-primary text-primary" : "text-muted-foreground"}`} />
+                </button>
               )}
             </div>
           </div>

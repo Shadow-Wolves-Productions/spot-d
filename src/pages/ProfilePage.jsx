@@ -233,9 +233,6 @@ export default function ProfilePage() {
             <Bookmark className={`w-4 h-4 mr-1 ${isSaved ? "fill-primary text-primary" : ""}`} />
             {isSaved ? "Saved" : "Save"}
           </Button>
-          <Button variant="outline" size="sm" onClick={handleShare} className="border-border hover:border-primary/20">
-            <Share2 className="w-4 h-4 mr-1" /> Share
-          </Button>
         </div>
       </div>
 
