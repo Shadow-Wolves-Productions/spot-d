@@ -71,10 +71,14 @@ export default function AdminDashboard() {
   };
 
   const togglePro = async (profile) => {
-   // PRO is now managed via Subscription entity
    const subs = await base44.entities.Subscription.filter({ user_id: profile.user_id, status: "active" });
    if (subs.length > 0) {
-     const newTier = subs[0].tier === "pro" ? "free" : "pro";
+     const currentTier = subs[0].tier;
+     if (currentTier === "founder" || currentTier === "elite") {
+       toast.error("Protected tier — cannot override founder or elite accounts via admin toggle.");
+       return;
+     }
+     const newTier = currentTier === "pro" ? "free" : "pro";
      await base44.entities.Subscription.update(subs[0].id, {
        tier: newTier,
        contact_reveal_limit: newTier === "pro" ? 20 : 5,

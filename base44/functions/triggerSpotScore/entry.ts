@@ -3,7 +3,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 // Automation-triggered score recalculation — receives entity event payload
 // Resolves profile_id from various entity types and calls recalculateSpotScore logic inline
 
-function calculateSpotScore(profile, endorsementCount, savedByCount, revealedByCount, recentLogin, appliedToCasting, postedCasting, confirmedSpottedWith = 0) {
+function calculateSpotScore(profile, spotCount, savedByCount, revealedByCount, recentLogin, appliedToCasting, postedCasting, confirmedSpottedWith = 0) {
   let score = 0;
   if (profile.profile_photo) score += 5;
   if (profile.bio) score += 5;
@@ -13,10 +13,10 @@ function calculateSpotScore(profile, endorsementCount, savedByCount, revealedByC
   if (profile.showreel_link) score += 5;
   if (profile.email_verified) score += 7;
   if (profile.phone_verified) score += 8;
-  if (endorsementCount >= 10) score += 25;
-  else if (endorsementCount >= 6) score += 20;
-  else if (endorsementCount >= 3) score += 14;
-  else if (endorsementCount >= 1) score += 8;
+  if (spotCount >= 10) score += 25;
+  else if (spotCount >= 6) score += 20;
+  else if (spotCount >= 3) score += 14;
+  else if (spotCount >= 1) score += 8;
   if (savedByCount >= 15) score += 17;
   else if (savedByCount >= 5) score += 12;
   else if (savedByCount >= 1) score += 5;
@@ -40,8 +40,8 @@ async function recalculateForProfile(base44, profileId) {
   const profile = profiles[0];
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
-  const [endorsements, savedBy, revealedBy, castingApps, castingCalls, users, spottedA, spottedB] = await Promise.all([
-    base44.asServiceRole.entities.Endorsement.filter({ profile_id: profileId }),
+  const [spots, savedBy, revealedBy, castingApps, castingCalls, users, spottedA, spottedB] = await Promise.all([
+    base44.asServiceRole.entities.Spot.filter({ spotted_profile_id: profileId }),
     base44.asServiceRole.entities.SavedProfile.filter({ profile_id: profileId }),
     base44.asServiceRole.entities.ContactReveal.filter({ profile_id: profileId }),
     base44.asServiceRole.entities.CastingApplication.filter({ applicant_user_id: profile.user_id }),
@@ -53,7 +53,7 @@ async function recalculateForProfile(base44, profileId) {
 
   const recentLogin = users.length > 0 && users[0].updated_date > sevenDaysAgo;
   const confirmedSpottedWith = [...spottedA, ...spottedB].filter(s => s.confirmed).length;
-  const newScore = calculateSpotScore(profile, endorsements.length, savedBy.length, revealedBy.length, recentLogin, castingApps.length > 0, castingCalls.length > 0, confirmedSpottedWith);
+  const newScore = calculateSpotScore(profile, spots.length, savedBy.length, revealedBy.length, recentLogin, castingApps.length > 0, castingCalls.length > 0, confirmedSpottedWith);
   await base44.asServiceRole.entities.Profile.update(profileId, { spot_score: newScore });
 }
 
@@ -78,8 +78,8 @@ Deno.serve(async (req) => {
 
   if (entityName === 'Profile') {
     profileId = event.entity_id;
-  } else if (entityName === 'Endorsement' && data?.profile_id) {
-    profileId = data.profile_id;
+  } else if (entityName === 'Spot' && data?.spotted_profile_id) {
+    profileId = data.spotted_profile_id;
   } else if (entityName === 'SavedProfile' && data?.profile_id) {
     profileId = data.profile_id;
   } else if (entityName === 'ContactReveal' && data?.profile_id) {

@@ -59,7 +59,7 @@ export default function HeroSection() {
              <div className="mt-12 flex items-center gap-10">
                {[
                  { label: "Roles covered", value: "30+" },
-                 { label: "Verified profiles only", value: "✓" },
+                 { label: "Verified profiles", value: "✓" },
                  { label: "Direct contact", value: "Instant" },
                ].map((stat) => (
                  <div key={stat.label}>
