@@ -120,11 +120,25 @@ export default function ProfileCard({ profile, subscription, onSave, isSaved, in
             </div>
 
             {/* Verification row */}
-            <div className="flex items-center gap-1.5 pt-0.5">
-              {profile.email_verified && <CheckCircle className="w-3 h-3 text-green-500" title="Email verified" />}
-              {profile.phone_verified && <CheckCircle className="w-3 h-3" style={{ color: "#FF5C35" }} title="Phone verified" />}
-              {profile.imdb_verified && <CheckCircle className="w-3 h-3 text-primary" title="IMDb verified" />}
-              {profile.imdb_link && <Film className="w-3 h-3 text-primary/50" title="IMDb linked" />}
+            <div className="flex items-center justify-between pt-0.5">
+              <div className="flex items-center gap-1.5">
+                {profile.email_verified && <CheckCircle className="w-3 h-3 text-green-500" title="Email verified" />}
+                {profile.phone_verified && <CheckCircle className="w-3 h-3" style={{ color: "#FF5C35" }} title="Phone verified" />}
+                {profile.imdb_verified && <CheckCircle className="w-3 h-3 text-primary" title="IMDb verified" />}
+              </div>
+              {profile.imdb_link && (
+                <a
+                  href={profile.imdb_link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[9px] font-bold hover:opacity-80 transition-opacity"
+                  style={{ background: "#F5C518", color: "#0D0D0D" }}
+                  title="View on IMDb"
+                >
+                  <Film className="w-2.5 h-2.5" /> IMDb
+                </a>
+              )}
             </div>
           </div>
         </div>

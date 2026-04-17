@@ -1,4 +1,5 @@
-import { MapPin, Crown, CheckCircle, Film, Clock, Briefcase } from "lucide-react";
+import { MapPin, Crown, CheckCircle, Film, Clock, Briefcase, ExternalLink } from "lucide-react";
+import { base44 } from "@/api/base44Client";
 import { Badge } from "@/components/ui/badge";
 import SpotScoreBadge from "../SpotScoreBadge";
 
@@ -12,6 +13,12 @@ const AVAILABILITY_BG = {
   "Available Soon": "#FF5C35",
   "Not Available": "#444",
 };
+
+async function trackImdbClick(profile) {
+  try {
+    await base44.entities.PortfolioClick.create({ profile_id: profile.id, asset_type: "imdb" });
+  } catch (_) {}
+}
 
 export default function ProfileHero({ profile }) {
   return (
@@ -98,6 +105,25 @@ export default function ProfileHero({ profile }) {
                 </Badge>
               )}
             </div>
+
+            {/* IMDb button */}
+            {profile.imdb_link && (
+              <div className="mt-4">
+                <a
+                  href={profile.imdb_link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => trackImdbClick(profile)}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold transition-opacity hover:opacity-90"
+                  style={{ background: "#F5C518", color: "#0D0D0D" }}
+                >
+                  <Film className="w-4 h-4" />
+                  View on IMDb
+                  {profile.imdb_verified && <CheckCircle className="w-3.5 h-3.5" />}
+                  <ExternalLink className="w-3 h-3 opacity-60" />
+                </a>
+              </div>
+            )}
 
             {/* Verification icons */}
             <div className="flex items-center gap-2 mt-4">

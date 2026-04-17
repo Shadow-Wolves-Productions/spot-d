@@ -1,0 +1,17 @@
+{
+  "name": "SearchAppearance",
+  "type": "object",
+  "properties": {
+    "profile_id": {
+      "type": "string",
+      "description": "Profile that appeared in search/directory results"
+    },
+    "search_query": {
+      "type": "string",
+      "description": "The query or filter that surfaced this profile"
+    }
+  },
+  "required": [
+    "profile_id"
+  ]
+}

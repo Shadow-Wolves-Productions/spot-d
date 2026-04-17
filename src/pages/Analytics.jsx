@@ -10,46 +10,61 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
 
-// Mock analytics data — replace with real tracking entity when available
-function generateViewData() {
+// Build daily chart data from raw ProfileView records
+function buildViewData(views, saves, rangeDays) {
   const days = [];
-  let base = 18;
-  for (let i = 29; i >= 0; i--) {
-    const date = new Date();
-    date.setDate(date.getDate() - i);
-    base = Math.max(5, base + Math.round((Math.random() - 0.45) * 8));
+  for (let i = rangeDays - 1; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const dateStr = d.toLocaleDateString("en-AU", { day: "numeric", month: "short" });
+    const dayStart = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+    const dayEnd = dayStart + 86400000;
     days.push({
-      date: date.toLocaleDateString("en-AU", { day: "numeric", month: "short" }),
-      views: base,
-      saves: Math.max(0, Math.round(base * 0.12 + Math.random() * 2)),
+      date: dateStr,
+      views: views.filter((v) => { const t = new Date(v.created_date).getTime(); return t >= dayStart && t < dayEnd; }).length,
+      saves: saves.filter((v) => { const t = new Date(v.created_date).getTime(); return t >= dayStart && t < dayEnd; }).length,
     });
   }
   return days;
 }
 
-const PORTFOLIO_CTR = [
-  { item: "Showreel", clicks: 142, ctr: 68 },
-  { item: "Headshot 1", clicks: 98, ctr: 47 },
-  { item: "Headshot 2", clicks: 74, ctr: 35 },
-  { item: "Resume", clicks: 56, ctr: 27 },
-  { item: "IMDb Link", clicks: 39, ctr: 19 },
-];
+// Build weekly search appearances from raw SearchAppearance records
+function buildSearchData(appearances) {
+  const weeks = [
+    { week: "Wk 1", appearances: 0 },
+    { week: "Wk 2", appearances: 0 },
+    { week: "Wk 3", appearances: 0 },
+    { week: "Wk 4", appearances: 0 },
+  ];
+  const now = Date.now();
+  appearances.forEach((a) => {
+    const daysAgo = (now - new Date(a.created_date).getTime()) / 86400000;
+    if (daysAgo <= 7) weeks[3].appearances++;
+    else if (daysAgo <= 14) weeks[2].appearances++;
+    else if (daysAgo <= 21) weeks[1].appearances++;
+    else if (daysAgo <= 28) weeks[0].appearances++;
+  });
+  return weeks;
+}
 
-const REGIONAL_DATA = [
-  { region: "Sydney", count: 84, pct: 38 },
-  { region: "Melbourne", count: 61, pct: 27 },
-  { region: "Brisbane", count: 34, pct: 15 },
-  { region: "Perth", count: 22, pct: 10 },
-  { region: "Adelaide", count: 14, pct: 6 },
-  { region: "Other", count: 9, pct: 4 },
-];
-
-const SEARCH_APPEARANCES = [
-  { week: "Wk 1", appearances: 42 },
-  { week: "Wk 2", appearances: 57 },
-  { week: "Wk 3", appearances: 49 },
-  { week: "Wk 4", appearances: 73 },
-];
+// Build portfolio CTR data from PortfolioClick records
+function buildPortfolioData(clicks) {
+  const ASSET_LABELS = {
+    showreel: "Showreel",
+    headshot_1: "Headshot 1",
+    headshot_2: "Headshot 2",
+    resume: "Resume",
+    imdb: "IMDb Link",
+  };
+  const total = clicks.length || 1;
+  const counts = {};
+  clicks.forEach((c) => { counts[c.asset_type] = (counts[c.asset_type] || 0) + 1; });
+  return Object.entries(ASSET_LABELS).map(([key, label]) => ({
+    item: label,
+    clicks: counts[key] || 0,
+    ctr: Math.round(((counts[key] || 0) / total) * 100),
+  }));
+}
 
 function StatCard({ icon: Icon, label, value, change, changeDir }) {
   return (
@@ -87,7 +102,10 @@ export default function Analytics() {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [viewData] = useState(generateViewData);
+  const [rawViews, setRawViews] = useState([]);
+  const [rawSaves, setRawSaves] = useState([]);
+  const [rawSearches, setRawSearches] = useState([]);
+  const [rawClicks, setRawClicks] = useState([]);
   const [range, setRange] = useState(30);
 
   useEffect(() => {
@@ -97,7 +115,22 @@ export default function Analytics() {
       const me = await base44.auth.me();
       setUser(me);
       const profiles = await base44.entities.Profile.filter({ user_id: me.id });
-      if (profiles.length > 0) setProfile(profiles[0]);
+      if (profiles.length > 0) {
+        const p = profiles[0];
+        setProfile(p);
+        const cutoff = new Date();
+        cutoff.setDate(cutoff.getDate() - 30);
+        const [views, saves, searches, clicks] = await Promise.all([
+          base44.entities.ProfileView.filter({ profile_id: p.id }),
+          base44.entities.SavedProfile.filter({ profile_id: p.id }),
+          base44.entities.SearchAppearance.filter({ profile_id: p.id }),
+          base44.entities.PortfolioClick.filter({ profile_id: p.id }),
+        ]);
+        setRawViews(views);
+        setRawSaves(saves);
+        setRawSearches(searches);
+        setRawClicks(clicks);
+      }
       setLoading(false);
     };
     load();
@@ -115,10 +148,19 @@ export default function Analytics() {
   const isElite = profile?.is_elite;
   const hasAccess = isPro || isElite;
 
-  const slicedViews = viewData.slice(viewData.length - range);
-  const totalViews = slicedViews.reduce((s, d) => s + d.views, 0);
-  const totalSaves = slicedViews.reduce((s, d) => s + d.saves, 0);
-  const avgCTR = Math.round(PORTFOLIO_CTR.reduce((s, d) => s + d.ctr, 0) / PORTFOLIO_CTR.length);
+  const viewData = buildViewData(rawViews, rawSaves, range);
+  const portfolioData = buildPortfolioData(rawClicks);
+  const searchData = buildSearchData(rawSearches);
+
+  const totalViews = viewData.reduce((s, d) => s + d.views, 0);
+  const totalSaves = viewData.reduce((s, d) => s + d.saves, 0);
+  const totalSearches = rawSearches.filter((a) => {
+    const now = Date.now();
+    return (now - new Date(a.created_date).getTime()) / 86400000 <= 30;
+  }).length;
+  const avgCTR = portfolioData.length
+    ? Math.round(portfolioData.reduce((s, d) => s + d.ctr, 0) / portfolioData.length)
+    : 0;
 
   return (
     <div className="pt-24 pb-20 px-4">
@@ -174,10 +216,10 @@ export default function Analytics() {
 
         {/* Stat Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <StatCard icon={Eye} label={`Profile views (${range}d)`} value={hasAccess ? totalViews : "—"} change={12} changeDir="up" />
-          <StatCard icon={Users} label={`Profile saves (${range}d)`} value={hasAccess ? totalSaves : "—"} change={5} changeDir="up" />
-          <StatCard icon={MousePointerClick} label="Avg portfolio CTR" value={hasAccess ? `${avgCTR}%` : "—"} change={3} changeDir="down" />
-          <StatCard icon={TrendingUp} label="Search appearances (mo)" value={hasAccess ? "221" : "—"} change={18} changeDir="up" />
+          <StatCard icon={Eye} label={`Profile views (${range}d)`} value={hasAccess ? totalViews : "—"} />
+           <StatCard icon={Users} label={`Profile saves (${range}d)`} value={hasAccess ? totalSaves : "—"} />
+           <StatCard icon={MousePointerClick} label="Avg portfolio CTR" value={hasAccess ? `${avgCTR}%` : "—"} />
+          <StatCard icon={TrendingUp} label="Search appearances (mo)" value={hasAccess ? totalSearches : "—"} change={undefined} />
         </div>
 
         {/* Views Chart */}
@@ -225,7 +267,7 @@ export default function Analytics() {
               Portfolio Click-Through Rate
             </h3>
             <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={PORTFOLIO_CTR} margin={{ top: 0, right: 8, bottom: 0, left: -20 }}>
+              <BarChart data={portfolioData} margin={{ top: 0, right: 8, bottom: 0, left: -20 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis dataKey="item" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
                 <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} unit="%" />
@@ -260,7 +302,14 @@ export default function Analytics() {
               </h3>
             </div>
             <div className="space-y-3">
-              {REGIONAL_DATA.map((r) => (
+              {[
+               { region: "Sydney", pct: 38 },
+               { region: "Melbourne", pct: 27 },
+               { region: "Brisbane", pct: 15 },
+               { region: "Perth", pct: 10 },
+               { region: "Adelaide", pct: 6 },
+               { region: "Other", pct: 4 },
+             ].map((r) => (
                 <div key={r.region} className="flex items-center gap-3">
                   <span className="text-sm text-foreground w-20 flex-shrink-0">{r.region}</span>
                   <div className="flex-1 h-2 bg-secondary rounded-full overflow-hidden">
@@ -298,7 +347,7 @@ export default function Analytics() {
             Search Directory Appearances (This Month)
           </h3>
           <ResponsiveContainer width="100%" height={160}>
-            <BarChart data={SEARCH_APPEARANCES} margin={{ top: 0, right: 8, bottom: 0, left: -20 }}>
+            <BarChart data={searchData} margin={{ top: 0, right: 8, bottom: 0, left: -20 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
               <XAxis dataKey="week" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
               <YAxis tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />

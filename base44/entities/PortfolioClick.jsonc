@@ -1,0 +1,29 @@
+{
+  "name": "PortfolioClick",
+  "type": "object",
+  "properties": {
+    "profile_id": {
+      "type": "string",
+      "description": "Profile whose asset was clicked"
+    },
+    "asset_type": {
+      "type": "string",
+      "enum": [
+        "showreel",
+        "headshot_1",
+        "headshot_2",
+        "resume",
+        "imdb"
+      ],
+      "description": "Which portfolio asset was clicked"
+    },
+    "viewer_id": {
+      "type": "string",
+      "description": "User who clicked (nullable for anonymous)"
+    }
+  },
+  "required": [
+    "profile_id",
+    "asset_type"
+  ]
+}

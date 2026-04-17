@@ -1,0 +1,27 @@
+{
+  "name": "ProfileView",
+  "type": "object",
+  "properties": {
+    "profile_id": {
+      "type": "string",
+      "description": "Profile that was viewed"
+    },
+    "viewer_id": {
+      "type": "string",
+      "description": "User who viewed (nullable for anonymous)"
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "directory",
+        "search",
+        "direct",
+        "casting"
+      ],
+      "description": "Where the view originated"
+    }
+  },
+  "required": [
+    "profile_id"
+  ]
+}
