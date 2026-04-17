@@ -13,6 +13,7 @@ import ProfileCard from "../components/ProfileCard";
 import SpotScoreBreakdown, { PercentileBadge } from "../components/SpotScoreBreakdown";
 import SpotRequestsPanel from "../components/dashboard/SpotRequestsPanel";
 import SavedProfilesPanel from "../components/dashboard/SavedProfilesPanel";
+import WelcomeBanner from "../components/dashboard/WelcomeBanner";
 
 export default function Dashboard() {
   const [user, setUser] = useState(null);
@@ -117,6 +118,9 @@ export default function Dashboard() {
             )}
           </div>
         </div>
+
+        {/* Welcome Banner (first-time / recent import users) */}
+        <WelcomeBanner user={user} profile={profile} />
 
         {/* Stats Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">

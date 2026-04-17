@@ -326,6 +326,16 @@
     },
     "ethnicity": {
       "type": "string"
+    },
+    "welcome_email_sent": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the welcome email has been sent to this profile's owner"
+    },
+    "welcome_email_sent_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp when the welcome email was sent"
     }
   },
   "required": [
