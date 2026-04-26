@@ -40,7 +40,7 @@ export default function ProfileCard({ profile, subscription, onSave, isSaved, in
       <Link to={`/profile/${profile.profile_slug || profile.id}`} className="block group">
         <div className="overflow-hidden rounded-lg border border-border transition-all duration-200 group-hover:border-primary/30" style={{ background: "#161616" }}>
           {/* Poster image */}
-          <div className="relative aspect-[3/4] overflow-hidden" style={{ background: "#111" }}>
+          <div className="relative aspect-[3/4] overflow-hidden" style={{ background: "#1A1A1A" }}>
             {profile.profile_photo ? (
               <img
                 src={profile.profile_photo?.startsWith("/api/static/") || profile.profile_photo?.startsWith("/static/") ? `/api${profile.profile_photo.startsWith("/static/") ? profile.profile_photo : profile.profile_photo.replace(/^\/api/, "")}` : profile.profile_photo}
@@ -48,9 +48,23 @@ export default function ProfileCard({ profile, subscription, onSave, isSaved, in
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               />
             ) : (
-              <div className="w-full h-full flex flex-col items-center justify-center" style={{ color: "#333" }}>
-                <Film className="w-10 h-10 mb-2" />
-                <span className="text-[10px] uppercase tracking-[0.08em]">No photo</span>
+              // Branded placeholder — Spot'd electric apostrophe at 30% opacity.
+              // Replaces the generic film-frame icon for a cohesive directory grid.
+              <div className="w-full h-full flex items-center justify-center select-none" data-testid="profile-card-placeholder" style={{ containerType: "size" }}>
+                <span
+                  className="font-display font-bold leading-none"
+                  style={{
+                    color: "#E8FC6C",
+                    opacity: 0.3,
+                    fontSize: "min(60cqw, 80cqh)",
+                    lineHeight: 0.7,
+                    letterSpacing: "-0.05em",
+                    transform: "translateY(8%)",
+                  }}
+                  aria-hidden="true"
+                >
+                  '
+                </span>
               </div>
             )}
 
