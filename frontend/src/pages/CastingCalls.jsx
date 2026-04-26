@@ -2,11 +2,12 @@ import { useState, useEffect, useCallback } from "react";
 import { usePullToRefresh } from "../hooks/usePullToRefresh";
 import { base44 } from "@/api/base44Client";
 import { Link } from "react-router-dom";
-import { Plus, MapPin, Calendar, DollarSign, Briefcase, Users, Settings2 } from "lucide-react";
+import { Plus, MapPin, Calendar, DollarSign, Briefcase, Users, Settings2, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
 import ApplyModal from "../components/casting/ApplyModal";
+import CastingCallShareCard from "../components/CastingCallShareCard";
 
 const TYPE_COLORS = {
   "Feature Film": "text-blue-400 bg-blue-500/10 border-blue-500/20",
@@ -54,8 +55,8 @@ function CastingCallCard({ call, myProfile, index, user, appliedCallIds }) {
         </div>
       )}
 
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex-1 min-w-0">
+      <div className="flex items-start justify-between gap-4 flex-col sm:flex-row">
+        <div className="flex-1 min-w-0 w-full">
           <div className="flex items-center gap-2 mb-2">
             <Badge variant="outline" className={`text-[10px] ${TYPE_COLORS[call.project_type] || "text-muted-foreground border-border"}`}>
               {call.project_type || "Project"}
@@ -83,7 +84,7 @@ function CastingCallCard({ call, myProfile, index, user, appliedCallIds }) {
             ))}
           </div>
 
-          <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted-foreground">
             {call.location && (
               <div className="flex items-center gap-1">
                 <MapPin className="w-3 h-3" /> {call.location}
@@ -107,10 +108,26 @@ function CastingCallCard({ call, myProfile, index, user, appliedCallIds }) {
           </div>
         </div>
 
-        <div className="flex-shrink-0 flex flex-col gap-2 items-end">
+        <div className="flex-shrink-0 flex flex-col gap-2 items-stretch sm:items-end w-full sm:w-auto">
           {call.application_count > 0 && (
-            <span className="text-[10px] text-muted-foreground font-mono">{call.application_count} application{call.application_count !== 1 ? "s" : ""}</span>
+            <span className="text-[10px] text-muted-foreground font-mono sm:text-right">{call.application_count} application{call.application_count !== 1 ? "s" : ""}</span>
           )}
+          {/* Share button — visible to everyone (creators + talent) so calls
+              spread organically through Instagram, Twitter, DMs etc. */}
+          <CastingCallShareCard
+            call={call}
+            trigger={
+              <Button
+                size="sm"
+                variant="ghost"
+                className="border border-border/40 text-muted-foreground hover:text-primary hover:border-primary/30 gap-1.5 text-xs"
+                data-testid={`casting-share-btn-${call.id}`}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <Share2 className="w-3.5 h-3.5" /> Share
+              </Button>
+            }
+          />
           {isCreator && alreadyApplied ? (
             <Link to={`/casting/applications?call=${call.id}`}>
               <Button size="sm" variant="outline" className="border-border gap-1.5 text-xs">

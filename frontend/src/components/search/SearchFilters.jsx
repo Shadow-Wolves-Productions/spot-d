@@ -167,21 +167,41 @@ export default function SearchFilters({ filters, onChange, isProUser, proximity,
       {/* Mobile filter drawer */}
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
         <SheetTrigger asChild className="lg:hidden">
-          <Button variant="outline" size="sm" className="border-border gap-2 bg-card text-foreground">
+          <Button variant="outline" size="sm" className="border-border gap-2 bg-card text-foreground" data-testid="mobile-filters-trigger">
             <SlidersHorizontal className="w-4 h-4" />
             Filters
             {activeCount > 0 && (
-              <Badge className="bg-primary text-primary-foreground text-[10px] px-1.5">{activeCount}</Badge>
+              <Badge className="bg-primary text-primary-foreground text-[10px] px-1.5" data-testid="mobile-filters-active-count">{activeCount}</Badge>
             )}
           </Button>
         </SheetTrigger>
-        <SheetContent side="bottom" className="border-border rounded-t-2xl max-h-[85vh] bg-card">
-          <SheetHeader className="pb-2">
-            <SheetTitle className="font-display text-sm uppercase tracking-[0.08em]">Filters</SheetTitle>
+        <SheetContent side="bottom" className="border-border rounded-t-2xl max-h-[85vh] bg-card flex flex-col" data-testid="mobile-filters-sheet">
+          <SheetHeader className="pb-2 flex-shrink-0">
+            <SheetTitle className="font-display text-sm uppercase tracking-[0.08em]">Filters{activeCount > 0 ? ` · ${activeCount}` : ""}</SheetTitle>
           </SheetHeader>
-          <ScrollArea className="h-[calc(85vh-80px)] mt-2 pr-4">
+          <ScrollArea className="flex-1 mt-2 pr-4">
             <FilterContent />
           </ScrollArea>
+          {/* Sticky footer with Apply + Clear all */}
+          <div className="flex-shrink-0 flex items-center gap-3 pt-3 border-t border-border bg-card sticky bottom-0">
+            <Button
+              variant="outline"
+              size="lg"
+              data-testid="mobile-filters-clear"
+              className="flex-1 border-border min-h-[44px]"
+              onClick={() => { clearFilters(); }}
+            >
+              <X className="w-4 h-4 mr-1.5" /> Clear all
+            </Button>
+            <Button
+              size="lg"
+              data-testid="mobile-filters-apply"
+              className="flex-1 bg-primary text-primary-foreground font-semibold min-h-[44px]"
+              onClick={() => setMobileOpen(false)}
+            >
+              Apply{activeCount > 0 ? ` · ${activeCount}` : ""}
+            </Button>
+          </div>
         </SheetContent>
       </Sheet>
     </>

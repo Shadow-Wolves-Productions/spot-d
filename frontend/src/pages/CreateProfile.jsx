@@ -277,20 +277,46 @@ export default function CreateProfile() {
           Complete your profile to be discovered by filmmakers worldwide.
         </p>
 
-        {/* Steps */}
-        <div className="flex items-center gap-2 mb-8 overflow-x-auto pb-2">
-          {STEPS.map((s, i) => (
-            <button
-              key={s}
-              onClick={() => setStep(i)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
-                i === step ? "glass-gold text-primary" : i < step ? "bg-primary/10 text-primary" : "bg-secondary text-muted-foreground"
-              }`}
-            >
-              {i < step ? <Check className="w-3.5 h-3.5" /> : <span className="w-5 h-5 rounded-full bg-secondary/50 flex items-center justify-center text-[10px]">{i + 1}</span>}
-              {s}
-            </button>
-          ))}
+        {/* Steps — full text on desktop, dot-only indicator on mobile */}
+        <div className="mb-8">
+          {/* Mobile: numbered dots */}
+          <div className="flex sm:hidden items-center justify-center gap-2 pb-2" data-testid="create-profile-steps-mobile">
+            {STEPS.map((s, i) => (
+              <button
+                key={s}
+                onClick={() => setStep(i)}
+                aria-label={`Step ${i + 1} of ${STEPS.length}: ${s}`}
+                className={`min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full text-xs font-bold transition-all ${
+                  i === step
+                    ? "border-2 border-primary text-primary bg-primary/10"
+                    : i < step
+                    ? "bg-primary text-primary-foreground"
+                    : "border-2 border-border text-muted-foreground/60 bg-secondary"
+                }`}
+              >
+                {i < step ? <Check className="w-4 h-4" /> : <span>{i + 1}</span>}
+              </button>
+            ))}
+          </div>
+          <p className="sm:hidden text-center text-[11px] uppercase tracking-[0.08em] font-mono text-muted-foreground mt-2">
+            Step {step + 1} of {STEPS.length} · <span className="text-primary">{STEPS[step]}</span>
+          </p>
+
+          {/* Desktop: full text labels */}
+          <div className="hidden sm:flex items-center gap-2 overflow-x-auto pb-2">
+            {STEPS.map((s, i) => (
+              <button
+                key={s}
+                onClick={() => setStep(i)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
+                  i === step ? "glass-gold text-primary" : i < step ? "bg-primary/10 text-primary" : "bg-secondary text-muted-foreground"
+                }`}
+              >
+                {i < step ? <Check className="w-3.5 h-3.5" /> : <span className="w-5 h-5 rounded-full bg-secondary/50 flex items-center justify-center text-[10px]">{i + 1}</span>}
+                {s}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Step 0: Personal */}
