@@ -1,0 +1,54 @@
+{
+  "summary": "Iteration 3 testing of Spot'd. Backend: 10/11 pytest cases pass in test_iteration3.py. The 1 failing test (test_upload_profile_photo_png_success) reveals a CRITICAL ingress/static-serving bug: uploaded images are saved correctly to /app/backend/static/uploads/profiles/ and served by FastAPI on localhost:8001/static/... (200 + image/png), but the public REACT_APP_BACKEND_URL/static/... routes through the K8s ingress to the FRONTEND, returning text/html (the React index.html). Result: every URL returned by /api/upload/* (e.g. '/static/uploads/profiles/<id>.png') is unreachable from the public domain — users will see broken images on profile/company pages. All other backend coverage is green: rejects non-image with 400, oversize with 413, unauth with 401; headshot/company-logo/cover-image endpoints all save & return 200 (also unreachable publicly for same reason); Postmark webhook correctly returns 403 for missing/invalid HMAC-SHA256 base64 signatures and 200 + persists for valid signatures (secret 'spotd-dev-postmark-secret-rotate-me'); CompanyProfile entity CRUD (create / get / list-by-slug / patch / delete) works end-to-end. Frontend (Playwright on REACT_APP_BACKEND_URL): /search renders directory-tabs with tab-talent / tab-crew / tab-companies, default Crew (button has bg-primary class). Companies tab shows empty-state text 'create your company profile'. /c/<non-existent-slug> shows 'Company not found' empty state. /c/<existing-slug> renders CompanyProfilePage with company_name, type badge ('Production Company'), location ('Sydney, NSW, AU'), and Services list ('Producing'). /create-company step 1 has all 3 testids: company-name-input, company-slug-input, company-type-select; typing into company-name-input persists 'TEST Iter3 Co' across keystrokes (focus retained). /create-profile profile-photo-input upload: 200 OK, preview <img src='/static/uploads/profiles/...'> renders in DOM but visually appears broken because of the static-routing bug above. Admin Dashboard: dashboard-create-company-btn present with href='/create-company' and text 'Company profile'. New-user dashboard does NOT show the button (button only appears once user has a profile, which matches the request's '(when logged in & profile exists)' wording). Could not verify the tag-input-secondary_roles testid — element not found in DOM during automated test (may be in a deeper section or conditional render); recommend manual verification.",
+  "backend_issues": {
+    "critical": [
+      {"endpoint": "GET /static/uploads/profiles/<filename> (public)", "issue": "K8s ingress routes /static/* to the FRONTEND, not the backend. Uploaded image URLs returned by POST /api/upload/* (shape '/static/uploads/profiles/<id>.png') resolve to text/html (React index.html) when fetched from REACT_APP_BACKEND_URL. Confirmed: localhost:8001/static/...= 200 image/png; public URL/static/... = 200 text/html. Every uploaded photo will appear broken to users. Fix: mount StaticFiles under '/api/static' in server.py (line 73) and have _save_upload return '/api/static/uploads/<sub>/<filename>' instead of '/static/uploads/...'. Then update ImageUploader/CreateProfile/CompanyProfilePage frontend to read the new path. Alternatively serve via a dedicated /api/files/<sub>/<filename> route.", "priority": "CRITICAL"}
+    ],
+    "minor": [
+      {"endpoint": "POST /api/webhooks/postmark", "issue": "When POSTMARK_WEBHOOK_SECRET is unset/empty, verify_postmark_signature returns False (rejects all). This is good for prod safety but means any deploy without the env var silently breaks Postmark — consider logging a startup warning."},
+      {"endpoint": "POST /api/upload/* (oversize)", "issue": "Reads entire file into memory (await file.read()) before checking length, so a 5MB+1 byte upload still fully buffers. For DoS resilience consider streaming with a size cap (file.file.read(MAX+1) chunked) — non-blocking but worth flagging."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "ProfileCard.jsx", "issue": "Renders nested <a> inside <a> — DOM nesting validation warning logged repeatedly in console on /search. Wrap inner element with a <div> or use a single Link; this is invalid HTML and may break assistive tech.", "selector": "[data-testid^=profile-card-]", "priority": "MEDIUM"},
+      {"component": "ProfileCard.jsx", "issue": "Missing data-testid attribute on the card root, making automated counting/assertion of profile cards on /search impossible. CompanyProfileCard has 'company-card-<slug>' — please mirror with 'profile-card-<slug>'.", "selector": "(none)", "priority": "MEDIUM"},
+      {"component": "ImageUploader / preview <img>", "issue": "Profile photo preview <img src='/static/uploads/profiles/...'> renders in the DOM but is a broken image due to backend static-routing bug above.", "selector": "img[src*='/static/uploads/profiles/']", "priority": "CRITICAL"}
+    ],
+    "integration_issues": [
+      {"flow": "Profile/company photo upload end-to-end", "issue": "POST /api/upload/* succeeds (200) and returns a URL, but the URL is not publicly fetchable (returns frontend HTML). Persisting this URL in Profile/CompanyProfile docs guarantees broken images everywhere.", "affected_selectors": ["[data-testid='profile-photo-input']", "img[src*='/static/uploads']"]}
+    ],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration3.py",
+    "/app/test_reports/pytest/iter3_results.xml"
+  ],
+  "action_items": [
+    "CRITICAL: Fix static-file public routing — mount StaticFiles at '/api/static' (server.py line 73) and update _save_upload return URLs to '/api/static/uploads/<sub>/<filename>' so the K8s ingress (which forwards /api/* to backend) actually serves the uploaded files. Also update any frontend ImageUploader src construction.",
+    "Add data-testid='profile-card-<slug>' to ProfileCard.jsx root (mirror CompanyProfileCard) for stable e2e tests.",
+    "Fix nested <a> inside <a> in ProfileCard.jsx — DOM nesting violation logged in browser console.",
+    "Verify /create-profile tag-input-secondary_roles is reachable via Playwright — automated test could not find [data-testid='tag-input-secondary_roles']; main agent should manually confirm or the test suite needs the rendering condition documented.",
+    "Update test_iteration3.py if the static path is changed (currently tests assert '/static/uploads/' prefix)."
+  ],
+  "critical_code_review_comments": [
+    "server.py is now ~1589 lines — well past the 700-line guideline; uploads + webhooks + bulk-import + stripe + entities all in one file. Strongly recommend splitting into routers/uploads.py, routers/webhooks.py, routers/companies.py.",
+    "_save_upload buffers entire file in memory before size check — switch to streaming with a hard cap or use FastAPI's spooled file with size guard.",
+    "Postmark signature check accepts only base64 (and hex) of the raw body; if Postmark rotates to a different scheme (e.g. their actual production HMAC uses webhook_secret + timestamp), this will silently reject. Document the expected algorithm in code comments.",
+    "Upload endpoints use new_id() for filename (collision-resistant) but never sanitize content-type-vs-bytes — a client can send a .png file that's actually executable bytes; consider verifying via PIL/imghdr in production.",
+    "ProfileCard nested <a> is a recurring React Router antipattern; consider <div onClick={navigate(...)}> for the outer wrapper or use a single Link with all interactive children rendered as non-anchor elements."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration3.py"
+  ],
+  "success_rate": {
+    "backend": "91% (10/11 — 1 critical static-serving failure)",
+    "frontend": "~85% (directory tabs / company empty / company-not-found / company render / create-company step1 / dashboard admin button all pass; profile photo upload UI works but produces broken-image src; tag-input-secondary_roles selector not found by Playwright)"
+  },
+  "test_credentials": "Admin: brendan@shadowwolvesproductions.com.au (OTP, dev_code returned in /api/auth/request-code response under EMAIL_MOCK_MODE=true). New test users use unique iter3*@example.com per run to bypass the 3-codes-per-10min rate limit.",
+  "seed_data_creation": "TestCompanyProfileCRUD creates and deletes a 'TEST_Iter3 Co' company per run (cleaned up). Frontend admin test created and deleted 'test-iter3-render-co' (cleaned up). Several iter3*@example.com user accounts persist from OTP login tests but have no profile/subscription. Postmark webhook tests inserted 1 valid event into postmark_events collection. _save_upload persisted ~5 small PNGs into /app/backend/static/uploads/{profiles,headshots,company-logos,company-covers}/ — these are leftover but only ~1KB each.",
+  "retest_needed": true,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "After main agent fixes the static-routing issue, re-run /app/backend/tests/test_iteration3.py — only test_upload_profile_photo_png_success should change. Update its assertions to match the new URL prefix (likely '/api/static/uploads/profiles/'). Postmark webhook secret is 'spotd-dev-postmark-secret-rotate-me' (HMAC-SHA256 base64 of raw body). DB has 1+ extra postmark_events from these tests and 60+ profiles from prior iters. Brendan admin token can be reused via OTP each run. Note: /create-profile flow first shows AgeGate (testids: age-gate-over-btn / age-gate-terms-checkbox / age-gate-adult-continue) before form is visible.",
+  "rca of the issue": "The ImageUploader feature fix replaced a broken base44 SDK call with a real /api/upload/* endpoint that saves to /app/backend/static/uploads/<sub>/ and returns '/static/uploads/<sub>/<filename>' as the URL. Backend StaticFiles is correctly mounted at '/static' on the FastAPI app, and localhost:8001/static/<path> serves the file with the right content-type. However the K8s ingress in this preview environment only forwards traffic prefixed with '/api/' to the backend service on port 8001 — every other path falls through to the frontend service on port 3000, which returns the SPA index.html for unknown routes. So the URL stored on Profile/CompanyProfile docs ('/static/uploads/profiles/X.png') resolves to text/html when loaded by a browser via REACT_APP_BACKEND_URL. Reproduction: (1) curl -F file=@small.png -H 'Authorization: Bearer <admin>' $URL/api/upload/profile-photo → 200 + {url:'/static/uploads/profiles/<id>.png'}. (2) curl -I $URL/static/uploads/profiles/<id>.png → 200 text/html. Mitigation: change StaticFiles mount path to '/api/static' (single line edit at server.py line 73) and update public_url_base in the four upload endpoints to '/api/static/uploads/<sub>'. Then any frontend img src using REACT_APP_BACKEND_URL prefix or a same-origin relative path will hit the backend through the ingress."
+}

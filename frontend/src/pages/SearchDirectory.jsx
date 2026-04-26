@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import ProfileCard from "../components/ProfileCard";
+import CompanyProfileCard from "../components/CompanyProfileCard";
 import SearchFilters from "../components/search/SearchFilters";
 import MapView from "../components/search/MapView";
 import { geocodePlace, haversineKm } from "../components/search/ProximityFilter";
@@ -20,6 +21,8 @@ const SORT_OPTIONS = [
 
 export default function SearchDirectory() {
   const [profiles, setProfiles] = useState([]);
+  const [companies, setCompanies] = useState([]);
+  const [tab, setTab] = useState("crew"); // "talent" | "crew" | "companies"
   const [spotCountMap, setSpotCountMap] = useState({});
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
@@ -67,6 +70,26 @@ export default function SearchDirectory() {
   const loadProfiles = useCallback(async () => {
     // eslint-disable-next-line
     setLoading(true);
+
+    // Companies tab — load CompanyProfile records
+    if (tab === "companies") {
+      const all = await base44.entities.CompanyProfile.list("-spot_score", 100).catch(() => []);
+      let data = all;
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        data = data.filter((c) =>
+          c.company_name?.toLowerCase().includes(q) ||
+          c.company_type?.toLowerCase().includes(q) ||
+          c.city?.toLowerCase().includes(q) ||
+          c.country?.toLowerCase().includes(q)
+        );
+      }
+      setCompanies(data);
+      setProfiles([]);
+      setLoading(false);
+      return;
+    }
+
     const filterObj = {};
     if (filters.role && filters.role !== "all_roles") filterObj.primary_role = filters.role;
     if (filters.availability && filters.availability !== "any_availability") filterObj.availability_status = filters.availability;
@@ -156,8 +179,17 @@ export default function SearchDirectory() {
 
     setProfiles(data);
 
+    // Apply Talent vs Crew split
+    let visible = data;
+    if (tab === "talent") {
+      visible = data.filter((p) => p.primary_role === "Actor");
+    } else if (tab === "crew") {
+      visible = data.filter((p) => p.primary_role && p.primary_role !== "Actor");
+    }
+    setProfiles(visible);
+
     // Build spot count map for visible profiles
-    if (data.length > 0) {
+    if (visible.length > 0) {
       const allSpots = await base44.entities.Spot.list("-created_date", 500);
       const countMap = {};
       allSpots.forEach((s) => { countMap[s.spotted_profile_id] = (countMap[s.spotted_profile_id] || 0) + 1; });
@@ -165,7 +197,7 @@ export default function SearchDirectory() {
     }
 
     setLoading(false);
-  }, [filters, sort, searchQuery, proximity]);
+  }, [filters, sort, searchQuery, proximity, tab]);
 
   useEffect(() => {
     loadProfiles();
@@ -227,6 +259,28 @@ export default function SearchDirectory() {
           </p>
 
           <div className="mt-8 rounded-2xl p-4 sm:p-6 max-w-3xl mx-auto border border-border bg-card">
+            {/* Directory tabs */}
+            <div className="flex items-center gap-1 p-1 rounded-full bg-secondary border border-border mb-4 mx-auto w-fit" data-testid="directory-tabs">
+              {[
+                { id: "talent", label: "Talent" },
+                { id: "crew", label: "Crew" },
+                { id: "companies", label: "Companies" },
+              ].map((t) => (
+                <button
+                  key={t.id}
+                  data-testid={`tab-${t.id}`}
+                  onClick={() => setTab(t.id)}
+                  className={`px-4 sm:px-6 py-1.5 text-xs sm:text-sm font-semibold rounded-full transition-colors ${
+                    tab === t.id
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+
             <div className="flex flex-col sm:flex-row gap-3">
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -278,7 +332,7 @@ export default function SearchDirectory() {
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
                 <span className="text-sm text-muted-foreground">
-                  {loading ? "Searching..." : `${profiles.length} profiles found`}
+                  {loading ? "Searching..." : (tab === "companies" ? `${companies.length} companies found` : `${profiles.length} profiles found`)}
                 </span>
                 <div className="lg:hidden">
                   <SearchFilters filters={filters} onChange={setFilters} isProUser={myProfile?.is_pro} proximity={proximity} onProximityChange={setProximity} />
@@ -320,6 +374,20 @@ export default function SearchDirectory() {
               <div className="flex items-center justify-center h-64">
                 <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
               </div>
+            ) : tab === "companies" ? (
+              companies.length === 0 ? (
+                <div className="text-center py-20">
+                  <Search className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
+                  <h3 className="font-display text-lg font-semibold text-foreground">No companies yet</h3>
+                  <p className="text-sm text-muted-foreground mt-2">Be the first — <a href="/create-company" className="text-primary underline">create your company profile</a>.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                  {companies.map((c, i) => (
+                    <CompanyProfileCard key={c.id} company={c} index={i} />
+                  ))}
+                </div>
+              )
             ) : profiles.length === 0 ? (
               <div className="text-center py-20">
                 <Search className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
@@ -329,7 +397,7 @@ export default function SearchDirectory() {
             ) : viewMode === "map" ? (
               <MapView profiles={profiles} center={proximity} />
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+              <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 {profiles.map((profile, i) => (
                   <div key={profile.id} className="relative group">
                    <ProfileCard

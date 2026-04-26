@@ -22,6 +22,8 @@ import Login from './pages/Login';
 import Welcome from './pages/Welcome';
 import Terms from './pages/Terms';
 import Privacy from './pages/Privacy';
+import CreateCompany from './pages/CreateCompany';
+import CompanyProfilePage from './pages/CompanyProfilePage';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth } = useAuth();
@@ -50,6 +52,8 @@ const AuthenticatedApp = () => {
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/analytics" element={<Analytics />} />
         <Route path="/u/:slug" element={<ProfileBySlug />} />
+        <Route path="/c/:slug" element={<CompanyProfilePage />} />
+        <Route path="/create-company" element={<CreateCompany />} />
         <Route path="/login" element={<Login />} />
         <Route path="/welcome" element={<Welcome />} />
         <Route path="/terms" element={<Terms />} />
