@@ -46,6 +46,7 @@ const FEATURES = [
 
 export default function Landing() {
   const [founderCount, setFounderCount] = useState(0);
+  const founderRemaining = Math.max(0, 500 - founderCount);
 
   useEffect(() => {
     base44.http.get("/api/public-stats").then(({ data }) => setFounderCount(data.founder_count || 0)).catch(() => {});
@@ -106,8 +107,20 @@ export default function Landing() {
               <p className="text-muted-foreground mt-4 text-base leading-[1.7] max-w-sm">
                 The first 500 members get lifetime free PRO access, a founding member badge, and priority listing in the directory.
               </p>
-              <p className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground mt-6 font-mono" data-testid="founding-counter">
-                <span className="text-primary font-bold">{founderCount}</span> of 500 founding spots claimed
+
+              {/* Big remaining-spots callout — drives urgency */}
+              <div className="mt-8 inline-flex items-baseline gap-3" data-testid="founding-remaining">
+                <span className="font-display text-6xl sm:text-7xl font-bold leading-none text-primary" style={{ letterSpacing: "-2px" }}>
+                  {founderRemaining}
+                </span>
+                <span className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground font-mono">
+                  spots<br />remaining
+                </span>
+              </div>
+
+              {/* Progress fineprint */}
+              <p className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground mt-3 font-mono" data-testid="founding-counter">
+                <span className="text-foreground font-semibold">{founderCount}</span> of 500 founding spots claimed
               </p>
             </div>
             <div className="p-10 lg:p-14 flex flex-col justify-center bg-primary">

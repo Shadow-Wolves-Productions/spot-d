@@ -212,11 +212,8 @@ export default function HeroSection() {
                 )}
               </div>
 
-              {/* Floating badge — keeps founding-member moment */}
-              <div className="absolute -bottom-12 -left-4 rounded-lg px-4 py-3 shadow-xl bg-primary z-10">
-                <div className="text-[10px] uppercase tracking-[0.08em] font-semibold text-primary-foreground/70">Founding members</div>
-                <div className="font-display font-bold text-lg leading-none mt-0.5 text-primary-foreground">Free PRO</div>
-              </div>
+              {/* Floating badge — keeps founding-member moment with live remaining */}
+              <FoundingBadge />
             </div>
           </motion.div>
         </div>
@@ -233,5 +230,24 @@ export default function HeroSection() {
         </div>
       </div>
     </section>
+  );
+}
+
+function FoundingBadge() {
+  const [remaining, setRemaining] = useState(null);
+  useEffect(() => {
+    base44.http.get("/api/public-stats")
+      .then(({ data }) => setRemaining(Math.max(0, 500 - (data.founder_count || 0))))
+      .catch(() => setRemaining(null));
+  }, []);
+  return (
+    <div className="absolute -bottom-12 -left-4 rounded-lg px-4 py-3 shadow-xl bg-primary z-10" data-testid="hero-founding-badge">
+      <div className="text-[10px] uppercase tracking-[0.08em] font-semibold text-primary-foreground/70">
+        Founding · Free PRO
+      </div>
+      <div className="font-display font-bold text-lg leading-none mt-1 text-primary-foreground">
+        {remaining !== null ? `${remaining} spots left` : "500 spots"}
+      </div>
+    </div>
   );
 }
