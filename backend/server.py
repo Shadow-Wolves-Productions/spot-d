@@ -898,6 +898,11 @@ async def fn_respond_spot(request: Request):
     body = await request.json()
     request_id = body.get("request_id")
     action = body.get("action")
+    # Accept both shorthand ('accept'/'decline') and long form ('accepted'/'declined').
+    if action == "accept":
+        action = "accepted"
+    elif action == "decline":
+        action = "declined"
     if action not in ("accepted", "declined") or not request_id:
         raise HTTPException(400, "Invalid params")
     rec = await db.spot_requests.find_one({"id": request_id})
@@ -1856,12 +1861,22 @@ async def admin_logs(request: Request, limit: int = 100):
 
 @app.get("/api/admin/imports")
 async def admin_imports(request: Request):
-    """Returns only profiles created via bulk-import (import_source set), with claim status."""
+    """Returns only profiles created via bulk-import (import_source set), with claim status + email."""
     await _require_admin(request)
     profiles = await db.profiles.find(
         {"import_source": {"$exists": True, "$ne": None}},
         {"_id": 0},
     ).sort("created_date", -1).to_list(length=500)
+    # Hydrate each item with its user email + user_id for the admin UI.
+    user_ids = [p["user_id"] for p in profiles if p.get("user_id")]
+    users = await db.users.find(
+        {"id": {"$in": user_ids}}, {"_id": 0, "id": 1, "email": 1}
+    ).to_list(length=500)
+    by_id = {u["id"]: u for u in users}
+    for p in profiles:
+        u = by_id.get(p.get("user_id"))
+        if u:
+            p.setdefault("email", u.get("email"))
     return {
         "total": len(profiles),
         "claimed": sum(1 for p in profiles if p.get("welcome_email_sent") or p.get("auto_claim_dismissed")),
