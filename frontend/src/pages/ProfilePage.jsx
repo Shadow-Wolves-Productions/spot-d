@@ -19,6 +19,7 @@ export default function ProfilePage() {
   const [user, setUser] = useState(null);
   const [myProfile, setMyProfile] = useState(null);
   const [similarProfiles, setSimilarProfiles] = useState([]);
+  const [linkedCompanies, setLinkedCompanies] = useState([]);
   const [isSaved, setIsSaved] = useState(false);
   const [spotModalOpen, setSpotModalOpen] = useState(false);
   const [hasSpotted, setHasSpotted] = useState(false);
@@ -64,6 +65,12 @@ export default function ProfilePage() {
             5
           );
           setSimilarProfiles(similar.filter((s) => s.id !== p.id).slice(0, 4));
+        }
+        // Cross-link: show "Also on Spot'd" company tiles for any
+        // CompanyProfile owned by this user.
+        if (p.user_id) {
+          const linked = await base44.entities.CompanyProfile.filter({ user_id: p.user_id }).catch(() => []);
+          setLinkedCompanies(linked || []);
         }
       }
       setLoading(false);
@@ -268,6 +275,37 @@ export default function ProfilePage() {
             <PortfolioSection profile={profile} />
             <SpottedWithSection profileId={profile.id} />
             <SpotsSection profileId={profile.id} />
+
+            {/* Also on Spot'd — cross-link to any CompanyProfile owned by this user */}
+            {linkedCompanies.length > 0 && (
+              <section className="space-y-3" data-testid="also-on-spotd-section">
+                <h2 className="font-display text-lg font-semibold text-foreground">Also on Spot'd</h2>
+                <div className="grid sm:grid-cols-2 gap-3">
+                  {linkedCompanies.map((c) => (
+                    <Link
+                      key={c.id}
+                      to={`/c/${c.company_slug || c.id}`}
+                      data-testid={`also-on-spotd-company-${c.company_slug || c.id}`}
+                      className="bg-card border border-border rounded-xl p-4 flex items-center gap-3 hover:border-primary/40 transition-colors"
+                    >
+                      <div className="w-12 h-12 rounded-lg bg-secondary overflow-hidden flex-shrink-0 flex items-center justify-center">
+                        {c.logo ? (
+                          <img src={c.logo.startsWith("/api/static/") ? c.logo : c.logo} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          <span className="text-xs font-bold text-muted-foreground">{(c.company_name || "C").slice(0, 2).toUpperCase()}</span>
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold text-foreground truncate">{c.company_name}</p>
+                        <p className="text-[11px] text-muted-foreground truncate">
+                          {c.company_type || "Company"} · getspotd.app/c/{c.company_slug || c.id}
+                        </p>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            )}
           </div>
 
           {/* Right sticky panel */}

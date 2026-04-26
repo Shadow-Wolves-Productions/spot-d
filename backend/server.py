@@ -487,6 +487,11 @@ async def list_entity(entity: str, request: Request):
     if sort_list:
         cursor = cursor.sort(sort_list)
     items = await cursor.to_list(length=limit)
+    # Defense-in-depth: never expose Profile rows that admins have flagged as
+    # is_hidden=True from the public Profile listing. Owner can still see their
+    # own profile via /entities/Profile/{id}.
+    if entity == "Profile":
+        items = [p for p in items if not p.get("is_hidden")]
     return items
 
 
@@ -1736,6 +1741,183 @@ async def public_settings():
 
 
 # --------------------------------------------------------------------------- #
+# Profile completion nudge email — runs daily, sends single Postmark nudge to
+# any user who:
+#   • completed first login (welcome_email_sent=True OR auto_claim_dismissed=True)
+#   • is more than 48h past that first-login moment
+#   • has spot_score < 40
+#   • has not received the nudge yet (nudge_email_sent != True)
+# --------------------------------------------------------------------------- #
+async def _send_profile_completion_nudges():
+    cutoff = (datetime.now(timezone.utc) - timedelta(hours=48)).isoformat()
+    cursor = db.profiles.find(
+        {
+            "spot_score": {"$lt": 40},
+            "nudge_email_sent": {"$ne": True},
+            "$or": [
+                {"auto_claim_dismissed": True, "updated_date": {"$lt": cutoff}},
+                {"welcome_email_sent": True, "updated_date": {"$lt": cutoff}},
+            ],
+        },
+        {"_id": 0},
+    )
+    sent = 0
+    async for p in cursor:
+        user = await db.users.find_one({"id": p.get("user_id")})
+        if not user or not user.get("email"):
+            continue
+        # Top 3 missing items by SpotScore impact
+        suggestions = []
+        if not p.get("profile_photo"):
+            suggestions.append(("Add a profile photo", 5))
+        if not p.get("phone_verified"):
+            suggestions.append(("Verify your phone", 8))
+        if not p.get("email_verified"):
+            suggestions.append(("Verify your email", 7))
+        if not p.get("imdb_link"):
+            suggestions.append(("Link your IMDb profile", 5))
+        if not p.get("showreel_link"):
+            suggestions.append(("Add your showreel", 5))
+        if not p.get("bio"):
+            suggestions.append(("Write a short bio", 5))
+        suggestions = sorted(suggestions, key=lambda s: -s[1])[:3]
+        items_html = "".join(f"<li><strong>{label}</strong> — +{pts} pts</li>" for label, pts in suggestions)
+        edit_url = f"{PUBLIC_APP_URL}/create-profile"
+        score = p.get("spot_score", 0)
+        html = (
+            f"<p>Hi {p.get('preferred_name') or p.get('full_name') or 'there'},</p>"
+            f"<p>Your Spot'd profile is almost there — current SpotScore: <strong>{score}/100</strong>.</p>"
+            f"<p>Three quick wins to climb the directory:</p>"
+            f"<ul>{items_html}</ul>"
+            f"<p><a href='{edit_url}'>Complete my profile →</a></p>"
+        )
+        try:
+            await send_email(user["email"], "Your Spot'd profile is almost there", html)
+            await db.profiles.update_one(
+                {"id": p["id"]},
+                {"$set": {"nudge_email_sent": True, "nudge_email_at": now_iso()}},
+            )
+            sent += 1
+        except Exception as e:
+            log.warning("Nudge email failed for %s: %s", user.get("email"), e)
+    log.info("Sent %d completion-nudge emails", sent)
+    return {"success": True, "sent": sent}
+
+
+@app.post("/api/functions/sendProfileCompletionNudges")
+async def fn_send_nudges(request: Request):
+    user = await require_user(request)
+    if user.get("role") != "admin":
+        raise HTTPException(403, "Admin only")
+    return await _send_profile_completion_nudges()
+
+
+# --------------------------------------------------------------------------- #
+# Admin helpers — used by the 7-tab Admin Dashboard
+# --------------------------------------------------------------------------- #
+async def _require_admin(request: Request):
+    user = await require_user(request)
+    if user.get("role") != "admin":
+        raise HTTPException(403, "Admin only")
+    return user
+
+
+async def _log_admin_action(actor_id: str, action: str, target: str = "", meta: dict | None = None):
+    await db.admin_logs.insert_one({
+        "id": new_id(),
+        "actor_id": actor_id,
+        "action": action,
+        "target": target,
+        "meta": meta or {},
+        "created_date": now_iso(),
+    })
+
+
+@app.get("/api/admin/logs")
+async def admin_logs(request: Request, limit: int = 100):
+    await _require_admin(request)
+    items = await db.admin_logs.find({}, {"_id": 0}).sort("created_date", -1).limit(int(limit)).to_list(length=int(limit))
+    return items
+
+
+@app.get("/api/admin/imports")
+async def admin_imports(request: Request):
+    """Returns the 58 imported founding members + claim status (welcome_email_sent + auto_claim_dismissed)."""
+    await _require_admin(request)
+    profiles = await db.profiles.find(
+        {"$or": [{"imported_from": {"$exists": True}}, {"welcome_email_sent": False}]},
+        {"_id": 0},
+    ).sort("created_date", -1).to_list(length=500)
+    return {
+        "total": len(profiles),
+        "claimed": sum(1 for p in profiles if p.get("welcome_email_sent") or p.get("auto_claim_dismissed")),
+        "unclaimed": sum(1 for p in profiles if not (p.get("welcome_email_sent") or p.get("auto_claim_dismissed"))),
+        "items": profiles,
+    }
+
+
+@app.get("/api/admin/emails")
+async def admin_emails(request: Request, limit: int = 100):
+    """Recent email log entries (mock or real)."""
+    await _require_admin(request)
+    items = await db.email_log.find({}, {"_id": 0}).sort("created_date", -1).limit(int(limit)).to_list(length=int(limit))
+    return items
+
+
+@app.get("/api/admin/platform")
+async def admin_platform(request: Request):
+    await _require_admin(request)
+    return {
+        "email_mock": EMAIL_MOCK,
+        "sms_mock": SMS_MOCK,
+        "env": os.environ.get("ENV", "development"),
+        "founder_count": await db.subscriptions.count_documents({"tier": "founder", "status": "active"}),
+        "user_count": await db.users.count_documents({}),
+        "profile_count": await db.profiles.count_documents({}),
+        "casting_calls": await db.casting_calls.count_documents({}),
+        "applications": await db.casting_applications.count_documents({}),
+        "endorsements": await db.spots.count_documents({}),
+        "notifications": await db.notifications.count_documents({}),
+    }
+
+
+@app.get("/api/admin/casting-calls")
+async def admin_casting_calls(request: Request):
+    await _require_admin(request)
+    items = await db.casting_calls.find({}, {"_id": 0}).sort("created_date", -1).to_list(length=500)
+    # Hydrate creator name for the admin table
+    creator_ids = list({c.get("creator_user_id") for c in items if c.get("creator_user_id")})
+    creators = await db.users.find({"id": {"$in": creator_ids}}, {"_id": 0, "id": 1, "email": 1, "full_name": 1}).to_list(length=500)
+    by_id = {u["id"]: u for u in creators}
+    for c in items:
+        u = by_id.get(c.get("creator_user_id"))
+        if u:
+            c["creator_email"] = u.get("email")
+            c["creator_name"] = u.get("full_name")
+    return items
+
+
+class AdminProfileFlagBody(BaseModel):
+    is_hidden: Optional[bool] = None
+
+
+@app.post("/api/admin/profile/{profile_id}/flag")
+async def admin_profile_flag(profile_id: str, body: AdminProfileFlagBody, request: Request):
+    user = await _require_admin(request)
+    update = {}
+    if body.is_hidden is not None:
+        update["is_hidden"] = bool(body.is_hidden)
+    if not update:
+        raise HTTPException(400, "Nothing to update")
+    update["updated_date"] = now_iso()
+    res = await db.profiles.update_one({"id": profile_id}, {"$set": update})
+    if res.matched_count == 0:
+        raise HTTPException(404, "Profile not found")
+    await _log_admin_action(user["id"], "profile.flag", profile_id, update)
+    return {"ok": True}
+
+
+# --------------------------------------------------------------------------- #
 # Startup: indexes, scheduled jobs, seed
 # --------------------------------------------------------------------------- #
 async def seed_initial_data():
@@ -1856,6 +2038,7 @@ async def on_startup():
     # Scheduled jobs
     scheduler.add_job(_run_spotted_with, CronTrigger(hour=2, minute=0))
     scheduler.add_job(_purge_codes, CronTrigger(hour=3, minute=0))
+    scheduler.add_job(_send_profile_completion_nudges, CronTrigger(hour=15, minute=0))
     scheduler.add_job(lambda: _send_daily_weekly("daily"), CronTrigger(hour=17, minute=0))
     scheduler.add_job(lambda: _send_daily_weekly("weekly"), CronTrigger(day_of_week="sun", hour=17, minute=0))
     scheduler.start()

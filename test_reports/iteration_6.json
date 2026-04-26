@@ -1,0 +1,41 @@
+{
+  "summary": "Iteration 6 backend + frontend regression for Spot'd batch-1 features. Backend: 18/18 pytest cases PASS in /app/backend/tests/test_iteration6.py (health, /api/analytics/summary tier-aware payload for founder + free + 401, /api/auto-claim/check + /dismiss, Profile is_hidden listing exclusion, all 5 admin endpoints with role gating + no _id leaks, /api/admin/profile/{id}/flag persistence + admin_logs write, /api/functions/sendProfileCompletionNudges admin-only, CastingCall posted_as=company persistence). Frontend: data-testids present on all 8 critical surfaces — /analytics has data-testid='analytics-advanced' with 'SpotScore History' + 'who revealed contact' rendered; /notifications page renders ('You're all caught up' empty state — mark-all-read-btn correctly conditional on unread>0); /dashboard auto-claim banner correctly absent (Brendan claimed); mobile bottom tabs has exactly 4 tabs (DIRECTORY, CASTING, INBOX, DASHBOARD); /admin renders all 8 tabs (admin-tab-users/profiles/casting/imports/emails/platform/stats/logs); admin-send-nudges-btn is mounted on Emails tab (verified in source); toggle-include-minors mounted only when tab='talent' and filter panel open (verified in source). post-as-selector + also-on-spotd-section + casting-call-posted-by chip require seeded CompanyProfile / company-attributed call to render (no test data; logic mounting-paths verified in source).",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration6.py",
+    "/app/test_reports/pytest/iter6_results.xml"
+  ],
+  "action_items": [
+    "OPTIONAL data setup for end-to-end visual verification: (1) Create a CompanyProfile under Brendan's user_id (61102aff1ea2423997336aa4) so /u/brendanbyrneofficial renders the data-testid='also-on-spotd-section' and /casting/new shows data-testid='post-as-selector'; (2) Post a casting call with posted_as='company' + posted_as_company_* fields so the /casting list shows data-testid='casting-call-posted-by' chip. Backend path is fully tested and persists those fields correctly.",
+    "OPTIONAL UX: mark-all-read-btn is gated on unread>0 (correct), but there is no visible affordance on the empty Notifications page — consider letting the button be visible-but-disabled when items.length===0 so the testid is always discoverable.",
+    "OPTIONAL UX: toggle-include-minors lives inside a collapsible filters panel + Talent tab only — confirm this is intentional; if you want it always visible on /search Talent, hoist it out of the filters panel."
+  ],
+  "critical_code_review_comments": [
+    "server.py is now ~2052 lines — long overdue for splitting into routers (auth, entities, analytics, admin, functions, stripe).",
+    "/api/analytics/summary spot_score_history will only have data if the snapshot job has already run; on first deploy founders will see an empty chart — consider seeding one snapshot at user/profile creation.",
+    "/api/admin/imports filter is `imported_from exists OR welcome_email_sent=false` — newly-signed-up users (welcome_email_sent defaults missing) will leak into the 'imports' tab. Suggest making welcome_email_sent default to True at user-signup time so only real imports show up here.",
+    "/api/admin/profile/{id}/flag logs the action but does NOT log the previous value (before flip) — consider including {previous: bool, new: bool} in meta for full auditability.",
+    "TestProfileHiddenFilter created a profile via POST /api/entities/Profile from an authed admin — note the route allows anonymous Profile creation (line 503 of server.py); this is an open creation surface that could be abused. Consider gating Profile creation behind an authed user."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration6.py"
+  ],
+  "success_rate": {
+    "backend": "100% (18/18)",
+    "frontend": "8/8 critical testids/surfaces verified; 3 conditional surfaces (post-as-selector, also-on-spotd-section, casting-call-posted-by) need seeded company data for visual confirmation"
+  },
+  "test_credentials": "Admin: brendan@shadowwolvesproductions.com.au — passwordless OTP, dev_code returned in /api/auth/request-code response. JWT injected into localStorage as spotd_token for Playwright.",
+  "seed_data_creation": "Tests create+delete: (1) test_iter6_user_<rnd>@example.com for non-admin negative checks, (2) one TEST_HIDDEN profile with is_hidden=true to verify list exclusion, (3) one TEST_FLAG profile to verify admin flag + admin_logs entry, (4) one TEST_ITER6_CompanyCall_<rnd> casting call with posted_as=company to verify field persistence. All test data is deleted in the same test (try/finally).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Backend is fully green (18/18 iteration 6 + 13/13 iteration 4 = 31/31 across both suites). All new endpoints from this batch are documented in /app/backend/tests/test_iteration6.py and ready for regression. Frontend testids exist everywhere they should — the three remaining unverified UI surfaces (also-on-spotd-section, post-as-selector, casting-call-posted-by) require seeded CompanyProfile data; if main agent wants visual verification, seed a CompanyProfile under user 61102aff1ea2423997336aa4 first and post a casting call with posted_as='company'. Inject JWT into localStorage.spotd_token on REACT_APP_BACKEND_URL for fast Playwright auth — Cloudflare may challenge between rapid navigations, so use wait_until='domcontentloaded' instead of 'networkidle' if you hit timeouts on /casting/new.",
+  "rca of the issue": "No bugs found this iteration. Three frontend testids ('mark-all-read-btn' on empty inbox, 'toggle-include-minors' inside collapsed filters, 'admin-send-nudges-btn' on Emails sub-tab) showed as 'absent' in a flat-page query but are correctly present in source — they are conditionally rendered. This is by-design behavior, not a defect."
+}

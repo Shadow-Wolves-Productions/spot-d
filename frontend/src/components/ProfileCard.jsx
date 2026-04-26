@@ -70,6 +70,11 @@ export default function ProfileCard({ profile, subscription, onSave, isSaved, in
                     <Crown className="w-2.5 h-2.5" /> {tierBadge.label}
                   </span>
                 )}
+                {profile.is_minor_profile && (
+                  <span data-testid="minor-badge" className="px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em] rounded bg-amber-500/90 text-black" title="Performer under 18">
+                    Minor
+                  </span>
+                )}
               </div>
               {/* SpotScore dot in top-right of headshot */}
               {profile.spot_score > 0 && (

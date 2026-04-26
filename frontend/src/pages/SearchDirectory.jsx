@@ -50,6 +50,7 @@ export default function SearchDirectory() {
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState("grid"); // "grid" | "map"
   const [proximity, setProximity] = useState(null); // { lat, lon, radius, display }
+  const [includeMinors, setIncludeMinors] = useState(false);
 
   useEffect(() => {
     const init = async () => {
@@ -107,6 +108,16 @@ export default function SearchDirectory() {
       data = await base44.entities.Profile.filter(filterObj, sort, 50);
     } else {
       data = await base44.entities.Profile.list(sort, 50);
+    }
+
+    // Always exclude profiles flagged as hidden by an admin (defense-in-depth;
+    // backend also filters these out at the query level).
+    data = data.filter((p) => !p.is_hidden);
+
+    // Minor performer safeguard: hide minor-performer profiles unless the
+    // viewer explicitly toggled "Include minor performers".
+    if (!includeMinors) {
+      data = data.filter((p) => !p.is_minor_profile);
     }
 
     // Client-side filtering for text search and other filters
@@ -220,7 +231,7 @@ export default function SearchDirectory() {
     }
 
     setLoading(false);
-  }, [filters, sort, searchQuery, proximity, tab]);
+  }, [filters, sort, searchQuery, proximity, tab, includeMinors]);
 
   useEffect(() => {
     loadProfiles();
@@ -340,6 +351,20 @@ export default function SearchDirectory() {
                   {toggle.label}
                 </button>
               ))}
+              {tab === "talent" && (
+                <button
+                  data-testid="toggle-include-minors"
+                  onClick={() => setIncludeMinors((v) => !v)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                    includeMinors
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-secondary/50 text-muted-foreground hover:text-foreground hover:bg-secondary"
+                  }`}
+                  title="Show minor (under-18) performers in the directory"
+                >
+                  Include minor performers
+                </button>
+              )}
             </div>
           </div>
         </div>

@@ -22,13 +22,38 @@ function CastingCallCard({ call, myProfile, index, user, appliedCallIds }) {
   const alreadyApplied = appliedCallIds?.has(call.id);
   const isCreator = user?.id === call.creator_user_id;
 
+  // "Posted by" attribution — company or personal
+  const isCompanyPost = call.posted_as === "company" && call.posted_as_company_id;
+  const attributionName = isCompanyPost ? call.posted_as_company_name : call.company_name;
+  const attributionLogo = isCompanyPost ? call.posted_as_company_logo : call.company_logo;
+  const attributionHref = isCompanyPost && call.posted_as_company_slug ? `/c/${call.posted_as_company_slug}` : null;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.05, duration: 0.3 }}
       className="bg-card border border-border/60 rounded-xl p-6 hover:border-primary/30 transition-all hover:shadow-lg hover:shadow-primary/5"
+      data-testid={`casting-call-card-${call.id}`}
     >
+      {/* Posted-by chip — links to company if company-posted */}
+      {(attributionName || attributionLogo) && (
+        <div className="flex items-center gap-2 mb-3" data-testid="casting-call-posted-by">
+          {attributionLogo && (
+            <img src={attributionLogo.startsWith("/api/static/") ? attributionLogo : attributionLogo} alt="" className="w-5 h-5 rounded object-cover border border-border flex-shrink-0" />
+          )}
+          {attributionHref ? (
+            <Link to={attributionHref} className="text-[11px] uppercase tracking-[0.06em] font-mono text-muted-foreground hover:text-primary transition-colors">
+              Posted by {attributionName}
+            </Link>
+          ) : attributionName ? (
+            <span className="text-[11px] uppercase tracking-[0.06em] font-mono text-muted-foreground">
+              Posted by {attributionName}
+            </span>
+          ) : null}
+        </div>
+      )}
+
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-2">
