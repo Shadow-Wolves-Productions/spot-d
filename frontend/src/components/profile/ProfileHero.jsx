@@ -31,10 +31,10 @@ export default function ProfileHero({ profile }) {
       </div>
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-8">
-        <div className="flex flex-col lg:flex-row gap-8 items-start">
-          {/* Photo */}
-          <div className="relative flex-shrink-0">
-            <div className="w-44 h-56 sm:w-56 sm:h-72 rounded-2xl overflow-hidden border-2 border-border/60 shadow-2xl shadow-black/30">
+        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 items-start">
+          {/* Photo — full width on mobile, fixed size on desktop */}
+          <div className="relative w-full lg:w-auto lg:flex-shrink-0">
+            <div className="w-full lg:w-56 aspect-[4/5] sm:aspect-[3/4] lg:aspect-auto lg:h-72 rounded-xl lg:rounded-2xl overflow-hidden border-2 border-border/60 shadow-2xl shadow-black/30">
               {profile.profile_photo ? (
                 <img src={profile.profile_photo} alt={profile.full_name} className="w-full h-full object-cover" />
               ) : (
@@ -135,13 +135,13 @@ export default function ProfileHero({ profile }) {
             )}
           </div>
 
-          {/* SpotScore */}
-          <div className="flex-shrink-0 flex flex-col items-center gap-2">
-            <div className="flex flex-col items-center justify-center rounded-2xl border border-primary/30 px-6 py-5" style={{ background: "rgba(232,252,108,0.06)", minWidth: 100 }}>
+          {/* SpotScore — full width on mobile, sidebar card on desktop */}
+          <div className="w-full lg:w-auto lg:flex-shrink-0 flex flex-col items-center gap-2">
+            <div className="w-full lg:w-auto flex flex-row lg:flex-col items-center justify-center gap-4 rounded-2xl border border-primary/30 px-6 py-5" style={{ background: "rgba(232,252,108,0.06)", minWidth: 100 }} data-testid="profile-hero-spotscore">
               <span className="font-display font-bold text-primary" style={{ fontSize: 52, lineHeight: 1, color: "hsl(var(--primary))" }}>
                 {profile.spot_score || 0}
               </span>
-              <span className="text-[10px] uppercase tracking-[0.12em] font-mono text-muted-foreground mt-1">SpotScore</span>
+              <span className="text-[10px] uppercase tracking-[0.12em] font-mono text-muted-foreground lg:mt-1">SpotScore</span>
             </div>
           </div>
         </div>

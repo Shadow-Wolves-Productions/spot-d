@@ -498,10 +498,13 @@ async def list_entity(entity: str, request: Request):
 @app.post("/api/entities/{entity}")
 async def create_entity(entity: str, request: Request):
     user = await current_user(request)
-    if not user and entity not in {"VerificationCode", "ProfileView", "SearchAppearance"}:
-        # allow some passive entities anonymous
-        if entity != "Profile":
-            raise HTTPException(401, "Unauthorized")
+    # Only telemetry entities (anonymous tracking) may be created without auth.
+    # Everything else — including Profile, CompanyProfile, CastingCall,
+    # CastingApplication, SpotRequest, SavedProfile, ContactReveal — requires
+    # an authenticated user.
+    ANONYMOUS_CREATE_OK = {"VerificationCode", "ProfileView", "SearchAppearance", "PortfolioClick"}
+    if not user and entity not in ANONYMOUS_CREATE_OK:
+        raise HTTPException(401, "Unauthorized")
 
     payload = await request.json()
     if not isinstance(payload, dict):
@@ -563,6 +566,17 @@ async def create_entity(entity: str, request: Request):
     # Auto-link CastingApplication side effects
     if entity == "CastingApplication":
         await _on_casting_application_created(doc)
+
+    # Seed one SpotScoreHistory snapshot for new Profiles so the analytics
+    # chart never starts empty.
+    if entity == "Profile":
+        await db.spot_score_history.insert_one({
+            "id": new_id(),
+            "profile_id": doc["id"],
+            "score": doc.get("spot_score", 0),
+            "recorded_at": now_iso(),
+            "created_date": now_iso(),
+        })
 
     # Trigger SpotScore recalc if relevant
     await maybe_recalc_score(entity, doc)
@@ -2011,6 +2025,26 @@ async def migrate_all_roles():
         log.info("Migrated all_roles for %d profiles", n)
 
 
+async def backfill_spot_score_history():
+    """One-time backfill: insert one SpotScoreHistory snapshot per profile that
+    has zero history rows so the chart on /analytics is never empty."""
+    cursor = db.profiles.find({}, {"_id": 0, "id": 1, "spot_score": 1})
+    n = 0
+    async for p in cursor:
+        existing = await db.spot_score_history.count_documents({"profile_id": p["id"]})
+        if existing == 0:
+            await db.spot_score_history.insert_one({
+                "id": new_id(),
+                "profile_id": p["id"],
+                "score": p.get("spot_score", 0),
+                "recorded_at": now_iso(),
+                "created_date": now_iso(),
+            })
+            n += 1
+    if n:
+        log.info("Backfilled SpotScoreHistory for %d profiles", n)
+
+
 async def create_indexes():
     await db.users.create_index("email", unique=True)
     await db.users.create_index("id", unique=True)
@@ -2035,6 +2069,7 @@ async def on_startup():
     await create_indexes()
     await seed_initial_data()
     await migrate_all_roles()
+    await backfill_spot_score_history()
     # Scheduled jobs
     scheduler.add_job(_run_spotted_with, CronTrigger(hour=2, minute=0))
     scheduler.add_job(_purge_codes, CronTrigger(hour=3, minute=0))
