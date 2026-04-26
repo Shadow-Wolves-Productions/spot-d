@@ -137,7 +137,7 @@ export default function Layout() {
                     )}
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <button className="w-8 h-8 bg-secondary border border-border rounded-full flex items-center justify-center hover:border-primary/40 transition-colors overflow-hidden">
+                        <button data-testid="user-menu-trigger" className="w-8 h-8 bg-secondary border border-border rounded-full flex items-center justify-center hover:border-primary/40 transition-colors overflow-hidden">
                           {profile?.profile_photo ? (
                             <img
                               src={profile.profile_photo}

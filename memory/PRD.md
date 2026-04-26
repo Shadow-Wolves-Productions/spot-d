@@ -1,76 +1,50 @@
 # Spot'd — Product Requirements Document
 
 **Tagline:** Indie film cast & crew discovery — "IMDb Pro meets Slated for indie."
-**URL:** getspotd.app
-**Platform:** Emergent (migrated from Base44)
 
 ## Tech Stack
-- Frontend: React 18 + Vite, TailwindCSS, shadcn/ui, framer-motion, react-router-dom, html2canvas
-- Backend: FastAPI + MongoDB (Motor)
-- Auth: Passwordless OTP (email 6-digit code + JWT)
-- Payments: Stripe via emergentintegrations
-- Email: Postmark (key wired, mock mode ON until launch)
-- SMS: Twilio (placeholder, mock mode ON)
-- Scheduler: APScheduler
+- React 18 + Vite, TailwindCSS, shadcn/ui, framer-motion, html2canvas
+- FastAPI + MongoDB
+- Auth: passwordless OTP + JWT
+- Stripe via emergentintegrations
+- Postmark email + Twilio SMS (currently mocked)
+- APScheduler
 
 ## Implemented (cumulative through Jan 2026)
 
-### Iteration 1 — Foundation
-- Project restructured (frontend/ + backend/), all entity collections, OTP login, generic entity REST mirroring Base44 SDK, all 11 named functions, SpotScore + percentile, Stripe Checkout, scheduled jobs, /login /welcome /terms /privacy, brand styling, admin seed.
+### Iter 1 — Foundation: full migration from Base44 (auth, entities, functions, Stripe, scheduled jobs, /login /welcome /terms /privacy)
+### Iter 2 — Postmark, bulk import (57 CineConnect members), Stripe renewed handler, AgeGate, Minor performer toggle, Shareable SpotScore card
+### Iter 3 — Bug fixes (photo upload, input focus), Postmark signature verification, file upload endpoints (/api/upload/*), reusable ImageUploader, Company Profile feature (3-tab directory, CompanyProfileCard, /create-company wizard, /c/[slug])
+### Iter 4 (this session)
+- **Multi-role profiles** — `all_roles` field auto-computed on Profile create/update (union of primary + secondary), one-time migration on startup. Directory tabs query `all_roles` so a profile like Brendan (Producer + Actor + Writer) appears in BOTH Talent and Crew tabs. Card shows context-relevant role (`PRODUCER · Also: Actor, Writer` in Crew tab; `ACTOR` in Talent tab).
+- **Personal + Company linked profiles** — Dashboard shows "Your profiles" section with personal + company cards (or empty-state "Create company profile" placeholder). Nav dropdown ("My profile (Personal)" / "My profile (Company)" / "Create personal/company profile" — driven off the user's owned profiles).
+- **Self-apply allowed** — Creator can apply to their own casting call ("Apply as crew/cast" button). Auto side effects: increments application_count, adds project to applicant's `Profile.credits`, runs SpottedWith matching, suppresses self-notification. "Creator" badge in the kanban for self-applies.
+- **3 test applications on Thunk** — Brendan (self-apply, shortlisted), Sofia Poli (1st AD, pending), Mitchell Baines (1st AC, viewed). `application_count = 3`.
+- **Geo proximity UX** — improved error states (denied / timeout / insecure context all show "Enter city manually"), 10s timeout, 5min cache.
+- **HTTPS redirect middleware** — only active when `ENV=production` (no redirect loops in dev).
+- **ensureAbsoluteUrl utility** (`/app/frontend/src/lib/url.js`) — `imdb_link`, `showreel_link`, `website`, `linkedin`, `resume_url`, `reel_link`, `past_productions[].link` all normalised to `https://...` on save (CreateProfile + CreateCompany) AND on render (ProfileHero, ProfileCard, ProfileSections, CompanyProfilePage). `ensureMailto` for emails.
+- **`data-testid="user-menu-trigger"` + `data-testid="user-dropdown"`** for stable test automation against the nav profile-switcher.
 
-### Iteration 2 — Postmark/Imports/Age Gate/Share
-- Postmark integration with webhook handler
-- Bulk import of 57 CineConnect founding members (PRO 12mo, idempotent)
-- Stripe customer.subscription.renewed handler (extends expires_at)
-- AgeGate component on /create-profile (18+ + minor consent)
-- Minor performer toggle + Responsible Adult fields
-- Shareable SpotScore card (1080×1920 + 1080×1080 PNG via html2canvas)
+## Backlog (P0 — needed before launch)
+- Real Stripe price IDs + flip dynamic-amount → fixed-price mode
+- Twilio creds + flip SMS_MOCK_MODE
+- Set production POSTMARK_WEBHOOK_SECRET + flip EMAIL_MOCK_MODE
+- Migrate file uploads from local disk → S3/Cloudflare R2
 
-### Iteration 3 — Bug Fixes + Company Profiles + Uploads
-- **Bug fix**: photo upload now uses real backend (was calling non-existent base44 SDK method)
-- **Bug fix**: input focus loss eliminated by moving TagInput component to module scope (was defined inside CreateProfile, causing remount on every keystroke)
-- **Postmark webhook signature verification** — HMAC-SHA256 base64 against `POSTMARK_WEBHOOK_SECRET`; rejects unsigned/invalid with 403
-- **File upload endpoints**: `/api/upload/{profile-photo,headshot,company-logo,cover-image}` with 5MB cap, JPG/PNG/WEBP only, served at `/api/static/uploads/<type>/<id>.<ext>` (mounted under /api/ so the K8s ingress routes it correctly)
-- **ImageUploader** reusable component with drag-drop, preview, replace, remove
-- **Company Profiles**:
-  - 3-tab directory (Talent / Crew / Companies) — default Crew
-  - `CompanyProfileCard` grid card with logo / type badge / SpotScore / location
-  - `/create-company` 4-step wizard (Basics, Location & Contact, Portfolio, Review) with logo + cover upload, slug editor, services tags, past productions array
-  - `/c/[slug]` company profile page with cover banner, contact strip, services, showreel, productions list, team links
-  - "Company profile" CTA on Dashboard
-- **ProfileCard** fixes: data-testid added; nested `<a>` (IMDb badge) replaced with `<span role="link">` to avoid invalid HTML
-
-## Backlog (P0 — needed before public launch)
-- [ ] Real Stripe price IDs (pro_monthly, pro_annual, elite_monthly, elite_annual)
-- [ ] Twilio creds + flip SMS_MOCK_MODE
-- [ ] Set production POSTMARK_WEBHOOK_SECRET (currently `spotd-dev-postmark-secret-rotate-me`)
-- [ ] Flip EMAIL_MOCK_MODE=false when ready
-- [ ] Migrate file uploads from local disk to S3/Cloudflare R2 (current MVP writes to /app/backend/static/uploads/)
-- [ ] Stream-based upload size cap (currently buffers full file before checking 5MB limit)
-
-## Backlog (P1 — analytics + mobile UX, partial)
-- [ ] Analytics dashboard completion: full charts (already partial), "Who saved you" (PRO/Elite), "Who revealed your contact" (Elite only), SpotScoreHistory entity + nightly snapshot
-- [ ] Mobile bottom-tab bar — add Notifications tab (4 tabs)
-- [ ] SearchFilters in mobile bottom sheet
-- [ ] ProfileHero stack on mobile (photo full-width, SpotScore below, full-width CTA)
-- [ ] Pull-to-refresh confirm on Dashboard / CastingCalls
-- [ ] Skeleton loaders on remaining pages
+## Backlog (P1)
+- Analytics dashboard completion ("Who saved you" / "Who revealed contact" tier-gated, SpotScoreHistory entity + nightly snapshots, full charts)
+- Mobile UX polish (4-tab bottom bar with notifications, filters bottom sheet, ProfileHero stack)
+- CastingCall company attribution (post as personal vs company picker)
+- "Also on Spot'd" cross-link section between personal + company profile pages
 
 ## Backlog (P2)
-- [ ] Server.py refactor — split into routers/auth, routers/entities, routers/functions, routers/uploads, routers/stripe, routers/webhooks, routers/companies (~1600 lines now)
-- [ ] PIL/imghdr verification of uploaded image bytes vs declared content-type
-- [ ] Admin actions: tier toggle (free↔pro only), boost on/off
-- [ ] Move SpotScore recalc to background queue
-- [ ] startup warning when POSTMARK_WEBHOOK_SECRET is unset
+- Split server.py (~1700 lines) into routers
+- PIL/imghdr image bytes verification
+- Strict-Transport-Security header
+- Background-task migration for >10k profiles
+- Admin tier toggle (free↔pro) protecting elite/founder
 
 ## Stats
-- 60+ profiles · 57 PRO subs · 1 founder sub (Brendan) · 499 founder spots remaining
-- 1 active casting call (Thunk)
-- 0 companies (will grow once Brendan/team add their own — `/create-company`)
-- Test suites: iter1 (21/21) + iter2 (10/10) + iter3 (11/11) = all green
-
-## Notes
-- "spot_score" is canonical; Endorsement & WorkedWith deprecated
-- All scheduled jobs run at 17:00 UTC (≈4am AEST)
-- Governing law: NSW, Australia
-- Any URL with "spotd.app" should be "getspotd.app"
+- 60 profiles · 57 PRO + 1 founder + 0 expired
+- 1 active casting call (Thunk) · 3 applications
+- All-pass tests: iter1 21/21 · iter2 10/10 · iter3 11/11 · iter4 13/13 = 55/55 backend
