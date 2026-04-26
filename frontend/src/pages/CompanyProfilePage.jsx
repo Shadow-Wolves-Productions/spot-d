@@ -6,6 +6,7 @@ import { Building2, MapPin, Globe, Mail, Phone, Instagram, Film, Users, Calendar
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import SpotScoreBadge from "@/components/SpotScoreBadge";
+import { ensureAbsoluteUrl, ensureMailto } from "@/lib/url";
 
 function resolveAsset(url) {
   if (!url) return "";
@@ -144,13 +145,13 @@ export default function CompanyProfilePage() {
           {/* Contact strip */}
           <div className="mt-8 grid grid-cols-2 sm:grid-cols-4 gap-3">
             {company.website && (
-              <a href={company.website} target="_blank" rel="noreferrer" className="flex items-center gap-2 px-3 py-2 rounded-lg bg-secondary/40 hover:bg-secondary text-sm text-foreground/80 transition-colors">
+              <a href={ensureAbsoluteUrl(company.website)} target="_blank" rel="noreferrer" className="flex items-center gap-2 px-3 py-2 rounded-lg bg-secondary/40 hover:bg-secondary text-sm text-foreground/80 transition-colors">
                 <Globe className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
                 <span className="truncate">Website</span>
               </a>
             )}
             {company.email && (
-              <a href={`mailto:${company.email}`} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-secondary/40 hover:bg-secondary text-sm text-foreground/80 transition-colors">
+              <a href={ensureMailto(company.email)} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-secondary/40 hover:bg-secondary text-sm text-foreground/80 transition-colors">
                 <Mail className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
                 <span className="truncate">{company.email}</span>
               </a>
@@ -162,7 +163,7 @@ export default function CompanyProfilePage() {
               </a>
             )}
             {company.instagram && (
-              <a href={`https://instagram.com/${company.instagram.replace("@", "")}`} target="_blank" rel="noreferrer" className="flex items-center gap-2 px-3 py-2 rounded-lg bg-secondary/40 hover:bg-secondary text-sm text-foreground/80 transition-colors">
+              <a href={ensureAbsoluteUrl(company.instagram.startsWith("@") ? `instagram.com/${company.instagram.slice(1)}` : (company.instagram.includes("instagram.com") ? company.instagram : `instagram.com/${company.instagram}`))} target="_blank" rel="noreferrer" className="flex items-center gap-2 px-3 py-2 rounded-lg bg-secondary/40 hover:bg-secondary text-sm text-foreground/80 transition-colors">
                 <Instagram className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
                 <span className="truncate">{company.instagram}</span>
               </a>
@@ -186,10 +187,10 @@ export default function CompanyProfilePage() {
         {company.reel_link && (
           <section className="mt-10">
             <h2 className="font-display text-xl font-semibold text-foreground mb-4">Showreel</h2>
-            <a href={company.reel_link} target="_blank" rel="noreferrer" className="block bg-card border border-border rounded-xl p-6 hover:border-primary/40 transition-colors">
+            <a href={ensureAbsoluteUrl(company.reel_link)} target="_blank" rel="noreferrer" className="block bg-card border border-border rounded-xl p-6 hover:border-primary/40 transition-colors">
               <div className="flex items-center gap-3">
                 <Film className="w-5 h-5 text-primary" />
-                <span className="text-sm text-foreground truncate">{company.reel_link}</span>
+                <span className="text-sm text-foreground truncate">{company.reel_link.replace(/^https?:\/\//, "").replace(/^www\./, "")}</span>
                 <ExternalLink className="w-3.5 h-3.5 text-muted-foreground ml-auto" />
               </div>
             </a>
@@ -208,7 +209,7 @@ export default function CompanyProfilePage() {
                     <p className="text-xs text-muted-foreground truncate">{[p.year, p.role_on_project].filter(Boolean).join(" · ")}</p>
                   </div>
                   {p.link && (
-                    <a href={p.link} target="_blank" rel="noreferrer" className="text-xs text-primary hover:underline inline-flex items-center gap-1">
+                    <a href={ensureAbsoluteUrl(p.link)} target="_blank" rel="noreferrer" className="text-xs text-primary hover:underline inline-flex items-center gap-1">
                       View <ExternalLink className="w-3 h-3" />
                     </a>
                   )}

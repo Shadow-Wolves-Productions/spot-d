@@ -2,6 +2,7 @@ import { MapPin, Crown, CheckCircle, Film, Clock, Briefcase, ExternalLink } from
 import { base44 } from "@/api/base44Client";
 import { Badge } from "@/components/ui/badge";
 import SpotScoreBadge from "../SpotScoreBadge";
+import { ensureAbsoluteUrl } from "@/lib/url";
 
 const AVAILABILITY_STYLES = {
   "Available Now": "text-black border-0",
@@ -110,7 +111,7 @@ export default function ProfileHero({ profile }) {
             {profile.imdb_link && (
               <div className="mt-4">
                 <a
-                  href={profile.imdb_link}
+                  href={ensureAbsoluteUrl(profile.imdb_link)}
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={() => trackImdbClick(profile)}

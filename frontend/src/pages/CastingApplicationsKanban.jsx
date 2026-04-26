@@ -17,7 +17,7 @@ const COLUMNS = [
 ];
 
 function ApplicantCard({ app, profileMap, onMove, moving }) {
-  const profile = profileMap[app.profile_id];
+  const profile = profileMap[app.profile_id] || profileMap[`uid:${app.applicant_user_id}`];
 
   const tsField = { viewed: 'viewed_at', shortlisted: 'shortlisted_at', rejected: 'rejected_at', booked: 'booked_at' }[app.status];
   const tsValue = tsField && app[tsField];
@@ -34,8 +34,15 @@ function ApplicantCard({ app, profileMap, onMove, moving }) {
           </div>
         )}
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-foreground truncate">{profile?.full_name || "Unknown"}</p>
-          <p className="text-[11px] text-muted-foreground truncate">{profile?.primary_role}</p>
+          <div className="flex items-center gap-2">
+            <p className="text-sm font-semibold text-foreground truncate">{profile?.full_name || app.applicant_name || "Unknown"}</p>
+            {app.is_self_apply && (
+              <span data-testid="creator-badge" className="text-[9px] uppercase tracking-[0.08em] px-1.5 py-0.5 rounded font-bold" style={{ background: "#E8FC6C", color: "#0D0D0D" }}>
+                Creator
+              </span>
+            )}
+          </div>
+          <p className="text-[11px] text-muted-foreground truncate">{profile?.primary_role || app.applicant_email}</p>
         </div>
         <Link to={`/profile/${profile?.profile_slug || app.profile_id}`} target="_blank">
           <ExternalLink className="w-3.5 h-3.5 text-muted-foreground hover:text-primary" />
@@ -133,15 +140,28 @@ export default function CastingApplicationsKanban() {
       const apps = await base44.entities.CastingApplication.filter({ casting_call_id: castingCallId }, "-created_date", 100);
       setApplications(apps);
 
-      // Load profiles for all applicants
+      // Load profiles for all applicants — match by profile_id OR applicant_user_id
       const profileIds = [...new Set(apps.map((a) => a.profile_id).filter(Boolean))];
-      const profileEntries = await Promise.all(
+      const userIds = [...new Set(apps.map((a) => a.applicant_user_id).filter(Boolean))];
+      const profileById = await Promise.all(
         profileIds.map(async (pid) => {
           const p = await base44.entities.Profile.filter({ id: pid });
           return [pid, p[0]];
         })
       );
-      setProfileMap(Object.fromEntries(profileEntries.filter(([, p]) => p)));
+      const profileByUid = await Promise.all(
+        userIds.map(async (uid) => {
+          const p = await base44.entities.Profile.filter({ user_id: uid });
+          return [uid, p[0]];
+        })
+      );
+      const map = Object.fromEntries(profileById.filter(([, p]) => p));
+      profileByUid.forEach(([uid, p]) => {
+        if (!p) return;
+        // Index by user id too so card lookups can find it
+        map[`uid:${uid}`] = p;
+      });
+      setProfileMap(map);
       setLoading(false);
     };
     load();

@@ -1,5 +1,6 @@
 import { Film, Globe, Link as LinkIcon, ExternalLink, Award, Languages, Wrench, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { ensureAbsoluteUrl } from "@/lib/url";
 
 export function AboutSection({ bio }) {
   if (!bio) return null;
@@ -96,7 +97,7 @@ export function CreditsSection({ profile }) {
         <h2 className="font-display text-lg font-semibold text-foreground">IMDb & Credits</h2>
         {profile.imdb_link && (
           <a
-            href={profile.imdb_link}
+            href={ensureAbsoluteUrl(profile.imdb_link)}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 transition-colors font-medium"
@@ -131,17 +132,17 @@ export function PortfolioSection({ profile }) {
       <h2 className="font-display text-lg font-semibold text-foreground">Portfolio & Media</h2>
       <div className="space-y-2">
         {profile.showreel_link && (
-          <a href={profile.showreel_link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-primary hover:text-primary/80 transition-colors">
+          <a href={ensureAbsoluteUrl(profile.showreel_link)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-primary hover:text-primary/80 transition-colors">
             <Film className="w-4 h-4" /> Watch Showreel <ExternalLink className="w-3 h-3" />
           </a>
         )}
         {profile.website && (
-          <a href={profile.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-primary hover:text-primary/80 transition-colors">
+          <a href={ensureAbsoluteUrl(profile.website)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-primary hover:text-primary/80 transition-colors">
             <Globe className="w-4 h-4" /> Website <ExternalLink className="w-3 h-3" />
           </a>
         )}
         {profile.resume_url && (
-          <a href={profile.resume_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-primary hover:text-primary/80 transition-colors">
+          <a href={ensureAbsoluteUrl(profile.resume_url)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-primary hover:text-primary/80 transition-colors">
             <LinkIcon className="w-4 h-4" /> Download CV / Resume <ExternalLink className="w-3 h-3" />
           </a>
         )}

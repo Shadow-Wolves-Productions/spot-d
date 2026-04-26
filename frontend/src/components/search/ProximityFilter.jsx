@@ -55,20 +55,39 @@ export default function ProximityFilter({ proximity, onChange }) {
   };
 
   const useMyLocation = () => {
-    if (!navigator.geolocation) return;
+    if (!navigator.geolocation || !window.isSecureContext) {
+      setError("Location access requires a secure connection. Try entering your city manually.");
+      return;
+    }
     setGeocoding(true);
+    setError("Waiting for permission…");
     navigator.geolocation.getCurrentPosition(
       async ({ coords }) => {
-        const { latitude: lat, longitude: lon } = coords;
-        // Reverse geocode
-        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`);
-        const data = await res.json();
-        const display = data.address?.city || data.address?.town || data.address?.suburb || "My location";
-        onChange({ lat, lon, display, radius: proximity?.radius || 100 });
-        setInput(display);
-        setGeocoding(false);
+        try {
+          const { latitude: lat, longitude: lon } = coords;
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`);
+          const data = await res.json();
+          const display = data.address?.city || data.address?.town || data.address?.suburb || "My location";
+          onChange({ lat, lon, display, radius: proximity?.radius || 100 });
+          setInput(display);
+          setError("");
+        } catch (e) {
+          setError("Couldn't reverse geocode. Try entering your city manually.");
+        } finally {
+          setGeocoding(false);
+        }
       },
-      () => { setError("Could not get location."); setGeocoding(false); }
+      (err) => {
+        setGeocoding(false);
+        if (err.code === err.PERMISSION_DENIED) {
+          setError("Location access denied. Enter city manually.");
+        } else if (err.code === err.TIMEOUT) {
+          setError("Location timed out. Enter city manually.");
+        } else {
+          setError("Could not get location. Enter city manually.");
+        }
+      },
+      { timeout: 10000, maximumAge: 300000 }
     );
   };
 

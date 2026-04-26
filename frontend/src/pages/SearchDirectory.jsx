@@ -91,7 +91,12 @@ export default function SearchDirectory() {
     }
 
     const filterObj = {};
-    if (filters.role && filters.role !== "all_roles") filterObj.primary_role = filters.role;
+    // Tab-aware role filter: "Talent" = profiles that contain Actor in any role
+    // "Crew" = profiles whose primary or secondary role is anything but only Actor
+    if (tab === "talent") {
+      filterObj.all_roles = "Actor";
+    }
+    if (filters.role && filters.role !== "all_roles") filterObj.all_roles = filters.role;
     if (filters.availability && filters.availability !== "any_availability") filterObj.availability_status = filters.availability;
     if (filters.availableNow) filterObj.availability_status = "Available Now";
     if (filters.proOnly) filterObj.is_pro = true;
@@ -179,13 +184,31 @@ export default function SearchDirectory() {
 
     setProfiles(data);
 
-    // Apply Talent vs Crew split
+    // Apply tab split — Talent shows anyone with Actor anywhere; Crew shows
+    // anyone whose roles include at least one non-Actor role. A profile can
+    // appear in BOTH tabs (e.g. an Actor/Producer like Brendan).
     let visible = data;
     if (tab === "talent") {
-      visible = data.filter((p) => p.primary_role === "Actor");
+      visible = data.filter((p) => (p.all_roles || [p.primary_role]).includes("Actor"));
     } else if (tab === "crew") {
-      visible = data.filter((p) => p.primary_role && p.primary_role !== "Actor");
+      visible = data.filter((p) => {
+        const roles = p.all_roles && p.all_roles.length ? p.all_roles : [p.primary_role].filter(Boolean);
+        return roles.some((r) => r && r !== "Actor");
+      });
     }
+    // Annotate each profile with the role to display for this tab so
+    // ProfileCard can show the most relevant title.
+    visible = visible.map((p) => {
+      const roles = p.all_roles && p.all_roles.length ? p.all_roles : [p.primary_role].filter(Boolean);
+      let displayRole = p.primary_role;
+      if (tab === "talent" && roles.includes("Actor")) displayRole = "Actor";
+      else if (tab === "crew") {
+        const crewRole = roles.find((r) => r && r !== "Actor");
+        if (crewRole) displayRole = crewRole;
+      }
+      const otherRoles = roles.filter((r) => r && r !== displayRole);
+      return { ...p, _displayRole: displayRole, _otherRoles: otherRoles };
+    });
     setProfiles(visible);
 
     // Build spot count map for visible profiles

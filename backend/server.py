@@ -66,6 +66,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# HTTPS-only enforcement. Active only when ENV=production. Lets dev servers
+# (http://localhost) keep working without redirect loops.
+if os.environ.get("ENV", "development").lower() == "production":
+    @app.middleware("http")
+    async def force_https(request: Request, call_next):
+        proto = request.headers.get("x-forwarded-proto", request.url.scheme)
+        if proto == "http":
+            url = request.url.replace(scheme="https")
+            return JSONResponse(status_code=301, content={"detail": "HTTPS required"}, headers={"Location": str(url)})
+        return await call_next(request)
+
 # Static file hosting for uploads
 UPLOAD_ROOT = Path(__file__).parent / "static" / "uploads"
 for sub in ("profiles", "headshots", "company-logos", "company-covers"):
@@ -351,10 +362,73 @@ async def logout(response: Response):
 # --------------------------------------------------------------------------- #
 # Generic entity CRUD
 # --------------------------------------------------------------------------- #
+async def _on_casting_application_created(application: dict):
+    """Side effects for new applications:
+       - increment application_count
+       - notify casting call creator
+       - if applicant is the creator (self-apply): add to credits + SpottedWith
+    """
+    call_id = application.get("casting_call_id")
+    call = await db.casting_calls.find_one({"id": call_id}) if call_id else None
+    if not call:
+        return
+    # Increment count + record applied_at on the application
+    await db.casting_calls.update_one({"id": call_id}, {"$inc": {"application_count": 1}})
+    # Notify creator (skip if self-applying — no need to alert yourself)
+    applicant_uid = application.get("applicant_user_id")
+    creator_uid = call.get("creator_user_id")
+    is_self_apply = applicant_uid and applicant_uid == creator_uid
+    if creator_uid and not is_self_apply:
+        await db.notifications.insert_one({
+            "id": new_id(),
+            "user_id": creator_uid,
+            "type": "casting_match",
+            "title": f"New application for {call.get('project_title')}",
+            "body": f"{application.get('applicant_name', 'Someone')} applied for {application.get('role_applied_for', 'a role')}",
+            "link": f"/casting/applications?call={call_id}",
+            "action_url": f"/casting/applications?call={call_id}",
+            "is_read": False,
+            "created_date": now_iso(),
+        })
+
+    # Self-apply: add credit to applicant's profile + run SpottedWith matching
+    if is_self_apply:
+        applicant_profile = await db.profiles.find_one({"user_id": applicant_uid})
+        if applicant_profile:
+            project_title = call.get("project_title")
+            role = application.get("role_applied_for") or "Self"
+            year = datetime.now(timezone.utc).year
+            credits = applicant_profile.get("credits") or []
+            already = any(
+                (c.get("project_title") or c.get("title") or "").strip().lower() == (project_title or "").strip().lower()
+                for c in credits
+            )
+            if project_title and not already:
+                credits.append({"project_title": project_title, "role_on_project": role, "year": year})
+                await db.profiles.update_one(
+                    {"id": applicant_profile["id"]},
+                    {"$set": {"credits": credits, "updated_date": now_iso()}},
+                )
+                # Re-run SpottedWith matching to surface the new credit
+                try:
+                    await _run_spotted_with()
+                except Exception as e:
+                    log.warning("SpottedWith re-run after self-apply failed: %s", e)
+
+
 def coll(entity: str):
     if entity not in ENTITIES:
         raise HTTPException(404, f"Unknown entity: {entity}")
     return db[ENTITIES[entity]]
+
+
+def compute_all_roles(profile: dict) -> list:
+    """Union of primary_role + secondary_roles, deduped, preserving order."""
+    seen = []
+    for r in [profile.get("primary_role")] + (profile.get("secondary_roles") or []):
+        if r and r not in seen:
+            seen.append(r)
+    return seen
 
 
 def parse_value(v: str) -> Any:
@@ -449,6 +523,8 @@ async def create_entity(entity: str, request: Request):
         # initialise score fields
         doc.setdefault("spot_score", 0)
         doc.setdefault("spot_percentile", 0)
+        # Multi-role: compute all_roles on every save
+        doc["all_roles"] = compute_all_roles(doc)
     elif entity == "Subscription":
         # Sensible defaults from tier
         tier = doc.get("tier", "free")
@@ -478,6 +554,10 @@ async def create_entity(entity: str, request: Request):
     await target.insert_one(doc.copy())
     doc.pop("_id", None)
 
+    # Auto-link CastingApplication side effects
+    if entity == "CastingApplication":
+        await _on_casting_application_created(doc)
+
     # Trigger SpotScore recalc if relevant
     await maybe_recalc_score(entity, doc)
     return doc
@@ -502,6 +582,11 @@ async def update_entity(entity: str, item_id: str, request: Request):
     payload.pop("_id", None)
     payload.pop("id", None)
     payload["updated_date"] = now_iso()
+    # Recompute all_roles when role fields change on a Profile
+    if entity == "Profile" and ("primary_role" in payload or "secondary_roles" in payload):
+        existing = await coll(entity).find_one({"id": item_id}, {"_id": 0}) or {}
+        merged = {**existing, **payload}
+        payload["all_roles"] = compute_all_roles(merged)
     res = await coll(entity).update_one({"id": item_id}, {"$set": payload})
     if res.matched_count == 0:
         raise HTTPException(404, "Not found")
@@ -1259,6 +1344,20 @@ async def upload_cover_image(request: Request, file: UploadFile = File(...)):
 # --------------------------------------------------------------------------- #
 # Bulk import — admin only
 # --------------------------------------------------------------------------- #
+@app.post("/api/admin/migrate-all-roles")
+async def admin_migrate_all_roles(request: Request):
+    user = await require_user(request)
+    if user.get("role") != "admin":
+        raise HTTPException(403, "Admin only")
+    cursor = db.profiles.find({}, {"_id": 0})
+    updated = 0
+    async for p in cursor:
+        roles = compute_all_roles(p)
+        await db.profiles.update_one({"id": p["id"]}, {"$set": {"all_roles": roles}})
+        updated += 1
+    return {"updated": updated}
+
+
 @app.post("/api/admin/bulk-import")
 async def bulk_import(request: Request, background: BackgroundTasks):
     user = await require_user(request)
@@ -1550,6 +1649,19 @@ async def seed_initial_data():
         })
 
 
+async def migrate_all_roles():
+    """One-time backfill: ensure every Profile has all_roles set."""
+    cursor = db.profiles.find({"$or": [{"all_roles": {"$exists": False}}, {"all_roles": {"$size": 0}}]}, {"_id": 0})
+    n = 0
+    async for p in cursor:
+        roles = compute_all_roles(p)
+        if roles:
+            await db.profiles.update_one({"id": p["id"]}, {"$set": {"all_roles": roles}})
+            n += 1
+    if n:
+        log.info("Migrated all_roles for %d profiles", n)
+
+
 async def create_indexes():
     await db.users.create_index("email", unique=True)
     await db.users.create_index("id", unique=True)
@@ -1573,6 +1685,7 @@ async def create_indexes():
 async def on_startup():
     await create_indexes()
     await seed_initial_data()
+    await migrate_all_roles()
     # Scheduled jobs
     scheduler.add_job(_run_spotted_with, CronTrigger(hour=2, minute=0))
     scheduler.add_job(_purge_codes, CronTrigger(hour=3, minute=0))

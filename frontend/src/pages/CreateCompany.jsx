@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import ImageUploader from "@/components/ImageUploader";
 import { ChevronLeft, ChevronRight, Plus, X, Loader2, Building2 } from "lucide-react";
 import { toast } from "sonner";
+import { ensureAbsoluteUrl } from "@/lib/url";
 
 const COMPANY_TYPES = [
   "Production Company", "VFX Studio", "Post Production", "Casting Agency",
@@ -87,6 +88,10 @@ export default function CreateCompany() {
         company_slug: slug,
         user_id: me.id,
         founded_year: form.founded_year ? Number(form.founded_year) : null,
+        website: ensureAbsoluteUrl(form.website),
+        imdb_link: ensureAbsoluteUrl(form.imdb_link),
+        reel_link: ensureAbsoluteUrl(form.reel_link),
+        past_productions: (form.past_productions || []).map((p) => ({ ...p, link: ensureAbsoluteUrl(p.link) })),
       };
       let saved;
       if (existing) {

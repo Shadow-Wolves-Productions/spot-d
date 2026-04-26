@@ -1,0 +1,45 @@
+{
+  "summary": "Iteration 4 backend + frontend verification. Backend: 13/13 pytest cases PASS in /app/backend/tests/test_iteration4.py (all_roles migration + filter, PATCH recompute, self-apply existing seed, fresh self-apply side effects increment+credit+no-self-notif, /api/admin/migrate-all-roles admin/non-admin/unauth gating, HTTPS middleware code-guard + dev-no-redirect, Postmark webhook regression, /api/static/uploads regression). Frontend (signed in as Brendan via JWT injected into localStorage on REACT_APP_BACKEND_URL): /search Talent tab renders 20 ProfileCards including profile-card-brendanbyrneofficial; Crew tab renders 20 cards including Brendan; Brendan card visible in BOTH tabs (multi-role works). /dashboard renders [data-testid='your-profiles-section'] with personal card 'Brendan · Producer · SpotScore 33' + 'Create company profile' placeholder. /casting page shows 'Manage Applications' AND [data-testid='self-apply-btn'] ('Apply as crew/cast') on Thunk creator card. /casting/applications?call=<thunk> kanban renders 3 columns with Brendan's card carrying CREATOR badge ([data-testid='creator-badge']) and visible self-apply note text.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "Seed Thunk self-apply", "issue": "Seeded self-apply CastingApplication has applicant_user_id='0' instead of the actual creator_user_id ('61102aff1ea2423997336aa4'). is_self_apply flag is correct, but the applicant<>creator mapping is broken — would cause downstream user-id-based logic (e.g. credit attribution if re-run) to miss. Fresh self-apply (TestSelfApplySideEffects) works correctly with proper uid match."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "ProfileCard / SearchDirectory", "issue": "Crew tab shows 'ACTOR' as the displayed primary role for Brendan (same as Talent tab). Spec requires Crew tab to display the highest non-Actor role ('PRODUCER'). _displayRole annotation is not differentiating between Talent and Crew tab contexts.", "selector": "[data-testid='profile-card-brendanbyrneofficial']", "priority": "HIGH"},
+      {"component": "Layout user dropdown", "issue": "The user/avatar dropdown in the header does not expose data-testid='user-dropdown' on the DropdownMenuContent (or a 'user-menu-trigger' on the avatar button). Found 7 header buttons but none match the spec'd selector — automation cannot reliably open the dropdown to assert the 'My profile (Personal)' / 'Create company profile' menu items.", "selector": "[data-testid='user-dropdown']", "priority": "HIGH"}
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "/search ProfileCard secondary text", "issues": ["The 'Also: Producer, Writer' pill is plain inline text — no visual badge/chip styling, easy to miss against the role line."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration4.py",
+    "/app/test_reports/pytest/iter4_results.xml"
+  ],
+  "action_items": [
+    "Fix ProfileCard _displayRole logic in SearchDirectory.jsx so Crew tab picks the first non-Actor role from all_roles when the profile is in the Crew result set.",
+    "Add data-testid='user-dropdown' to the DropdownMenuContent in /app/frontend/src/components/Layout.jsx (and ideally a stable trigger testid like 'user-menu-trigger' on the avatar button) so the menu items can be verified.",
+    "Repair the Thunk self-apply seed so applicant_user_id matches the creator (currently '0'). Re-run /api/admin/migrate-all-roles is fine; this is just a one-off seed correction."
+  ],
+  "critical_code_review_comments": [
+    "server.py is now ~1702 lines — definitely overdue for splitting into routers (auth, entities, uploads, webhooks, admin).",
+    "compute_all_roles is called inside both create_entity and update_entity but only when 'primary_role' or 'secondary_roles' is in the PATCH payload. If a future caller PATCHes only e.g. union_status, all_roles is left as-is — fine today but worth a comment.",
+    "_on_casting_application_created: project_title duplicate-credit detection uses case-insensitive title comparison only — applicants with two distinct projects sharing a title would be incorrectly de-duped. Consider also matching on casting_call_id.",
+    "HTTPS middleware production-only guard is correct; consider also setting Strict-Transport-Security header when active.",
+    "Admin migrate endpoint does not paginate — fine for current ~50 profiles, but a 10k-profile production DB will hold the request open. Consider chunked background task."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration4.py"
+  ],
+  "success_rate": {"backend": "100% (13/13)", "frontend": "5/7 spec checks pass; 2 fail (Crew-tab role display + user-dropdown testid)"},
+  "test_credentials": "Admin brendan@shadowwolvesproductions.com.au — OTP dev_code returned by /api/auth/request-code. JWT injected into localStorage as spotd_token for Playwright.",
+  "seed_data_creation": "TestSelfApplySideEffects creates+deletes a casting call ('TEST_ITER4_*'), submits+deletes a self-apply CastingApplication, and reverts the credit it added on Brendan's profile. Postmark inserts one event per run (TEST_ITER4_*).",
+  "retest_needed": true,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Backend is solid (13/13). Two clear frontend gaps remaining: (1) ProfileCard _displayRole must change per tab (Talent->Actor, Crew->first non-Actor role); right now SearchDirectory.jsx annotates the same _displayRole regardless. (2) /app/frontend/src/components/Layout.jsx must add data-testid='user-dropdown' on the DropdownMenuContent. Use the JWT injection trick (set localStorage.spotd_token on the public REACT_APP_BACKEND_URL) for fast Playwright auth — Cloudflare may challenge if you reload too quickly between navigations. Thunk casting call id is 'dfcfbabf484d452684498264'; admin user id '61102aff1ea2423997336aa4'.",
+  "rca of the issue": "Crew-tab role display: SearchDirectory.jsx annotates _displayRole + _otherRoles based on profile.primary_role only, so a profile whose primary is 'Producer' AND secondary includes 'Actor' shows 'PRODUCER' everywhere — but a profile whose primary is 'Actor' AND secondary includes 'Producer' (e.g. if Brendan were primary=Actor) still shows 'ACTOR' on Crew tab because the annotation isn't recomputed against the current tab. Fix: pass tab context to the annotator (or compute _displayRole as: if tab=='Crew', pick first non-Actor role from all_roles, else pick primary_role)."
+}
