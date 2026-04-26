@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import SpotScoreBadge from "../components/SpotScoreBadge";
+import ShareSpotScoreCard from "../components/ShareSpotScoreCard";
 import ProfileCard from "../components/ProfileCard";
 import SpotScoreBreakdown, { PercentileBadge } from "../components/SpotScoreBreakdown";
 import SpotRequestsPanel from "../components/dashboard/SpotRequestsPanel";
@@ -127,11 +128,23 @@ export default function Dashboard() {
           {/* SpotScore */}
           <div className="bg-card border border-border/60 rounded-xl p-5 flex items-center gap-4">
             <SpotScoreBadge score={profile?.spot_score || 0} size="md" />
-            <div>
+            <div className="flex-1 min-w-0">
               <p className="text-xs uppercase tracking-[0.08em] font-mono text-muted-foreground">SpotScore</p>
               <p className="font-display text-xl font-bold text-foreground">{profile?.spot_score || 0}<span className="text-xs font-normal text-muted-foreground ml-1">/100</span></p>
               {(profile?.spot_percentile || 0) >= 75 && (
                 <div className="mt-1"><PercentileBadge percentile={profile.spot_percentile} /></div>
+              )}
+              {profile && (
+                <div className="mt-2">
+                  <ShareSpotScoreCard
+                    profile={profile}
+                    trigger={
+                      <button data-testid="dashboard-share-spotscore" className="text-[11px] uppercase tracking-[0.08em] font-mono text-primary hover:text-primary/80 underline-offset-2 hover:underline">
+                        Share my SpotScore →
+                      </button>
+                    }
+                  />
+                </div>
               )}
             </div>
           </div>

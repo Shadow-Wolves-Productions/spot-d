@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useNavigate } from "react-router-dom";
-import { ChevronLeft, ChevronRight, Check, Upload, X, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, Check, Upload, X, Plus, ShieldAlert } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,6 +13,7 @@ import { toast } from "sonner";
 
 import InlineVerificationButton from "../components/profile/InlineVerificationButton";
 import SpotScoreChecklist from "../components/profile/SpotScoreChecklist";
+import AgeGate from "../components/AgeGate";
 
 const ROLES = ["Actor", "Director", "Producer", "Cinematographer", "Editor", "Writer", "Sound Designer", "Production Designer", "Costume Designer", "Makeup Artist", "Gaffer", "Grip", "1st AD", "2nd AD", "Line Producer", "Production Manager", "Script Supervisor", "Stunt Coordinator", "VFX Artist", "Colorist", "Composer", "Sound Mixer", "Boom Operator", "Art Director", "Set Designer", "Props Master", "Location Manager", "Casting Director", "Dialect Coach", "Choreographer", "Other"];
 const EXPERIENCE_LEVELS = ["Entry", "Mid", "Senior", "Expert"];
@@ -28,35 +29,9 @@ const AVAILABILITY = ["Available Now", "Available Soon", "Not Available"];
 
 const STEPS = ["Personal", "Professional", "Portfolio & IMDb", "Availability & Contact"];
 
-function calculateCineScore(data) {
-  let score = 0;
-  // Completeness
-  if (data.full_name) score += 4;
-  if (data.profile_photo) score += 8;
-  if (data.primary_role) score += 5;
-  if (data.bio) score += 8;
-  if (data.city) score += 3;
-  if (data.experience_level) score += 4;
-  if (data.years_of_experience > 0) score += 3;
-  if (data.email) score += 2;
-  if (data.phone) score += 2;
-  if (data.imdb_link) score += 6;
-  if (data.showreel_link) score += 6;
-  if (data.website) score += 2;
-  if (data.instagram || data.linkedin) score += 2;
-  if (data.credits?.length > 0) score += Math.min(data.credits.length * 2, 10);
-  if (data.union_status?.length > 0) score += 2;
-  if (data.headshots?.length > 0) score += 4;
-  if (data.special_skills?.length > 0) score += 2;
-  if (data.languages_spoken?.length > 0) score += 2;
-  if (data.willing_to_travel) score += 1;
-  // Verification bonuses
-  if (data.email_verified) score += 8;
-  if (data.phone_verified) score += 6;
-  if (data.union_verified) score += 6;
-  if (data.imdb_verified) score += 8;
-  return Math.min(Math.round(score), 100);
-}
+// NOTE: SpotScore is computed authoritatively on the backend via
+// recalculateSpotScore. The legacy client-side `calculateCineScore` was
+// removed (Jan 2026) to avoid drift between client and server scores.
 
 export default function CreateProfile() {
   const navigate = useNavigate();
@@ -65,6 +40,7 @@ export default function CreateProfile() {
   const [saving, setSaving] = useState(false);
   const [existingProfile, setExistingProfile] = useState(null);
   const [photoFile, setPhotoFile] = useState(null);
+  const [ageGateData, setAgeGateData] = useState(null);
 
   const [slugAvailable, setSlugAvailable] = useState(null);
   const [checkingSlug, setCheckingSlug] = useState(false);
@@ -85,6 +61,11 @@ export default function CreateProfile() {
     availability_status: "Available Now", availability_notes: "",
     credits: [],
     agent_name: "", agent_email: "", agent_phone: "",
+    is_minor_profile: false,
+    responsible_adult_name: "",
+    responsible_adult_relationship: "",
+    responsible_adult_email: "",
+    responsible_adult_phone: "",
   });
 
   const [tagInputs, setTagInputs] = useState({
@@ -93,6 +74,11 @@ export default function CreateProfile() {
 
   useEffect(() => {
     const load = async () => {
+      const isAuth = await base44.auth.isAuthenticated();
+      if (!isAuth) {
+        navigate("/login?next=" + encodeURIComponent("/create-profile"));
+        return;
+      }
       const me = await base44.auth.me();
       const profiles = await base44.entities.Profile.filter({ user_id: me.id });
       if (profiles.length > 0) {
@@ -102,6 +88,8 @@ export default function CreateProfile() {
           ...f,
           ...Object.fromEntries(Object.entries(p).filter(([k, v]) => v !== null && v !== undefined && k in f)),
         }));
+        // If they're editing an existing profile, skip the age gate
+        setAgeGateData({ from_existing: true });
       } else {
         setForm((f) => ({ ...f, full_name: me.full_name || "", email: me.email || "" }));
       }
@@ -185,7 +173,14 @@ export default function CreateProfile() {
       }
     }
 
-    const data = { ...form, profile_slug: slug, user_id: me.id };
+    const data = {
+      ...form,
+      profile_slug: slug,
+      user_id: me.id,
+      is_minor_profile: form.is_minor_profile || ageGateData?.is_minor || false,
+      responsible_adult_consent: ageGateData?.responsible_adult_consent || false,
+      terms_accepted_at: ageGateData?.terms_accepted ? new Date().toISOString() : (existingProfile?.terms_accepted_at || null),
+    };
 
     if (existingProfile) {
       await base44.entities.Profile.update(existingProfile.id, data);
@@ -222,6 +217,16 @@ export default function CreateProfile() {
         <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
       </div>
     );
+  }
+
+  // Show age gate if not yet completed (only for fresh profiles)
+  if (!ageGateData) {
+    return <AgeGate onComplete={(data) => {
+      setAgeGateData(data);
+      if (data.is_minor) {
+        setForm((f) => ({ ...f, is_minor_profile: true }));
+      }
+    }} />;
   }
 
   const TagInput = ({ field, label }) => (
@@ -279,6 +284,78 @@ export default function CreateProfile() {
         {/* Step 0: Personal */}
         {step === 0 && (
           <div className="space-y-6">
+            {/* Minor performer banner & toggle */}
+            <div className={`rounded-xl border p-4 ${form.is_minor_profile ? "border-primary/40 bg-primary/5" : "border-border bg-secondary/30"}`} data-testid="minor-toggle-section">
+              <div className="flex items-start gap-3">
+                <ShieldAlert className={`w-5 h-5 mt-0.5 flex-shrink-0 ${form.is_minor_profile ? "text-primary" : "text-muted-foreground"}`} />
+                <div className="flex-1">
+                  <div className="flex items-center justify-between gap-3">
+                    <Label htmlFor="minor-toggle" className="text-sm font-medium text-foreground cursor-pointer">
+                      Minor performer profile (under 18)
+                    </Label>
+                    <Switch
+                      id="minor-toggle"
+                      checked={!!form.is_minor_profile}
+                      onCheckedChange={(v) => update("is_minor_profile", v)}
+                      data-testid="minor-toggle-switch"
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1 leading-[1.6]">
+                    Required if the profile represents a performer under 18. Only the responsible adult's contact details will be visible.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {form.is_minor_profile && (
+              <div className="rounded-xl border border-border p-5 space-y-4 bg-secondary/20" data-testid="responsible-adult-section">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.08em] text-muted-foreground mb-1">Responsible adult</p>
+                  <p className="text-xs text-muted-foreground leading-[1.6]">Required for all minor profiles. The minor's personal contact details will not be stored.</p>
+                </div>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">Adult name *</Label>
+                    <Input
+                      data-testid="responsible-adult-name"
+                      value={form.responsible_adult_name}
+                      onChange={(e) => update("responsible_adult_name", e.target.value)}
+                      placeholder="Parent / guardian / agent"
+                      className="bg-secondary border-border"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">Relationship</Label>
+                    <Select value={form.responsible_adult_relationship} onValueChange={(v) => update("responsible_adult_relationship", v)}>
+                      <SelectTrigger className="bg-secondary border-border" data-testid="responsible-adult-relationship"><SelectValue placeholder="Select" /></SelectTrigger>
+                      <SelectContent className="bg-card border-border">
+                        {["Parent", "Legal Guardian", "Licensed Agent"].map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">Adult email *</Label>
+                    <Input
+                      data-testid="responsible-adult-email"
+                      type="email"
+                      value={form.responsible_adult_email}
+                      onChange={(e) => update("responsible_adult_email", e.target.value)}
+                      className="bg-secondary border-border"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">Adult phone</Label>
+                    <Input
+                      data-testid="responsible-adult-phone"
+                      value={form.responsible_adult_phone}
+                      onChange={(e) => update("responsible_adult_phone", e.target.value)}
+                      className="bg-secondary border-border"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Photo */}
             <div>
               <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">Profile Photo</Label>

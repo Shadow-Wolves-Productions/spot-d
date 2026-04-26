@@ -1132,7 +1132,216 @@ async def stripe_webhook(request: Request):
                 {"user_id": meta["user_id"]},
                 {"$set": {"tier": "free", "status": "expired", "updated_date": now_iso()}},
             )
+    elif evt.event_type in ("customer.subscription.updated", "invoice.payment_succeeded", "customer.subscription.renewed"):
+        # renewal: extend expires_at
+        meta = evt.metadata or {}
+        if meta.get("user_id"):
+            sub = await db.subscriptions.find_one({"user_id": meta["user_id"]})
+            if sub:
+                billing = meta.get("billing") or "monthly"
+                base = datetime.fromisoformat(sub["expires_at"]) if sub.get("expires_at") else datetime.now(timezone.utc)
+                base = max(base, datetime.now(timezone.utc))
+                extended = base + timedelta(days=365 if billing == "annual" else 30)
+                await db.subscriptions.update_one(
+                    {"id": sub["id"]},
+                    {"$set": {
+                        "expires_at": extended.isoformat(),
+                        "status": "active",
+                        "updated_date": now_iso(),
+                    }},
+                )
     return {"received": True}
+
+
+# --------------------------------------------------------------------------- #
+# Postmark webhook (delivery / bounce / spam events)
+# --------------------------------------------------------------------------- #
+@app.post("/api/webhooks/postmark")
+async def postmark_webhook(request: Request):
+    try:
+        payload = await request.json()
+    except Exception:
+        payload = {}
+    record_type = payload.get("RecordType") or payload.get("Type") or "Unknown"
+    await db.postmark_events.insert_one({
+        "id": new_id(),
+        "record_type": record_type,
+        "email": payload.get("Recipient") or payload.get("Email"),
+        "message_id": payload.get("MessageID"),
+        "raw": payload,
+        "created_date": now_iso(),
+    })
+    return {"received": True}
+
+
+# --------------------------------------------------------------------------- #
+# Bulk import — admin only
+# --------------------------------------------------------------------------- #
+@app.post("/api/admin/bulk-import")
+async def bulk_import(request: Request, background: BackgroundTasks):
+    user = await require_user(request)
+    if user.get("role") != "admin":
+        raise HTTPException(403, "Admin only")
+    body = await request.json()
+    members = body.get("members") or []
+    payment_reference = body.get("payment_reference", "cineconnect-import")
+    send_welcome = bool(body.get("send_welcome", False))
+    months = int(body.get("months", 12))
+
+    seen_emails: set = set()
+    imported = []
+    skipped = []
+    failed = []
+
+    for m in members:
+        email = (m.get("email") or "").strip().lower()
+        if not email:
+            failed.append({"name": m.get("full_name"), "reason": "missing email"})
+            continue
+        if email in seen_emails:
+            skipped.append({"email": email, "reason": "duplicate in batch"})
+            continue
+        seen_emails.add(email)
+        try:
+            existing_user = await db.users.find_one({"email": email})
+            if existing_user:
+                user_doc = existing_user
+                user_created = False
+            else:
+                user_doc = {
+                    "id": new_id(),
+                    "email": email,
+                    "full_name": m.get("full_name"),
+                    "role": "user",
+                    "created_date": now_iso(),
+                    "updated_date": now_iso(),
+                }
+                await db.users.insert_one(user_doc.copy())
+                user_doc.pop("_id", None)
+                user_created = True
+
+            user_id = user_doc["id"]
+
+            # Profile
+            profile_doc = await db.profiles.find_one({"user_id": user_id})
+            slug = (m.get("profile_slug") or slugify(m.get("full_name") or email)).lower()
+            # ensure slug uniqueness if profile would be created
+            if not profile_doc:
+                base_slug = slug
+                i = 2
+                while await db.profiles.find_one({"profile_slug": slug}):
+                    slug = f"{base_slug}-{i}"
+                    i += 1
+                profile_doc = {
+                    "id": new_id(),
+                    "user_id": user_id,
+                    "full_name": m.get("full_name"),
+                    "preferred_name": m.get("preferred_name"),
+                    "pronouns": m.get("pronouns") or None,
+                    "email": email,
+                    "phone": m.get("phone") or None,
+                    "city": m.get("city"),
+                    "state": m.get("state"),
+                    "country": m.get("country"),
+                    "primary_role": m.get("primary_role") or "Other",
+                    "secondary_roles": m.get("secondary_roles") or [],
+                    "experience_level": m.get("experience_level") or "Entry",
+                    "union_status": m.get("union_status") or ["Non-Union"],
+                    "imdb_link": m.get("imdb_link") or None,
+                    "showreel_link": m.get("showreel_link") or None,
+                    "bio": m.get("bio") or "",
+                    "profile_slug": slug,
+                    "availability_status": m.get("availability_status") or "Available Now",
+                    "spot_score": 0,
+                    "spot_percentile": 0,
+                    "import_source": payment_reference,
+                    "import_notes": m.get("import_notes"),
+                    "created_date": now_iso(),
+                    "updated_date": now_iso(),
+                }
+                await db.profiles.insert_one(profile_doc.copy())
+                profile_doc.pop("_id", None)
+
+            # Subscription
+            sub_doc = await db.subscriptions.find_one({"user_id": user_id})
+            if not sub_doc:
+                expires = (datetime.now(timezone.utc) + timedelta(days=30 * months)).isoformat()
+                sub_doc = {
+                    "id": new_id(),
+                    "user_id": user_id,
+                    "tier": "pro",
+                    "status": "active",
+                    "started_at": now_iso(),
+                    "expires_at": expires,
+                    "contact_reveal_limit": 20,
+                    "casting_call_limit": 5,
+                    "can_boost": True,
+                    "payment_reference": payment_reference,
+                    "created_date": now_iso(),
+                    "updated_date": now_iso(),
+                }
+                await db.subscriptions.insert_one(sub_doc.copy())
+
+            # Recalc score
+            await recalculate_spot_score(profile_doc["id"])
+
+            # Welcome email (only if explicitly requested — defaults to false)
+            if send_welcome:
+                try:
+                    background.add_task(_send_welcome_internal, user_id, profile_doc["id"], "pro")
+                except Exception:
+                    pass
+
+            imported.append({
+                "email": email,
+                "user_id": user_id,
+                "profile_id": profile_doc["id"],
+                "profile_slug": profile_doc.get("profile_slug"),
+                "user_created": user_created,
+            })
+        except Exception as e:
+            failed.append({"email": email, "reason": str(e)})
+
+    return {
+        "imported": len(imported),
+        "skipped": len(skipped),
+        "failed": len(failed),
+        "details": {"imported": imported, "skipped": skipped, "failed": failed},
+    }
+
+
+async def _send_welcome_internal(user_id: str, profile_id: str, tier: str = "pro"):
+    """Internal version of sendWelcomeEmail that doesn't require auth."""
+    user = await db.users.find_one({"id": user_id})
+    profile = await db.profiles.find_one({"id": profile_id})
+    if not user or not profile:
+        return
+    first = (profile.get("preferred_name") or profile.get("full_name") or "there").split(" ")[0]
+    score = profile.get("spot_score", 0)
+    slug = profile.get("profile_slug") or profile_id
+    tier_label = (tier or "pro").upper()
+    html = f"""
+<div style="background:#0D0D0D;color:#fff;font-family:'DM Sans',Arial,sans-serif;padding:40px 24px;">
+  <div style="max-width:600px;margin:0 auto;">
+    <div style="font-family:'Sora',Arial,sans-serif;font-size:24px;font-weight:700;color:#E8FC6C;margin-bottom:32px;">Spot'd</div>
+    <h1 style="font-family:'Sora',Arial,sans-serif;font-size:28px;color:#fff;margin:0 0 12px;">Hey {first},</h1>
+    <p style="color:#ccc;font-size:16px;line-height:1.6;">Your Spot'd profile is <strong style="color:#fff;">live in the directory.</strong></p>
+    <div style="background:#1A1A1A;border:1px solid #2A2A2A;border-radius:12px;padding:24px;margin:28px 0;">
+      <p style="margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:#888;font-weight:600;">Your plan</p>
+      <h2 style="margin:0;font-family:'Sora',Arial,sans-serif;font-size:22px;color:#E8FC6C;">12 months of {tier_label} access — on us.</h2>
+      <p style="margin:8px 0 0;color:#888;font-size:14px;">No credit card needed. No catch.</p>
+    </div>
+    <p style="color:#ccc;">Sign in: <a href="{PUBLIC_APP_URL}/login" style="color:#E8FC6C;text-decoration:none;font-weight:600;">{PUBLIC_APP_URL}/login</a></p>
+    <a href="{PUBLIC_APP_URL}/u/{slug}" style="display:inline-block;background:#E8FC6C;color:#0D0D0D;text-decoration:none;font-weight:700;padding:14px 32px;border-radius:8px;margin-top:20px;">View your profile →</a>
+    <p style="color:#888;margin-top:32px;">— The Spot'd team</p>
+  </div>
+</div>
+"""
+    await send_email(user["email"], "Your Spot'd profile is live", html)
+    await db.profiles.update_one({"id": profile_id}, {"$set": {
+        "welcome_email_sent": True,
+        "welcome_email_sent_at": now_iso(),
+    }})
 
 
 @app.post("/api/stripe/founder-claim")
