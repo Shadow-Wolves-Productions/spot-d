@@ -86,12 +86,31 @@ function CastingCallCard({ call, myProfile, index, user, appliedCallIds }) {
           {call.application_count > 0 && (
             <span className="text-[10px] text-muted-foreground font-mono">{call.application_count} application{call.application_count !== 1 ? "s" : ""}</span>
           )}
-          {isCreator ? (
+          {isCreator && alreadyApplied ? (
             <Link to={`/casting/applications?call=${call.id}`}>
               <Button size="sm" variant="outline" className="border-border gap-1.5 text-xs">
-                <Settings2 className="w-3.5 h-3.5" /> Manage Applications
+                <Settings2 className="w-3.5 h-3.5" /> Manage · Self-applied
               </Button>
             </Link>
+          ) : isCreator ? (
+            <div className="flex flex-col gap-2 items-end">
+              <Link to={`/casting/applications?call=${call.id}`}>
+                <Button size="sm" variant="outline" className="border-border gap-1.5 text-xs">
+                  <Settings2 className="w-3.5 h-3.5" /> Manage Applications
+                </Button>
+              </Link>
+              {myProfile && (
+                <Button
+                  onClick={() => setApplyOpen(true)}
+                  size="sm"
+                  variant="outline"
+                  className="border-primary/30 text-primary hover:bg-primary/10 text-xs"
+                  data-testid="self-apply-btn"
+                >
+                  Apply as crew/cast
+                </Button>
+              )}
+            </div>
           ) : alreadyApplied ? (
             <span className="text-xs px-3 py-1 rounded-full bg-green-500/10 text-green-400 border border-green-500/20 font-medium">
               ✓ Applied

@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { MapPin, Crown, CheckCircle, Film, Bookmark, Zap } from "lucide-react";
 import { motion } from "framer-motion";
 import { PercentileBadge } from "./SpotScoreBreakdown";
+import { ensureAbsoluteUrl } from "@/lib/url";
 
 // Score dot colour based on score value
 function ScoreDot({ score }) {
@@ -90,7 +91,12 @@ export default function ProfileCard({ profile, subscription, onSave, isSaved, in
               <h3 className="font-display text-base font-semibold text-white leading-tight" style={{ letterSpacing: "-0.3px" }}>
                 {profile.preferred_name || profile.full_name}
               </h3>
-              <p className="text-[10px] uppercase tracking-[0.08em] text-white/50 mt-0.5">{profile.primary_role}</p>
+              <p className="text-[10px] uppercase tracking-[0.08em] text-white/50 mt-0.5">
+                {profile._displayRole || profile.primary_role}
+                {profile._otherRoles && profile._otherRoles.length > 0 && (
+                  <span className="text-white/35 normal-case tracking-normal"> · Also: {profile._otherRoles.slice(0, 2).join(", ")}{profile._otherRoles.length > 2 ? "…" : ""}</span>
+                )}
+              </p>
             </div>
           </div>
 
@@ -140,7 +146,7 @@ export default function ProfileCard({ profile, subscription, onSave, isSaved, in
                 {profile.imdb_link && (
                   <span
                     role="link"
-                    onClick={(e) => { e.stopPropagation(); e.preventDefault(); window.open(profile.imdb_link, "_blank", "noopener,noreferrer"); }}
+                    onClick={(e) => { e.stopPropagation(); e.preventDefault(); window.open(ensureAbsoluteUrl(profile.imdb_link), "_blank", "noopener,noreferrer"); }}
                     className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[9px] font-bold hover:opacity-80 transition-opacity cursor-pointer"
                     style={{ background: "#F5C518", color: "#0D0D0D" }}
                     title="View on IMDb"

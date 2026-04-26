@@ -15,6 +15,7 @@ import InlineVerificationButton from "../components/profile/InlineVerificationBu
 import SpotScoreChecklist from "../components/profile/SpotScoreChecklist";
 import AgeGate from "../components/AgeGate";
 import ImageUploader from "../components/ImageUploader";
+import { ensureAbsoluteUrl } from "@/lib/url";
 
 const ROLES = ["Actor", "Director", "Producer", "Cinematographer", "Editor", "Writer", "Sound Designer", "Production Designer", "Costume Designer", "Makeup Artist", "Gaffer", "Grip", "1st AD", "2nd AD", "Line Producer", "Production Manager", "Script Supervisor", "Stunt Coordinator", "VFX Artist", "Colorist", "Composer", "Sound Mixer", "Boom Operator", "Art Director", "Set Designer", "Props Master", "Location Manager", "Casting Director", "Dialect Coach", "Choreographer", "Other"];
 const EXPERIENCE_LEVELS = ["Entry", "Mid", "Senior", "Expert"];
@@ -205,6 +206,12 @@ export default function CreateProfile() {
       ...form,
       profile_slug: slug,
       user_id: me.id,
+      // Normalise URL fields so we never store bare "imdb.me/x"
+      imdb_link: ensureAbsoluteUrl(form.imdb_link),
+      showreel_link: ensureAbsoluteUrl(form.showreel_link),
+      website: ensureAbsoluteUrl(form.website),
+      linkedin: ensureAbsoluteUrl(form.linkedin),
+      resume_url: ensureAbsoluteUrl(form.resume_url),
       is_minor_profile: form.is_minor_profile || ageGateData?.is_minor || false,
       responsible_adult_consent: ageGateData?.responsible_adult_consent || false,
       terms_accepted_at: ageGateData?.terms_accepted ? new Date().toISOString() : (existingProfile?.terms_accepted_at || null),

@@ -38,6 +38,7 @@ export default function Layout() {
   const location = useLocation();
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
+  const [companies, setCompanies] = useState([]);
   const [scrolled, setScrolled] = useState(false);
   const { theme, toggleTheme } = useTheme();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -51,6 +52,8 @@ export default function Layout() {
         setUser(me);
         const profiles = await base44.entities.Profile.filter({ user_id: me.id });
         if (profiles.length > 0) setProfile(profiles[0]);
+        const cs = await base44.entities.CompanyProfile.filter({ user_id: me.id });
+        setCompanies(cs);
       }
     };
     loadUser();
@@ -146,18 +149,39 @@ export default function Layout() {
                           <User className="w-3.5 h-3.5 text-muted-foreground" style={{ display: profile?.profile_photo ? 'none' : 'block' }} />
                         </button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-48 bg-card border-border rounded-lg shadow-xl">
+                      <DropdownMenuContent align="end" className="w-56 bg-card border-border rounded-lg shadow-xl" data-testid="user-dropdown">
                         <DropdownMenuItem asChild>
                           <Link to="/dashboard" className="cursor-pointer text-sm">Dashboard</Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
                           <Link to="/analytics" className="cursor-pointer text-sm">Analytics</Link>
                         </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <Link to={profile ? `/profile/${profile.profile_slug || profile.id}` : "/create-profile"} className="cursor-pointer text-sm">
-                            {profile ? "My profile" : "Create profile"}
-                          </Link>
-                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        {profile && (
+                          <DropdownMenuItem asChild>
+                            <Link to={`/u/${profile.profile_slug || profile.id}`} className="cursor-pointer text-sm" data-testid="dropdown-personal-profile">
+                              My profile (Personal)
+                            </Link>
+                          </DropdownMenuItem>
+                        )}
+                        {companies.map((c) => (
+                          <DropdownMenuItem key={c.id} asChild>
+                            <Link to={`/c/${c.company_slug || c.id}`} className="cursor-pointer text-sm truncate" data-testid={`dropdown-company-${c.company_slug || c.id}`}>
+                              My profile ({c.company_name})
+                            </Link>
+                          </DropdownMenuItem>
+                        ))}
+                        {!profile && (
+                          <DropdownMenuItem asChild>
+                            <Link to="/create-profile" className="cursor-pointer text-sm">Create personal profile</Link>
+                          </DropdownMenuItem>
+                        )}
+                        {companies.length === 0 && (
+                          <DropdownMenuItem asChild>
+                            <Link to="/create-company" className="cursor-pointer text-sm">Create company profile</Link>
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuSeparator />
                         <DropdownMenuItem asChild>
                           <Link to="/create-profile" className="cursor-pointer text-sm">Edit profile</Link>
                         </DropdownMenuItem>

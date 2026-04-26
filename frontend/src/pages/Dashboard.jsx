@@ -19,6 +19,7 @@ import WelcomeBanner from "../components/dashboard/WelcomeBanner";
 export default function Dashboard() {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
+  const [companies, setCompanies] = useState([]);
   const [savedProfiles, setSavedProfiles] = useState([]);
   const [savedProfileDetails, setSavedProfileDetails] = useState([]);
   const [revealCount, setRevealCount] = useState(0);
@@ -62,6 +63,10 @@ export default function Dashboard() {
 
       const saved = await base44.entities.SavedProfile.filter({ user_id: me.id });
       setSavedProfiles(saved);
+
+      // Load any company profiles owned by this user
+      const myCompanies = await base44.entities.CompanyProfile.filter({ user_id: me.id });
+      setCompanies(myCompanies);
 
       if (saved.length > 0) {
         const detailPromises = saved.map(async (s) => {
@@ -127,6 +132,55 @@ export default function Dashboard() {
 
         {/* Welcome Banner (first-time / recent import users) */}
         <WelcomeBanner user={user} profile={profile} />
+
+        {/* Your Profiles — personal + company side-by-side */}
+        {(profile || companies.length > 0) && (
+          <section className="mb-8" data-testid="your-profiles-section">
+            <p className="text-[11px] uppercase tracking-[0.08em] font-mono text-muted-foreground mb-3">Your profiles</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {profile && (
+                <Link to={`/u/${profile.profile_slug || profile.id}`} className="bg-card border border-border rounded-xl p-4 flex items-center gap-3 hover:border-primary/40 transition-colors" data-testid="dashboard-personal-card">
+                  <div className="w-12 h-12 rounded-lg bg-secondary overflow-hidden flex items-center justify-center flex-shrink-0">
+                    {profile.profile_photo ? (
+                      <img src={profile.profile_photo.startsWith("/api/static/") ? profile.profile_photo : profile.profile_photo} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-xs font-bold text-muted-foreground">{(profile.full_name || "P").slice(0, 2).toUpperCase()}</span>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-foreground truncate">{profile.preferred_name || profile.full_name}</p>
+                    <p className="text-[11px] text-muted-foreground truncate">{profile.primary_role || "Personal profile"} · SpotScore {profile.spot_score || 0}</p>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                </Link>
+              )}
+              {companies.map((c) => (
+                <Link key={c.id} to={`/c/${c.company_slug || c.id}`} className="bg-card border border-border rounded-xl p-4 flex items-center gap-3 hover:border-primary/40 transition-colors" data-testid={`dashboard-company-card-${c.company_slug || c.id}`}>
+                  <div className="w-12 h-12 rounded-lg bg-secondary overflow-hidden flex items-center justify-center flex-shrink-0">
+                    {c.logo ? <img src={c.logo} alt="" className="w-full h-full object-cover" /> : <Building2 className="w-5 h-5 text-muted-foreground/40" />}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-foreground truncate">{c.company_name}</p>
+                    <p className="text-[11px] text-muted-foreground truncate">{c.company_type} · SpotScore {c.spot_score || 0}</p>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                </Link>
+              ))}
+              {companies.length === 0 && profile && (
+                <Link to="/create-company" className="rounded-xl border border-dashed border-border p-4 flex items-center gap-3 text-muted-foreground hover:border-primary/40 hover:text-foreground transition-colors" data-testid="dashboard-add-company-card">
+                  <div className="w-12 h-12 rounded-lg bg-secondary/40 flex items-center justify-center flex-shrink-0">
+                    <Building2 className="w-5 h-5 text-muted-foreground/50" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold">Create company profile</p>
+                    <p className="text-[11px]">Get found as a studio/production house</p>
+                  </div>
+                  <ChevronRight className="w-4 h-4" />
+                </Link>
+              )}
+            </div>
+          </section>
+        )}
 
         {/* Stats Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
