@@ -24,6 +24,7 @@ import Terms from './pages/Terms';
 import Privacy from './pages/Privacy';
 import CreateCompany from './pages/CreateCompany';
 import CompanyProfilePage from './pages/CompanyProfilePage';
+import Notifications from './pages/Notifications';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth } = useAuth();
@@ -54,6 +55,7 @@ const AuthenticatedApp = () => {
         <Route path="/u/:slug" element={<ProfileBySlug />} />
         <Route path="/c/:slug" element={<CompanyProfilePage />} />
         <Route path="/create-company" element={<CreateCompany />} />
+        <Route path="/notifications" element={<Notifications />} />
         <Route path="/login" element={<Login />} />
         <Route path="/welcome" element={<Welcome />} />
         <Route path="/terms" element={<Terms />} />

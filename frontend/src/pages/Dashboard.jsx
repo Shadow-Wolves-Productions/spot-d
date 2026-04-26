@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import SpotScoreBadge from "../components/SpotScoreBadge";
 import ShareSpotScoreCard from "../components/ShareSpotScoreCard";
+import AutoClaimBanner from "../components/AutoClaimBanner";
 import ProfileCard from "../components/ProfileCard";
 import SpotScoreBreakdown, { PercentileBadge } from "../components/SpotScoreBreakdown";
 import SpotRequestsPanel from "../components/dashboard/SpotRequestsPanel";
@@ -129,6 +130,9 @@ export default function Dashboard() {
             )}
           </div>
         </div>
+
+        {/* Auto-claim screen for imported members on first login */}
+        <AutoClaimBanner />
 
         {/* Welcome Banner (first-time / recent import users) */}
         <WelcomeBanner user={user} profile={profile} />
