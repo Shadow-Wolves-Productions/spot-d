@@ -1,0 +1,218 @@
+{
+  "name": "CastingCall",
+  "type": "object",
+  "properties": {
+    "creator_user_id": {
+      "type": "string"
+    },
+    "creator_profile_id": {
+      "type": "string"
+    },
+    "company_name": {
+      "type": "string"
+    },
+    "company_logo": {
+      "type": "string",
+      "format": "uri"
+    },
+    "contact_email": {
+      "type": "string"
+    },
+    "project_title": {
+      "type": "string"
+    },
+    "project_type": {
+      "type": "string",
+      "enum": [
+        "Feature Film",
+        "Short Film",
+        "TV Series",
+        "Commercial",
+        "Music Video",
+        "Documentary",
+        "Web Series",
+        "Theatre",
+        "Animation",
+        "Podcast",
+        "Other"
+      ]
+    },
+    "description": {
+      "type": "string"
+    },
+    "budget_range": {
+      "type": "string"
+    },
+    "union_status": {
+      "type": "string",
+      "enum": [
+        "Union and Non-Union",
+        "Union Only",
+        "Non-Union Only",
+        "N/A"
+      ]
+    },
+    "shoot_dates": {
+      "type": "string"
+    },
+    "location": {
+      "type": "string"
+    },
+    "talent_search_scope": {
+      "type": "string",
+      "enum": [
+        "Local",
+        "Nationwide",
+        "Worldwide",
+        "Doesn't Matter"
+      ]
+    },
+    "roles": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "role_name": {
+            "type": "string"
+          },
+          "role_type": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "age_min": {
+            "type": "number"
+          },
+          "age_max": {
+            "type": "number"
+          },
+          "gender": {
+            "type": "string"
+          },
+          "ethnicity": {
+            "type": "string"
+          },
+          "skills": {
+            "type": "string"
+          },
+          "nudity": {
+            "type": "boolean"
+          },
+          "explicit_content": {
+            "type": "boolean"
+          },
+          "recording_location": {
+            "type": "string"
+          },
+          "accent": {
+            "type": "string"
+          },
+          "language": {
+            "type": "string"
+          },
+          "voice_style": {
+            "type": "string"
+          },
+          "crew_type": {
+            "type": "string"
+          },
+          "job_title": {
+            "type": "string"
+          },
+          "proficiency": {
+            "type": "string"
+          },
+          "compensation_type": {
+            "type": "string"
+          },
+          "rate_type": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "pay_amount": {
+            "type": "number"
+          },
+          "pay_range_min": {
+            "type": "number"
+          },
+          "pay_range_max": {
+            "type": "number"
+          },
+          "expected_hours": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "application_method": {
+      "type": "string",
+      "enum": [
+        "spot_button",
+        "self_tape",
+        "external"
+      ]
+    },
+    "self_tape_instructions": {
+      "type": "string"
+    },
+    "submission_email": {
+      "type": "string"
+    },
+    "submission_link": {
+      "type": "string"
+    },
+    "submission_link_password": {
+      "type": "string"
+    },
+    "deadline": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "view_count": {
+      "type": "number",
+      "default": 0
+    },
+    "application_count": {
+      "type": "number",
+      "default": 0
+    },
+    "roles_needed": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "experience_level": {
+      "type": "string"
+    },
+    "compensation": {
+      "type": "string"
+    },
+    "gender_preference": {
+      "type": "string"
+    },
+    "age_range_min": {
+      "type": "number"
+    },
+    "age_range_max": {
+      "type": "number"
+    }
+  },
+  "required": [
+    "project_title",
+    "description"
+  ]
+}

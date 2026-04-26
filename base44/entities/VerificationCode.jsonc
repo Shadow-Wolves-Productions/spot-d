@@ -1,0 +1,38 @@
+{
+  "name": "VerificationCode",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "code": {
+      "type": "string"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "email",
+        "phone"
+      ]
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "used": {
+      "type": "boolean",
+      "default": false
+    },
+    "attempts": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of incorrect code submission attempts"
+    }
+  },
+  "required": [
+    "user_id",
+    "code",
+    "type",
+    "expires_at"
+  ]
+}

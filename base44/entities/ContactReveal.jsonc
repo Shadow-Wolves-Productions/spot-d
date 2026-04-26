@@ -1,0 +1,23 @@
+{
+  "name": "ContactReveal",
+  "type": "object",
+  "properties": {
+    "viewer_id": {
+      "type": "string",
+      "description": "User ID of the person revealing"
+    },
+    "profile_id": {
+      "type": "string",
+      "description": "ID of the profile being revealed"
+    },
+    "month_key": {
+      "type": "string",
+      "description": "YYYY-MM for tracking monthly limits"
+    }
+  },
+  "required": [
+    "viewer_id",
+    "profile_id",
+    "month_key"
+  ]
+}

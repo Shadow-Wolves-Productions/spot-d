@@ -1,0 +1,35 @@
+{
+  "name": "WorkedWith",
+  "type": "object",
+  "properties": {
+    "profile_id": {
+      "type": "string",
+      "description": "Profile that added this connection"
+    },
+    "person_name": {
+      "type": "string"
+    },
+    "person_role": {
+      "type": "string"
+    },
+    "project_title": {
+      "type": "string"
+    },
+    "year": {
+      "type": "number"
+    },
+    "linked_profile_id": {
+      "type": "string",
+      "description": "If the person has a Spot'd profile"
+    },
+    "is_confirmed": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "profile_id",
+    "person_name",
+    "project_title"
+  ]
+}

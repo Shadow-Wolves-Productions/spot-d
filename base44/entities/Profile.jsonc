@@ -1,0 +1,373 @@
+{
+  "name": "Profile",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "Owner user ID"
+    },
+    "full_name": {
+      "type": "string"
+    },
+    "preferred_name": {
+      "type": "string"
+    },
+    "profile_slug": {
+      "type": "string",
+      "description": "Custom URL slug e.g. BrendanByrne"
+    },
+    "pronouns": {
+      "type": "string",
+      "enum": [
+        "He/Him",
+        "She/Her",
+        "They/Them",
+        "Other"
+      ]
+    },
+    "profile_photo": {
+      "type": "string",
+      "format": "uri"
+    },
+    "email": {
+      "type": "string",
+      "format": "email"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "city": {
+      "type": "string"
+    },
+    "state": {
+      "type": "string"
+    },
+    "country": {
+      "type": "string"
+    },
+    "willing_to_travel": {
+      "type": "boolean",
+      "default": false
+    },
+    "travel_notes": {
+      "type": "string"
+    },
+    "primary_role": {
+      "type": "string",
+      "enum": [
+        "Actor",
+        "Director",
+        "Producer",
+        "Cinematographer",
+        "Editor",
+        "Writer",
+        "Sound Designer",
+        "Production Designer",
+        "Costume Designer",
+        "Makeup Artist",
+        "Gaffer",
+        "Grip",
+        "1st AD",
+        "2nd AD",
+        "Line Producer",
+        "Production Manager",
+        "Script Supervisor",
+        "Stunt Coordinator",
+        "VFX Artist",
+        "Colorist",
+        "Composer",
+        "Sound Mixer",
+        "Boom Operator",
+        "Art Director",
+        "Set Designer",
+        "Props Master",
+        "Location Manager",
+        "Casting Director",
+        "Dialect Coach",
+        "Choreographer",
+        "Other"
+      ]
+    },
+    "secondary_roles": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "years_of_experience": {
+      "type": "number"
+    },
+    "experience_level": {
+      "type": "string",
+      "enum": [
+        "Entry",
+        "Mid",
+        "Senior",
+        "Expert"
+      ]
+    },
+    "day_rate_min": {
+      "type": "number"
+    },
+    "day_rate_max": {
+      "type": "number"
+    },
+    "willing_to_work_for": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "Paid Only",
+          "Deferred Payment",
+          "Credits / Experience",
+          "Union Scale",
+          "Negotiable"
+        ]
+      }
+    },
+    "union_status": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "SAG-AFTRA",
+          "MEAA",
+          "Equity",
+          "DGA",
+          "IATSE",
+          "WGA",
+          "Non-Union"
+        ]
+      }
+    },
+    "union_number": {
+      "type": "string"
+    },
+    "work_authorization": {
+      "type": "string",
+      "enum": [
+        "Citizen",
+        "Permanent Resident",
+        "Work Visa"
+      ]
+    },
+    "imdb_link": {
+      "type": "string",
+      "format": "uri"
+    },
+    "website": {
+      "type": "string",
+      "format": "uri"
+    },
+    "instagram": {
+      "type": "string"
+    },
+    "linkedin": {
+      "type": "string",
+      "format": "uri"
+    },
+    "showreel_link": {
+      "type": "string",
+      "format": "uri"
+    },
+    "resume_url": {
+      "type": "string",
+      "format": "uri"
+    },
+    "headshots": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "format": "uri"
+      },
+      "maxItems": 5
+    },
+    "equipment_owned": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "special_skills": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "languages_spoken": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "bio": {
+      "type": "string"
+    },
+    "availability_status": {
+      "type": "string",
+      "enum": [
+        "Available Now",
+        "Available Soon",
+        "Not Available"
+      ],
+      "default": "Available Now"
+    },
+    "availability_notes": {
+      "type": "string"
+    },
+    "credits": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "project_title": {
+            "type": "string"
+          },
+          "role_on_project": {
+            "type": "string"
+          },
+          "year": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "is_boosted": {
+      "type": "boolean",
+      "default": false
+    },
+    "boost_expires": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "email_verified": {
+      "type": "boolean",
+      "default": false
+    },
+    "phone_verified": {
+      "type": "boolean",
+      "default": false
+    },
+    "imdb_verified": {
+      "type": "boolean",
+      "default": false
+    },
+    "union_verified": {
+      "type": "boolean",
+      "default": false
+    },
+    "spot_score": {
+      "type": "number",
+      "default": 0
+    },
+    "spot_percentile": {
+      "type": "number",
+      "default": 0,
+      "description": "Percentile rank 0-100 among all profiles"
+    },
+    "agent_name": {
+      "type": "string"
+    },
+    "agent_email": {
+      "type": "string"
+    },
+    "agent_phone": {
+      "type": "string"
+    },
+    "gender": {
+      "type": "string",
+      "enum": [
+        "Male",
+        "Female",
+        "Non-Binary",
+        "Other"
+      ]
+    },
+    "hair_color": {
+      "type": "string",
+      "enum": [
+        "Blonde",
+        "Brown",
+        "Black",
+        "Red",
+        "Grey",
+        "White",
+        "Bald",
+        "Other"
+      ]
+    },
+    "eye_color": {
+      "type": "string",
+      "enum": [
+        "Blue",
+        "Brown",
+        "Green",
+        "Hazel",
+        "Grey",
+        "Amber",
+        "Other"
+      ]
+    },
+    "height_cm": {
+      "type": "number"
+    },
+    "build": {
+      "type": "string",
+      "enum": [
+        "Slim",
+        "Athletic",
+        "Average",
+        "Stocky",
+        "Plus-size"
+      ]
+    },
+    "age": {
+      "type": "number"
+    },
+    "ethnicity": {
+      "type": "string"
+    },
+    "welcome_email_sent": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the welcome email has been sent to this profile's owner"
+    },
+    "welcome_email_sent_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp when the welcome email was sent"
+    }
+  },
+  "required": [
+    "full_name",
+    "primary_role"
+  ],
+  "rls": {
+    "create": {},
+    "read": {},
+    "update": {
+      "$or": [
+        {
+          "data.user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "data.user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

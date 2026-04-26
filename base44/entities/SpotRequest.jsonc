@@ -1,0 +1,60 @@
+{
+  "name": "SpotRequest",
+  "type": "object",
+  "properties": {
+    "requester_profile_id": {
+      "type": "string",
+      "description": "Profile asking to be spotted"
+    },
+    "requester_name": {
+      "type": "string"
+    },
+    "target_user_id": {
+      "type": "string",
+      "description": "User being asked to spot them"
+    },
+    "target_profile_id": {
+      "type": "string",
+      "description": "Profile being asked to spot them"
+    },
+    "message": {
+      "type": "string",
+      "description": "Optional personal note from requester"
+    },
+    "spot_type": {
+      "type": "string",
+      "enum": [
+        "Reliable on set",
+        "Great communicator",
+        "Strong leadership",
+        "Excellent with actors",
+        "Calm under pressure",
+        "Fast and professional",
+        "Creative problem solver",
+        "Technical excellence",
+        "Team player",
+        "Highly organized"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "accepted",
+        "declined"
+      ],
+      "default": "pending"
+    },
+    "responded_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "requester_profile_id",
+    "requester_name",
+    "target_user_id",
+    "target_profile_id",
+    "spot_type"
+  ]
+}

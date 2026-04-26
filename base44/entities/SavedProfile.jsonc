@@ -1,0 +1,38 @@
+{
+  "name": "SavedProfile",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "User who saved the profile"
+    },
+    "profile_id": {
+      "type": "string",
+      "description": "Saved profile ID"
+    },
+    "is_super_liked": {
+      "type": "boolean",
+      "default": false
+    },
+    "saved_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Explicit save timestamp"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Free text note about why this profile was saved"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Short labels for organisation"
+    }
+  },
+  "required": [
+    "user_id",
+    "profile_id"
+  ]
+}

@@ -1,0 +1,89 @@
+{
+  "name": "RoleAlert",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "profile_id": {
+      "type": "string"
+    },
+    "roles": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "Actor",
+          "Director",
+          "Producer",
+          "Cinematographer",
+          "Editor",
+          "Writer",
+          "Sound Designer",
+          "Production Designer",
+          "Costume Designer",
+          "Makeup Artist",
+          "Gaffer",
+          "Grip",
+          "1st AD",
+          "2nd AD",
+          "Line Producer",
+          "Production Manager",
+          "Script Supervisor",
+          "Stunt Coordinator",
+          "VFX Artist",
+          "Colorist",
+          "Composer",
+          "Sound Mixer",
+          "Boom Operator",
+          "Art Director",
+          "Set Designer",
+          "Props Master",
+          "Location Manager",
+          "Casting Director",
+          "Dialect Coach",
+          "Choreographer",
+          "Other"
+        ]
+      }
+    },
+    "keywords": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "locations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "City or region names. Empty = match all."
+    },
+    "frequency": {
+      "type": "string",
+      "enum": [
+        "instant",
+        "daily",
+        "weekly"
+      ],
+      "default": "daily"
+    },
+    "email_notifications": {
+      "type": "boolean",
+      "default": true
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "last_sent_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "user_id",
+    "profile_id"
+  ]
+}
