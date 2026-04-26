@@ -317,8 +317,8 @@ export default function Layout() {
               <Link to="/pricing" className="hover:text-foreground transition-colors">Pricing</Link>
               <Link to="/contact" className="hover:text-foreground transition-colors">Contact</Link>
             </div>
-            <p className="text-xs text-muted-foreground/50">
-              © {new Date().getFullYear()} Spot'd
+            <p className="text-xs text-muted-foreground/50" data-testid="footer-copyright">
+              © {new Date().getFullYear()} Shadow Wolves Productions. All rights reserved.
             </p>
           </div>
         </div>

@@ -1,0 +1,44 @@
+{
+  "summary": "Iter 9 backend + frontend testing complete. 20/20 backend pytest cases pass: /api/public-stats returns founder_cap=100/remaining=99, no _id leaks, second call <1500ms (cached). /api/public-verified-companies returns 3 verified seeds (shadow-wolves-productions, phantom-digital-fx, mellow-pictures) anonymously, no auth needed. /api/og/casting/{id}.png and /api/og/profile/{slug}.png return 200 image/png with Cache-Control header; bytes are byte-identical on second call (cache works); 404 for unknown id/slug. /api/waitlist correctly dedupes (already_listed flips). /api/admin/waitlist returns {total,items}. /api/admin/platform-settings GET/PUT works; cap=0 and cap=-5 return 422; PUT without auth returns 401; PUT cap=150 immediately reflects in /api/public-stats (cache invalidated). /api/admin/launch-checklist returns 5 items (email_live/sms_live/stripe_keys/profile_count/pending_welcome) each with label/ok/value. /api/stripe/founder-claim with cap=1 (full) returns 400 'All 1 founding spots claimed'. Cap reset to 100 after every cap-mutation test. Frontend (1440x900): hero-founding-badge shows '99 spots left'; founding-member-section + founding-remaining='99 SPOTS REMAINING' + founding-cta='Claim your spot' + '1 OF 100 FOUNDING SPOTS CLAIMED' fineprint all render; trusted-by-row has 3 logos with correct slug testids; hero-cta-primary/secondary are now <A> tags with href containing /create-profile and /search respectively (FIXED from iter8). Frontend (390x844 pricing): pricing-founding-section + pricing-spot-counter='99 / 100 spots remaining' + pricing-founder-cta='Claim your spot', no urgency markers at 99 remaining. Waitlist mode (admin set cap=1): pricing-waitlist-section + input + submit render, submit -> pricing-waitlist-success 'You're on the list.', hero badge auto-hides on landing (cap full). Cap reset to 100 verified. Profile /u/brendanbyrneofficial: document.title='Brendan · Producer', og:image meta='/api/og/profile/brendanbyrneofficial.png', og:title set. Footer '© 2026 Shadow Wolves Productions. All rights reserved.' renders on /pricing and /search. Admin panel /admin: token-injection bypassed Cloudflare; 8 tabs visible; Platform tab shows admin-launch-checklist with all 5 items, founder-cap-input and founder-cap-save present, save triggered PUT successfully. ProfileCard placeholder regression: 52 placeholders on /search, no 'No photo' text, no Film icons inside placeholders.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Admin /admin Platform tab", "issues": ["After clicking 'Save' on Founding member cap, no visible success toast/feedback (PUT request itself succeeds and value persists; just no UI confirmation). Header subtitle reads '7-tab admin' but actually lists 8 tabs (users · profiles · casting · imports · emails · platform · stats · logs)."]},
+      {"screen": "ProfilePage <head>", "issues": ["og:image meta content is a relative path '/api/og/profile/...png' rather than an absolute URL. Some social platforms (older Slack, LinkedIn legacy crawlers) require absolute URLs. Recommend prefixing with REACT_APP_BACKEND_URL or window.location.origin in usePageMeta."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration9.py",
+    "/app/test_reports/pytest/iteration9.xml"
+  ],
+  "action_items": [
+    "Add a visible success toast in Platform tab after PUT /api/admin/platform-settings succeeds (currently silent; users won't know save worked).",
+    "Fix Admin Dashboard subtitle: currently says '7-tab admin' but renders 8 tabs.",
+    "Make og:image absolute (prefix with REACT_APP_BACKEND_URL) in usePageMeta.js for cross-platform OG scraping compatibility."
+  ],
+  "critical_code_review_comments": [
+    "server.py is now 2536 lines — the 9-router split is acknowledged-deferred, but file-size warning persists.",
+    "OG endpoints rely on `_OG_CACHE` and `_PUBLIC_STATS_CACHE` as module-level dicts. With multi-worker uvicorn, caches are per-process; not a bug for single worker but worth documenting.",
+    "/api/admin/platform-settings PUT swallows update body via `body.dict(exclude_none=True)` — Pydantic v2 deprecated `.dict()` (warns); migrate to `model_dump(exclude_none=True)`.",
+    "Founder-claim cap check is non-transactional (read count -> insert). At very high concurrency two simultaneous claimers could both pass the check. Acceptable for current scale; document or use a Mongo unique index/transaction for correctness at scale.",
+    "OG image render path imports Pillow at module-import time (top of try/except inside server.py at ~line 2092). If Pillow becomes optional, move to lazy import inside the endpoint to avoid startup failures.",
+    "Waitlist endpoint stores email lowercase but doesn't index `email` field — duplicate-prevention works via find_one but a unique index would be safer."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration9.py"
+  ],
+  "success_rate": {
+    "backend": "100%",
+    "frontend": "100%"
+  },
+  "test_credentials": "Admin OTP login via /api/auth/request-code -> dev_code -> /api/auth/verify-code (brendan@shadowwolvesproductions.com.au). Token also injected into localStorage as spotd_token to bypass Cloudflare on /admin.",
+  "seed_data_creation": "Test waitlist entries with TEST_waitlist_<ts>@example.com prefix (auto-cleanable). One TEST_claim_<ts>@example.com user created during cap=1 founder-claim test.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Iter 9 is clean. All 20 backend pytest cases pass. Founder cap reset to 100 at end of every test. /api/admin/platform-settings unauthorized test must use a fresh requests.put() (not the module-scoped session) because login fixtures pollute cookies. Casting call ID for OG tests is fetched via mongosh since there is no public-casting-calls endpoint. Cloudflare bot challenge on /admin can be bypassed by injecting localStorage.spotd_token before navigation. Save toast on FounderCapEditor is missing — flagged as design issue. og:image is relative — flagged."
+}

@@ -126,15 +126,15 @@ export default function HeroSection() {
               {subhead}
             </p>
 
-            {/* CTAs */}
+            {/* CTAs — testid on the wrapping <Link> so href is testable */}
             <div className="mt-10 flex flex-col sm:flex-row gap-3">
-              <Link to="/create-profile">
-                <Button data-testid="hero-cta-primary" size="lg" className="bg-primary text-primary-foreground font-semibold px-8 h-12 text-sm hover:bg-primary/90 rounded-full w-full sm:w-auto">
+              <Link to="/create-profile" data-testid="hero-cta-primary">
+                <Button size="lg" className="bg-primary text-primary-foreground font-semibold px-8 h-12 text-sm hover:bg-primary/90 rounded-full w-full sm:w-auto">
                   Get spot'd
                 </Button>
               </Link>
-              <Link to="/search">
-                <Button data-testid="hero-cta-secondary" variant="outline" size="lg" className="border-border text-foreground h-12 px-8 text-sm hover:bg-secondary rounded-full w-full sm:w-auto">
+              <Link to="/search" data-testid="hero-cta-secondary">
+                <Button variant="outline" size="lg" className="border-border text-foreground h-12 px-8 text-sm hover:bg-secondary rounded-full w-full sm:w-auto">
                   Browse the directory
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
@@ -237,16 +237,18 @@ function FoundingBadge() {
   const [remaining, setRemaining] = useState(null);
   useEffect(() => {
     base44.http.get("/api/public-stats")
-      .then(({ data }) => setRemaining(Math.max(0, 500 - (data.founder_count || 0))))
+      .then(({ data }) => setRemaining(Math.max(0, (data.founder_cap || 100) - (data.founder_count || 0))))
       .catch(() => setRemaining(null));
   }, []);
+  // Hide entirely when cohort is full — landing page should never lie.
+  if (remaining === 0) return null;
   return (
     <div className="absolute -bottom-12 -left-4 rounded-lg px-4 py-3 shadow-xl bg-primary z-10" data-testid="hero-founding-badge">
       <div className="text-[10px] uppercase tracking-[0.08em] font-semibold text-primary-foreground/70">
         Founding · Free PRO
       </div>
       <div className="font-display font-bold text-lg leading-none mt-1 text-primary-foreground">
-        {remaining !== null ? `${remaining} spots left` : "500 spots"}
+        {remaining !== null ? `${remaining} spots left` : "Founding cohort"}
       </div>
     </div>
   );

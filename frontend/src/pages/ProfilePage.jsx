@@ -12,6 +12,7 @@ import SpottedWithSection from "../components/profile/SpottedWithSection";
 import SpotRequestModal from "../components/profile/SpotRequestModal";
 import SpotScoreBadge from "../components/SpotScoreBadge";
 import ProfileCard from "../components/ProfileCard";
+import { usePageMeta } from "@/lib/usePageMeta";
 
 export default function ProfilePage() {
   const [profile, setProfile] = useState(null);
@@ -27,6 +28,25 @@ export default function ProfilePage() {
 
   const profileParam = window.location.pathname.split("/profile/")[1];
   const isMongoId = /^[a-f0-9]{24}$/.test(profileParam);
+
+  // OG / share-preview tags — wired off the loaded profile
+  const role = profile?.primary_role || "";
+  const place = [profile?.city, profile?.state].filter(Boolean).join(", ");
+  usePageMeta({
+    title: profile ? `${profile.preferred_name || profile.full_name} · ${role || "Spot'd"}` : undefined,
+    description: profile
+      ? `${role}${place ? " · " + place : ""}${profile.spot_score ? ` · SpotScore ${profile.spot_score}` : ""}. Find cast & crew on Spot'd.`
+      : undefined,
+    image: profile?.profile_slug
+      ? `${base44.baseURL}/api/og/profile/${profile.profile_slug}.png`
+      : profile?.id
+      ? `${base44.baseURL}/api/og/profile/${profile.id}.png`
+      : undefined,
+    url: profile?.profile_slug
+      ? `${window.location.origin}/u/${profile.profile_slug}`
+      : undefined,
+    type: "profile",
+  });
 
   useEffect(() => {
     const load = async () => {
