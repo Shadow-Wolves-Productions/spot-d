@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Link } from "react-router-dom";
-import { Crown, Eye, Bookmark, Clock, ChevronRight, Edit, Zap, Moon, Sun, Trash2, AlertTriangle, BarChart2 } from "lucide-react";
+import { Crown, Eye, Bookmark, Clock, ChevronRight, Edit, Zap, Moon, Sun, Trash2, AlertTriangle, BarChart2, Building2 } from "lucide-react";
 import RoleAlertsPanel from "../components/RoleAlertsPanel";
 import { useTheme } from "../lib/useTheme";
 import VerificationPanel from "../components/VerificationPanel";
@@ -107,6 +107,11 @@ export default function Dashboard() {
                 <Link to="/create-profile">
                   <Button size="sm" className="bg-primary text-primary-foreground">
                     <Edit className="w-4 h-4 mr-1" /> Edit Profile
+                  </Button>
+                </Link>
+                <Link to="/create-company">
+                  <Button variant="outline" size="sm" className="border-border" data-testid="dashboard-create-company-btn">
+                    <Building2 className="w-4 h-4 mr-1" /> Company profile
                   </Button>
                 </Link>
               </>

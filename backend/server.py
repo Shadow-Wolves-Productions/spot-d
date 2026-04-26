@@ -17,15 +17,20 @@ import re
 import json
 import uuid
 import secrets
+import hmac
+import hashlib
+import base64
 import logging
 import asyncio
 from datetime import datetime, timezone, timedelta
 from typing import Optional, Any
+from pathlib import Path
 
 import jwt
-from fastapi import FastAPI, HTTPException, Request, Response, Depends, Query, BackgroundTasks
+from fastapi import FastAPI, HTTPException, Request, Response, Depends, Query, BackgroundTasks, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, EmailStr, Field
 from motor.motor_asyncio import AsyncIOMotorClient
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -60,6 +65,12 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Static file hosting for uploads
+UPLOAD_ROOT = Path(__file__).parent / "static" / "uploads"
+for sub in ("profiles", "headshots", "company-logos", "company-covers"):
+    (UPLOAD_ROOT / sub).mkdir(parents=True, exist_ok=True)
+app.mount("/static", StaticFiles(directory=str(Path(__file__).parent / "static")), name="static")
 
 scheduler = AsyncIOScheduler(timezone="UTC")
 
@@ -1155,12 +1166,35 @@ async def stripe_webhook(request: Request):
 
 # --------------------------------------------------------------------------- #
 # Postmark webhook (delivery / bounce / spam events)
+# Signed via X-Postmark-Signature (HMAC-SHA256, base64) using
+# POSTMARK_WEBHOOK_SECRET. Reject any request whose signature doesn't match.
 # --------------------------------------------------------------------------- #
+def verify_postmark_signature(raw_body: bytes, signature_header: str) -> bool:
+    secret = os.environ.get("POSTMARK_WEBHOOK_SECRET", "").strip()
+    # If no secret configured we deliberately reject so we never accidentally
+    # accept unsigned data in production. Set the env var to disable this check
+    # (e.g. during local dev) — empty secret means no webhook traffic accepted.
+    if not secret:
+        return False
+    if not signature_header:
+        return False
+    expected = hmac.new(secret.encode("utf-8"), raw_body, hashlib.sha256).digest()
+    expected_b64 = base64.b64encode(expected).decode("ascii")
+    expected_hex = expected.hex()
+    # Postmark sends base64; accept hex too in case of alternate config
+    candidates = (signature_header.strip(), )
+    return any(hmac.compare_digest(c, expected_b64) or hmac.compare_digest(c.lower(), expected_hex) for c in candidates)
+
+
 @app.post("/api/webhooks/postmark")
 async def postmark_webhook(request: Request):
+    raw = await request.body()
+    sig = request.headers.get("X-Postmark-Signature", "")
+    if not verify_postmark_signature(raw, sig):
+        raise HTTPException(status_code=403, detail="Invalid signature")
     try:
-        payload = await request.json()
-    except Exception:
+        payload = json.loads(raw.decode("utf-8") or "{}")
+    except json.JSONDecodeError:
         payload = {}
     record_type = payload.get("RecordType") or payload.get("Type") or "Unknown"
     await db.postmark_events.insert_one({
@@ -1172,6 +1206,54 @@ async def postmark_webhook(request: Request):
         "created_date": now_iso(),
     })
     return {"received": True}
+
+
+# --------------------------------------------------------------------------- #
+# File uploads — local disk MVP. Single source of truth for upload validation.
+# TODO(prod): swap local disk for S3 / Cloudflare R2; currently writes to
+# /app/backend/static/uploads/<type>/. Files are served via /static/...
+# --------------------------------------------------------------------------- #
+ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/jpg", "image/png", "image/webp"}
+MAX_UPLOAD_BYTES = 5 * 1024 * 1024  # 5 MB
+
+
+async def _save_upload(file: UploadFile, subdir: str, public_url_base: str) -> dict:
+    if file.content_type not in ALLOWED_IMAGE_TYPES:
+        raise HTTPException(400, "Only JPEG, PNG and WEBP images are allowed.")
+    contents = await file.read()
+    if len(contents) > MAX_UPLOAD_BYTES:
+        raise HTTPException(413, "File too large. Max 5MB.")
+    if not contents:
+        raise HTTPException(400, "Empty file.")
+    ext = {"image/jpeg": "jpg", "image/jpg": "jpg", "image/png": "png", "image/webp": "webp"}[file.content_type]
+    filename = f"{new_id()}.{ext}"
+    path = UPLOAD_ROOT / subdir / filename
+    path.write_bytes(contents)
+    return {"url": f"{public_url_base}/{filename}", "filename": filename, "size": len(contents)}
+
+
+@app.post("/api/upload/profile-photo")
+async def upload_profile_photo(request: Request, file: UploadFile = File(...)):
+    await require_user(request)
+    return await _save_upload(file, "profiles", "/static/uploads/profiles")
+
+
+@app.post("/api/upload/headshot")
+async def upload_headshot(request: Request, file: UploadFile = File(...)):
+    await require_user(request)
+    return await _save_upload(file, "headshots", "/static/uploads/headshots")
+
+
+@app.post("/api/upload/company-logo")
+async def upload_company_logo(request: Request, file: UploadFile = File(...)):
+    await require_user(request)
+    return await _save_upload(file, "company-logos", "/static/uploads/company-logos")
+
+
+@app.post("/api/upload/cover-image")
+async def upload_cover_image(request: Request, file: UploadFile = File(...)):
+    await require_user(request)
+    return await _save_upload(file, "company-covers", "/static/uploads/company-covers")
 
 
 # --------------------------------------------------------------------------- #

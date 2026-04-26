@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import InlineVerificationButton from "../components/profile/InlineVerificationButton";
 import SpotScoreChecklist from "../components/profile/SpotScoreChecklist";
 import AgeGate from "../components/AgeGate";
+import ImageUploader from "../components/ImageUploader";
 
 const ROLES = ["Actor", "Director", "Producer", "Cinematographer", "Editor", "Writer", "Sound Designer", "Production Designer", "Costume Designer", "Makeup Artist", "Gaffer", "Grip", "1st AD", "2nd AD", "Line Producer", "Production Manager", "Script Supervisor", "Stunt Coordinator", "VFX Artist", "Colorist", "Composer", "Sound Mixer", "Boom Operator", "Art Director", "Set Designer", "Props Master", "Location Manager", "Casting Director", "Dialect Coach", "Choreographer", "Other"];
 const EXPERIENCE_LEVELS = ["Entry", "Mid", "Senior", "Expert"];
@@ -32,6 +33,38 @@ const STEPS = ["Personal", "Professional", "Portfolio & IMDb", "Availability & C
 // NOTE: SpotScore is computed authoritatively on the backend via
 // recalculateSpotScore. The legacy client-side `calculateCineScore` was
 // removed (Jan 2026) to avoid drift between client and server scores.
+
+// IMPORTANT: TagInput is defined OUTSIDE the parent component to keep its
+// component identity stable across re-renders. Defining it inside caused
+// React to remount the <input> every keystroke (focus loss after one char).
+function TagInput({ field, label, value, listValue, onTextChange, onAdd, onRemove }) {
+  return (
+    <div>
+      <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">{label}</Label>
+      <div className="flex gap-2">
+        <Input
+          data-testid={`tag-input-${field}`}
+          value={value}
+          onChange={(e) => onTextChange(field, e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), onAdd(field))}
+          placeholder={`Add ${label.toLowerCase()}`}
+          className="bg-secondary border-border h-11"
+        />
+        <Button type="button" variant="outline" size="icon" onClick={() => onAdd(field)} className="h-11 w-11">
+          <Plus className="w-4 h-4" />
+        </Button>
+      </div>
+      <div className="flex flex-wrap gap-1.5 mt-2">
+        {listValue.map((v) => (
+          <Badge key={v} variant="outline" className="border-border text-foreground/80 gap-1">
+            {v}
+            <button type="button" onClick={() => onRemove(field, v)}><X className="w-3 h-3" /></button>
+          </Badge>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default function CreateProfile() {
   const navigate = useNavigate();
@@ -142,12 +175,7 @@ export default function CreateProfile() {
     update("credits", form.credits.filter((_, i) => i !== idx));
   };
 
-  const handlePhotoUpload = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const { file_url } = await base44.integrations.Core.UploadFile({ file });
-    update("profile_photo", file_url);
-  };
+  const handlePhotoUpload = (url) => update("profile_photo", url);
 
   const handleSave = async () => {
     if (!form.full_name || !form.primary_role) {
@@ -229,31 +257,8 @@ export default function CreateProfile() {
     }} />;
   }
 
-  const TagInput = ({ field, label }) => (
-    <div>
-      <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">{label}</Label>
-      <div className="flex gap-2">
-        <Input
-          value={tagInputs[field]}
-          onChange={(e) => setTagInputs((t) => ({ ...t, [field]: e.target.value }))}
-          onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addTag(field))}
-          placeholder={`Add ${label.toLowerCase()}`}
-          className="bg-secondary border-border"
-        />
-        <Button type="button" variant="outline" size="icon" onClick={() => addTag(field)}>
-          <Plus className="w-4 h-4" />
-        </Button>
-      </div>
-      <div className="flex flex-wrap gap-1.5 mt-2">
-        {form[field].map((v) => (
-          <Badge key={v} variant="outline" className="border-border text-foreground/80 gap-1">
-            {v}
-            <button onClick={() => removeTag(field, v)}><X className="w-3 h-3" /></button>
-          </Badge>
-        ))}
-      </div>
-    </div>
-  );
+  // Stable handlers passed into the (now external) TagInput.
+  const onTagText = (field, value) => setTagInputs((t) => ({ ...t, [field]: value }));
 
   return (
     <div className="pt-24 pb-20 px-4">
@@ -359,19 +364,14 @@ export default function CreateProfile() {
             {/* Photo */}
             <div>
               <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">Profile Photo</Label>
-              <div className="flex items-center gap-4">
-                <div className="w-24 h-24 rounded-xl overflow-hidden border border-border bg-secondary flex items-center justify-center">
-                  {form.profile_photo ? (
-                    <img src={form.profile_photo} alt="" className="w-full h-full object-cover" />
-                  ) : (
-                    <Upload className="w-6 h-6 text-muted-foreground/30" />
-                  )}
-                </div>
-                <label className="cursor-pointer">
-                  <input type="file" accept="image/*" onChange={handlePhotoUpload} className="hidden" />
-                  <span className="text-sm text-primary hover:underline">Upload Photo</span>
-                </label>
-              </div>
+              <ImageUploader
+                value={form.profile_photo}
+                onChange={handlePhotoUpload}
+                kind="profile-photo"
+                shape="square"
+                testId="profile-photo"
+                label="Square crop works best. JPG, PNG or WEBP. Max 5MB."
+              />
             </div>
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
@@ -483,7 +483,9 @@ export default function CreateProfile() {
                 </SelectContent>
               </Select>
             </div>
-            <TagInput field="secondary_roles" label="Secondary Roles" />
+            <TagInput field="secondary_roles" label="Secondary Roles"
+              value={tagInputs.secondary_roles} listValue={form.secondary_roles}
+              onTextChange={onTagText} onAdd={addTag} onRemove={removeTag} />
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
                 <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">Experience Level</Label>
@@ -561,9 +563,15 @@ export default function CreateProfile() {
             {form.willing_to_travel && (
               <Input value={form.travel_notes} onChange={(e) => update("travel_notes", e.target.value)} placeholder="Travel notes (e.g. Anywhere in USA)" className="bg-secondary border-border" />
             )}
-            <TagInput field="equipment_owned" label="Equipment Owned" />
-            <TagInput field="special_skills" label="Special Skills" />
-            <TagInput field="languages_spoken" label="Languages Spoken" />
+            <TagInput field="equipment_owned" label="Equipment Owned"
+              value={tagInputs.equipment_owned} listValue={form.equipment_owned}
+              onTextChange={onTagText} onAdd={addTag} onRemove={removeTag} />
+            <TagInput field="special_skills" label="Special Skills"
+              value={tagInputs.special_skills} listValue={form.special_skills}
+              onTextChange={onTagText} onAdd={addTag} onRemove={removeTag} />
+            <TagInput field="languages_spoken" label="Languages Spoken"
+              value={tagInputs.languages_spoken} listValue={form.languages_spoken}
+              onTextChange={onTagText} onAdd={addTag} onRemove={removeTag} />
           </div>
         )}
 
@@ -591,6 +599,40 @@ export default function CreateProfile() {
             <div>
               <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">LinkedIn</Label>
               <Input value={form.linkedin} onChange={(e) => update("linkedin", e.target.value)} placeholder="https://linkedin.com/in/..." className="bg-secondary border-border" />
+            </div>
+
+            {/* Headshots — up to 4 */}
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <Label className="text-xs uppercase tracking-wider text-muted-foreground">Headshots <span className="text-muted-foreground/60 normal-case">(up to 4)</span></Label>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {[0, 1, 2, 3].map((i) => {
+                  const existing = form.headshots[i];
+                  return (
+                    <div key={i} className="relative">
+                      <ImageUploader
+                        value={existing || ""}
+                        onChange={(url) => {
+                          const next = [...form.headshots];
+                          next[i] = url;
+                          update("headshots", next.filter(Boolean));
+                        }}
+                        onRemove={() => {
+                          const next = [...form.headshots];
+                          next.splice(i, 1);
+                          update("headshots", next);
+                        }}
+                        kind="headshot"
+                        shape="square"
+                        testId={`headshot-${i}`}
+                        label="JPG/PNG/WEBP · 5MB"
+                        className="!flex-col !items-stretch"
+                      />
+                    </div>
+                  );
+                })}
+              </div>
             </div>
 
             {/* Credits */}
