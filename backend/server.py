@@ -110,6 +110,7 @@ ENTITIES = {
     "SearchAppearance": "search_appearances",
     "CompanyProfile": "company_profiles",
     "PaymentTransaction": "payment_transactions",
+    "SpotScoreHistory": "spot_score_history",
 }
 
 # Public entities that anonymous users can list/read.
@@ -117,7 +118,7 @@ PUBLIC_READ = {"Profile", "CompanyProfile", "CastingCall", "Spot", "Endorsement"
                "SpottedWith", "SavedProfile", "ContactReveal", "ProfileView",
                "PortfolioClick", "SearchAppearance", "Notification",
                "Subscription", "SpotRequest", "RoleAlert", "User",
-               "CastingApplication"}
+               "CastingApplication", "SpotScoreHistory"}
 
 # --------------------------------------------------------------------------- #
 # Helpers
@@ -669,8 +670,19 @@ async def recalculate_spot_score(profile_id: str) -> Optional[int]:
     if not profile:
         return None
     score = await calculate_spot_score(profile)
+    prev = profile.get("spot_score", 0)
     await db.profiles.update_one({"id": profile_id}, {"$set": {"spot_score": score}})
     await recalc_percentiles()
+    # Snapshot — only when the score actually changes (avoids polluting history
+    # with no-op recalcs from unrelated entity mutations)
+    if score != prev:
+        await db.spot_score_history.insert_one({
+            "id": new_id(),
+            "profile_id": profile_id,
+            "score": score,
+            "recorded_at": now_iso(),
+            "created_date": now_iso(),
+        })
     return score
 
 
@@ -1557,6 +1569,161 @@ async def founder_count():
 @app.get("/api/health")
 async def health():
     return {"ok": True, "time": now_iso()}
+
+
+@app.get("/api/analytics/summary")
+async def analytics_summary(request: Request, days: int = 30):
+    """Tier-aware analytics rollup for the current user's primary profile."""
+    user = await require_user(request)
+    profile = await db.profiles.find_one({"user_id": user["id"]}, {"_id": 0})
+    if not profile:
+        raise HTTPException(404, "No profile yet")
+    sub = await db.subscriptions.find_one({"user_id": user["id"]}, {"_id": 0}) or {}
+    tier = sub.get("tier", "free")
+
+    pid = profile["id"]
+    cutoff = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
+
+    # Always-available counts
+    views_count = await db.profile_views.count_documents({"profile_id": pid, "created_date": {"$gte": cutoff}})
+    saves_count = await db.saved_profiles.count_documents({"profile_id": pid})
+    reveals_count = await db.contact_reveals.count_documents({"profile_id": pid})
+    search_count = await db.search_appearances.count_documents({"profile_id": pid, "created_date": {"$gte": cutoff}})
+
+    # Score history (last 90 days)
+    score_cutoff = (datetime.now(timezone.utc) - timedelta(days=90)).isoformat()
+    history_cursor = db.spot_score_history.find(
+        {"profile_id": pid, "recorded_at": {"$gte": score_cutoff}},
+        {"_id": 0},
+    ).sort("recorded_at", 1)
+    history = await history_cursor.to_list(length=500)
+
+    payload = {
+        "tier": tier,
+        "profile": {
+            "id": pid,
+            "spot_score": profile.get("spot_score", 0),
+            "spot_percentile": profile.get("spot_percentile", 0),
+        },
+        "totals": {
+            "views": views_count,
+            "saves": saves_count,
+            "reveals": reveals_count,
+            "search_appearances": search_count,
+        },
+        "spot_score_history": history,
+    }
+
+    # PRO+: who saved
+    if tier in ("pro", "elite", "founder"):
+        savers = await db.saved_profiles.find({"profile_id": pid}, {"_id": 0}).sort("created_date", -1).to_list(length=50)
+        saver_user_ids = list({s["user_id"] for s in savers if s.get("user_id")})
+        saver_profiles = await db.profiles.find({"user_id": {"$in": saver_user_ids}}, {"_id": 0}).to_list(length=200)
+        by_uid = {p["user_id"]: p for p in saver_profiles}
+        payload["who_saved_you"] = [
+            {
+                "saved_at": s.get("created_date"),
+                "profile": {
+                    "id": by_uid.get(s["user_id"], {}).get("id"),
+                    "full_name": by_uid.get(s["user_id"], {}).get("full_name"),
+                    "preferred_name": by_uid.get(s["user_id"], {}).get("preferred_name"),
+                    "primary_role": by_uid.get(s["user_id"], {}).get("primary_role"),
+                    "profile_slug": by_uid.get(s["user_id"], {}).get("profile_slug"),
+                    "profile_photo": by_uid.get(s["user_id"], {}).get("profile_photo"),
+                } if by_uid.get(s["user_id"]) else None,
+            }
+            for s in savers if s.get("user_id")
+        ]
+    else:
+        payload["who_saved_you"] = None  # gated
+
+    # Elite only: who revealed your contact
+    if tier in ("elite", "founder"):
+        reveals = await db.contact_reveals.find({"profile_id": pid}, {"_id": 0}).sort("created_date", -1).to_list(length=50)
+        reveal_user_ids = list({r["revealer_user_id"] for r in reveals if r.get("revealer_user_id")})
+        reveal_profiles = await db.profiles.find({"user_id": {"$in": reveal_user_ids}}, {"_id": 0}).to_list(length=200)
+        by_uid = {p["user_id"]: p for p in reveal_profiles}
+        payload["who_revealed_contact"] = [
+            {
+                "revealed_at": r.get("created_date"),
+                "profile": by_uid.get(r["revealer_user_id"]) and {
+                    "id": by_uid[r["revealer_user_id"]].get("id"),
+                    "full_name": by_uid[r["revealer_user_id"]].get("full_name"),
+                    "primary_role": by_uid[r["revealer_user_id"]].get("primary_role"),
+                    "profile_slug": by_uid[r["revealer_user_id"]].get("profile_slug"),
+                },
+            }
+            for r in reveals if r.get("revealer_user_id")
+        ]
+    elif tier == "pro":
+        payload["who_revealed_contact"] = {"count_only": reveals_count}
+    else:
+        payload["who_revealed_contact"] = None
+
+    return payload
+
+
+@app.get("/api/auto-claim/check")
+async def auto_claim_check(request: Request):
+    """Returns auto-claim payload if the current user has a pre-built profile
+    (welcome_email_sent=false) that they haven't yet completed."""
+    user = await require_user(request)
+    profile = await db.profiles.find_one({"user_id": user["id"]}, {"_id": 0})
+    if not profile:
+        return {"eligible": False}
+    # Eligibility: profile created via import (welcome_email_sent never sent
+    # AND they haven't dismissed the auto-claim banner yet)
+    welcome_sent = profile.get("welcome_email_sent", False)
+    auto_claim_dismissed = profile.get("auto_claim_dismissed", False)
+    if welcome_sent or auto_claim_dismissed:
+        return {"eligible": False}
+
+    # Compute top 3 missing items by SpotScore impact
+    suggestions = []
+    if not profile.get("profile_photo"):
+        suggestions.append({"key": "profile_photo", "label": "Add a profile photo", "points": 5})
+    if not profile.get("showreel_link"):
+        suggestions.append({"key": "showreel_link", "label": "Link your showreel", "points": 5})
+    if not profile.get("phone_verified"):
+        suggestions.append({"key": "phone_verified", "label": "Verify your phone", "points": 8})
+    if not profile.get("email_verified"):
+        suggestions.append({"key": "email_verified", "label": "Verify your email", "points": 7})
+    if not profile.get("bio"):
+        suggestions.append({"key": "bio", "label": "Add a short bio", "points": 5})
+    if not profile.get("imdb_link"):
+        suggestions.append({"key": "imdb_link", "label": "Add your IMDb link", "points": 5})
+    suggestions = sorted(suggestions, key=lambda s: -s["points"])[:3]
+
+    # Profile completion %
+    fields = ["profile_photo", "bio", "primary_role", "city", "imdb_link",
+              "showreel_link", "phone", "email_verified"]
+    completed = sum(1 for f in fields if profile.get(f))
+    completion_pct = round(100 * completed / len(fields))
+
+    return {
+        "eligible": True,
+        "profile": {
+            "id": profile["id"],
+            "preferred_name": profile.get("preferred_name") or profile.get("full_name") or "there",
+            "spot_score": profile.get("spot_score", 0),
+            "profile_slug": profile.get("profile_slug"),
+        },
+        "completion_pct": completion_pct,
+        "suggestions": suggestions,
+    }
+
+
+@app.post("/api/auto-claim/dismiss")
+async def auto_claim_dismiss(request: Request):
+    user = await require_user(request)
+    profile = await db.profiles.find_one({"user_id": user["id"]})
+    if not profile:
+        raise HTTPException(404, "No profile")
+    await db.profiles.update_one(
+        {"id": profile["id"]},
+        {"$set": {"auto_claim_dismissed": True, "welcome_email_sent": True, "updated_date": now_iso()}},
+    )
+    return {"ok": True}
 
 
 @app.get("/api/public-settings")
