@@ -1,0 +1,39 @@
+{
+  "summary": "Iteration 3 retest — both critical fixes verified GREEN. Backend: all 11/11 tests in /app/backend/tests/test_iteration3.py pass after updating asserted prefix from '/static/' to '/api/static/'. Confirmed via curl that POST /api/upload/profile-photo returns {url:'/api/static/uploads/profiles/<id>.png', ...} and that public REACT_APP_BACKEND_URL + url returns 200 with content-type: image/png (73 bytes for our test PNG) — the K8s ingress now correctly routes /api/static/* to the backend. Other 3 upload endpoints (headshot, company-logo, cover-image) verified to return /api/static/uploads/<sub>/ prefix and are publicly fetchable. Postmark webhook (no/invalid/valid HMAC-SHA256) and CompanyProfile CRUD all still pass. Frontend (/search via Playwright on REACT_APP_BACKEND_URL): 37 ProfileCards rendered on Crew tab and 13 on Talent tab — every card now has data-testid='profile-card-<slug>' (e.g. profile-card-brendanbyrneofficial, profile-card-kira-woods). Zero nested <a> inside <a> in DOM. Zero validateDOMNesting / 'cannot appear as a descendant of <a>' console warnings. The IMDb badge is now rendered as <span role=\"link\" title=\"View on IMDb\"> (2 instances on the page), opening IMDb via window.open on click as expected.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "POST /api/webhooks/postmark", "issue": "When POSTMARK_WEBHOOK_SECRET is empty, verify_postmark_signature rejects all requests. Safe in prod but a missing-env-var deploy will silently reject all webhook deliveries — consider a startup warning."},
+      {"endpoint": "POST /api/upload/*", "issue": "Reads entire body into memory (await file.read()) before size check; a 5MB+1 byte upload still buffers fully. Consider streaming with hard cap for DoS resilience."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration3.py",
+    "/app/test_reports/pytest/iter3_retest_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "server.py is ~1589 lines — split into routers/uploads.py, routers/webhooks.py, routers/companies.py, routers/auth.py.",
+    "_save_upload still buffers the entire file before checking size; switch to streaming with a hard cap.",
+    "Upload endpoints don't verify content-type vs actual bytes — a client can send executable bytes labelled image/png. Consider PIL/imghdr verification.",
+    "Postmark signature verification accepts only base64/hex of raw body; document the algorithm in code comments in case Postmark rotates the format."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration3.py"
+  ],
+  "success_rate": {
+    "backend": "100% (11/11)",
+    "frontend": "100% on the requested checks (data-testid present, no nested <a>, no DOM nesting warnings)"
+  },
+  "test_credentials": "Admin: brendan@shadowwolvesproductions.com.au — OTP, dev_code returned by /api/auth/request-code in EMAIL_MOCK_MODE. Had to delete recent login_codes from MongoDB once due to rate limit (3 codes / 10 min).",
+  "seed_data_creation": "TestCompanyProfileCRUD created and deleted 'TEST_Iter3 Co'. ~5 small PNGs added under /app/backend/static/uploads/{profiles,headshots,company-logos,company-covers}/. 1 Postmark event inserted into postmark_events.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Static file serving fixed: StaticFiles mounted at /api/static (server.py:73). Upload endpoints return /api/static/uploads/<sub>/<filename>. Frontend resolveAsset already accepts both /api/static/* and legacy /static/*. ProfileCard.jsx has data-testid='profile-card-<slug>' on root and uses <span role=\"link\"> for IMDb badge instead of nested <a>. test_iteration3.py prefix assertions updated to '/api/static/...'. If admin OTP rate limits, delete db.login_codes for the admin email before re-running.",
+  "rca of the issue": "Resolved in iteration 3 fix: K8s ingress only routes /api/* to backend; previously StaticFiles was mounted at /static so uploaded image URLs returned by /api/upload/* (shape '/static/uploads/...') were intercepted by the frontend service and returned the SPA index.html. Fix mounted StaticFiles at /api/static and updated _save_upload's public_url_base to '/api/static/uploads/<sub>'. Verified: curl -I REACT_APP_BACKEND_URL/api/static/uploads/profiles/<id>.png → HTTP 200, content-type: image/png. ProfileCard nested-<a> warning was caused by IMDb link being a sibling <a> inside the wrapping <Link>; fixed by replacing it with <span role=\"link\" onClick={window.open}>."
+}

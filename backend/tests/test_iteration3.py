@@ -87,7 +87,7 @@ class TestUploads:
         assert r.status_code == 200, r.text
         body = r.json()
         assert body.get("filename", "").endswith(".png")
-        assert body["url"].startswith("/static/uploads/profiles/")
+        assert body["url"].startswith("/api/static/uploads/profiles/")
         assert body["size"] == len(png)
         # Fetch via static
         full = f"{BASE_URL}{body['url']}"
@@ -115,9 +115,9 @@ class TestUploads:
         assert r.status_code == 401, r.text
 
     @pytest.mark.parametrize("endpoint,prefix", [
-        ("/api/upload/headshot", "/static/uploads/headshots/"),
-        ("/api/upload/company-logo", "/static/uploads/company-logos/"),
-        ("/api/upload/cover-image", "/static/uploads/company-covers/"),
+        ("/api/upload/headshot", "/api/static/uploads/headshots/"),
+        ("/api/upload/company-logo", "/api/static/uploads/company-logos/"),
+        ("/api/upload/cover-image", "/api/static/uploads/company-covers/"),
     ])
     def test_other_upload_endpoints(self, session, auth_headers, endpoint, prefix):
         png = _make_png()

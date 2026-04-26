@@ -9,7 +9,8 @@ import SpotScoreBadge from "@/components/SpotScoreBadge";
 
 function resolveAsset(url) {
   if (!url) return "";
-  if (url.startsWith("/static/")) return `${base44.baseURL}${url}`;
+  if (url.startsWith("/api/static/")) return `${base44.baseURL}${url}`;
+  if (url.startsWith("/static/")) return `${base44.baseURL}/api${url}`;
   return url;
 }
 

@@ -38,8 +38,8 @@ export default function ImageUploader({
   const [err, setErr] = useState("");
   const endpoint = ENDPOINTS[kind] || ENDPOINTS["profile-photo"];
 
-  const resolved = value && value.startsWith("/static/")
-    ? `${base44.baseURL}${value}`
+  const resolved = value && (value.startsWith("/static/") || value.startsWith("/api/static/"))
+    ? `${base44.baseURL}${value.startsWith("/static/") ? "/api" + value : value}`
     : value;
 
   const onPick = (e) => {

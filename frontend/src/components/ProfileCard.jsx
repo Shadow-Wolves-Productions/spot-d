@@ -34,6 +34,7 @@ export default function ProfileCard({ profile, subscription, onSave, isSaved, in
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.04, duration: 0.4 }}
+      data-testid={`profile-card-${profile.profile_slug || profile.id}`}
     >
       <Link to={`/profile/${profile.profile_slug || profile.id}`} className="block group">
         <div className="overflow-hidden rounded-lg border border-border transition-all duration-200 group-hover:border-primary/30" style={{ background: "#161616" }}>
@@ -41,7 +42,7 @@ export default function ProfileCard({ profile, subscription, onSave, isSaved, in
           <div className="relative aspect-[3/4] overflow-hidden" style={{ background: "#111" }}>
             {profile.profile_photo ? (
               <img
-                src={profile.profile_photo}
+                src={profile.profile_photo?.startsWith("/api/static/") || profile.profile_photo?.startsWith("/static/") ? `/api${profile.profile_photo.startsWith("/static/") ? profile.profile_photo : profile.profile_photo.replace(/^\/api/, "")}` : profile.profile_photo}
                 alt={profile.full_name}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               />
@@ -137,17 +138,15 @@ export default function ProfileCard({ profile, subscription, onSave, isSaved, in
                   </div>
                 )}
                 {profile.imdb_link && (
-                  <a
-                    href={profile.imdb_link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={(e) => e.stopPropagation()}
-                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[9px] font-bold hover:opacity-80 transition-opacity"
+                  <span
+                    role="link"
+                    onClick={(e) => { e.stopPropagation(); e.preventDefault(); window.open(profile.imdb_link, "_blank", "noopener,noreferrer"); }}
+                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[9px] font-bold hover:opacity-80 transition-opacity cursor-pointer"
                     style={{ background: "#F5C518", color: "#0D0D0D" }}
                     title="View on IMDb"
                   >
                     <Film className="w-2.5 h-2.5" /> IMDb
-                  </a>
+                  </span>
                 )}
               </div>
               {onSave && !profile._isOwnProfile && (

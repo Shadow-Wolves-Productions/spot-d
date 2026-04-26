@@ -70,7 +70,7 @@ app.add_middleware(
 UPLOAD_ROOT = Path(__file__).parent / "static" / "uploads"
 for sub in ("profiles", "headshots", "company-logos", "company-covers"):
     (UPLOAD_ROOT / sub).mkdir(parents=True, exist_ok=True)
-app.mount("/static", StaticFiles(directory=str(Path(__file__).parent / "static")), name="static")
+app.mount("/api/static", StaticFiles(directory=str(Path(__file__).parent / "static")), name="static")
 
 scheduler = AsyncIOScheduler(timezone="UTC")
 
@@ -1235,25 +1235,25 @@ async def _save_upload(file: UploadFile, subdir: str, public_url_base: str) -> d
 @app.post("/api/upload/profile-photo")
 async def upload_profile_photo(request: Request, file: UploadFile = File(...)):
     await require_user(request)
-    return await _save_upload(file, "profiles", "/static/uploads/profiles")
+    return await _save_upload(file, "profiles", "/api/static/uploads/profiles")
 
 
 @app.post("/api/upload/headshot")
 async def upload_headshot(request: Request, file: UploadFile = File(...)):
     await require_user(request)
-    return await _save_upload(file, "headshots", "/static/uploads/headshots")
+    return await _save_upload(file, "headshots", "/api/static/uploads/headshots")
 
 
 @app.post("/api/upload/company-logo")
 async def upload_company_logo(request: Request, file: UploadFile = File(...)):
     await require_user(request)
-    return await _save_upload(file, "company-logos", "/static/uploads/company-logos")
+    return await _save_upload(file, "company-logos", "/api/static/uploads/company-logos")
 
 
 @app.post("/api/upload/cover-image")
 async def upload_cover_image(request: Request, file: UploadFile = File(...)):
     await require_user(request)
-    return await _save_upload(file, "company-covers", "/static/uploads/company-covers")
+    return await _save_upload(file, "company-covers", "/api/static/uploads/company-covers")
 
 
 # --------------------------------------------------------------------------- #
