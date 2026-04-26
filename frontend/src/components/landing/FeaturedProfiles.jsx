@@ -11,8 +11,11 @@ export default function FeaturedProfiles() {
 
   useEffect(() => {
     const load = async () => {
-      const top = await base44.entities.Profile.list("-spot_score", 8);
-      setProfiles(top);
+      const top = await base44.entities.Profile.list("-spot_score", 12);
+      // Backend already filters out is_hidden — also exclude minor performers
+      // from the public landing page.
+      const visible = top.filter((p) => !p.is_minor_profile).slice(0, 6);
+      setProfiles(visible);
       setLoading(false);
     };
     load();
@@ -31,7 +34,7 @@ export default function FeaturedProfiles() {
   if (profiles.length === 0) return null;
 
   return (
-    <section className="py-20 px-4">
+    <section className="py-20 px-4" data-testid="featured-profiles-section">
       <div className="max-w-7xl mx-auto">
         {/* Section header — editorial */}
         <div className="mb-10 border-b border-border pb-4">
@@ -43,20 +46,20 @@ export default function FeaturedProfiles() {
                 </h2>
               </div>
               <Link to="/search" className="hidden sm:flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-                Full directory <ArrowRight className="w-4 h-4" />
+                View full directory <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-           {profiles.slice(0, 8).map((profile, i) => (
-             <ProfileCard key={profile.id} profile={profile} index={i} featured={profile.is_boosted} subscription={null} />
-           ))}
-         </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+          {profiles.map((profile, i) => (
+            <ProfileCard key={profile.id} profile={profile} index={i} featured={profile.is_boosted} subscription={null} />
+          ))}
+        </div>
 
         <div className="mt-8 sm:hidden">
           <Link to="/search" className="flex items-center justify-center gap-2 text-sm font-medium text-foreground border border-border rounded-full py-3 hover:border-primary transition-colors">
-            Browse the full directory <ArrowRight className="w-4 h-4" />
+            View full directory <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
       </div>

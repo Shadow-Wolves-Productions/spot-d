@@ -1,0 +1,36 @@
+{
+  "summary": "Iter 8 backend + frontend testing complete. /api/public-stats verified (no auth, correct shape, integers, no _id leak, values match raw mongo counts). Landing page redesign fully validated: live counts in hero/trust-stats/live-stats-bar/founding-counter, real ProfileCard carousel with 3 dots, FeaturedProfiles 3-col grid (6 cards), CastingCallsPreview rendering Thunk active call, Why Spot'd has all 6 new tiles and zero forbidden tiles, founding section has all 6 bullets and live counter '1 of 500 founding spots claimed'. ProfileCard placeholder verified on /search: 36 placeholders all using #E8FC6C apostrophe at 0.3 opacity on #1A1A1A bg, with container queries (min(60cqw,80cqh)) — no Film icon, no 'No photo' text. Mobile (390x844) hides hero-cards-stack as expected; live-stats-bar, founding-counter, subheadline all render. Navbar nav to /casting /pricing /contact-faq all load without errors. Admin UI tab count NOT verified — Cloudflare bot challenge blocked playwright on /admin (auth itself works: OTP request-code + verify-code returned 200 with token).",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration8.py",
+    "/app/test_reports/pytest/iteration8.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "server.py is now 2120 lines — exceeds 700-line guideline. Recommend modular split (auth, profiles, casting_calls, public, admin) for maintainability.",
+    "Hero CTA buttons use <Link to=...><Button data-testid=...>... pattern — testid sits on inner <button> not the wrapping <a>. href is on the parent <a>. Test asserting hero-cta-primary.href will be null; navigation works via parent. Consider moving data-testid to the Link/anchor or expose href via aria-label for testability.",
+    "FeaturedProfiles uses defense-in-depth filter (also drops is_minor_profile client-side) — good, but duplicates the backend filter logic. Document or centralise.",
+    "ProfileCard placeholder uses CSS container queries (cqw/cqh) — modern browsers OK; no fallback for very old browsers. Acceptable for the target audience."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration8.py"
+  ],
+  "success_rate": {
+    "backend": "100%",
+    "frontend": "100%"
+  },
+  "test_credentials": "Admin OTP login: brendan@shadowwolvesproductions.com.au — POST /api/auth/request-code returns dev_code; POST /api/auth/verify-code returns access_token. Verified working.",
+  "seed_data_creation": "None. Used existing data: 60 profiles, 16 distinct roles, 1 active casting call (Thunk), 1 founder subscription.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Iter 8 verified clean. /api/public-stats live and matches raw mongo counts. Landing page redesign components all wired correctly. Note: hero-cta-primary/secondary testids are on inner <button>; href lives on parent <a> (Link wraps Button). Admin UI smoke could not be re-tested via playwright due to Cloudflare bot challenge on /admin route — auth API itself works. If admin UI verification is needed in future, may need IP allowlist or use a non-CF preview.",
+  "rca of the issue": "No issues found."
+}

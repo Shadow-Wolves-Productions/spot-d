@@ -1759,6 +1759,24 @@ async def public_settings():
     }
 
 
+@app.get("/api/public-stats")
+async def public_stats():
+    """Live counts for the marketing landing page. All public-safe."""
+    # Only count profiles that aren't admin-hidden — they're the ones a visitor
+    # can actually click through to.
+    profile_filter = {"is_hidden": {"$ne": True}, "is_minor_profile": {"$ne": True}}
+    distinct_roles = await db.profiles.distinct("primary_role", profile_filter)
+    distinct_roles = [r for r in distinct_roles if r]
+    founder_count = await db.subscriptions.count_documents({"tier": "founder", "status": "active"})
+    return {
+        "profile_count": await db.profiles.count_documents(profile_filter),
+        "role_count": len(distinct_roles),
+        "casting_call_count": await db.casting_calls.count_documents({"is_active": True}),
+        "founder_count": founder_count,
+        "founder_remaining": max(0, 500 - founder_count),
+    }
+
+
 # --------------------------------------------------------------------------- #
 # Profile completion nudge email — runs daily, sends single Postmark nudge to
 # any user who:
