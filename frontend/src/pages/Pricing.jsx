@@ -1,9 +1,9 @@
-import { Check, Crown, Sparkles, X, Star, Shield } from "lucide-react";
+import { Check, Crown, Sparkles, X, Star, Shield, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 
 const FREE_FEATURES = [
@@ -61,14 +61,50 @@ function FeatureList({ features, dark = false }) {
 export default function Pricing() {
   const [annual, setAnnual] = useState(true);
   const [spotsLeft, setSpotsLeft] = useState(null);
+  const [loadingPlan, setLoadingPlan] = useState(null);
+  const [checkoutError, setCheckoutError] = useState("");
+  const navigate = useNavigate();
   const MAX_SPOTS = 500;
 
   useEffect(() => {
-    base44.entities.Profile.list("-created_date", 500).then((all) => {
-      const taken = Math.min(all.length, MAX_SPOTS);
-      setSpotsLeft(Math.max(0, MAX_SPOTS - taken));
-    });
+    base44.payments.founderCount().then((d) => {
+      setSpotsLeft(d.remaining);
+    }).catch(() => setSpotsLeft(MAX_SPOTS));
   }, []);
+
+  const startCheckout = async (planKey) => {
+    setCheckoutError("");
+    const isAuth = await base44.auth.isAuthenticated();
+    if (!isAuth) {
+      navigate("/login?next=" + encodeURIComponent("/pricing"));
+      return;
+    }
+    setLoadingPlan(planKey);
+    try {
+      const res = await base44.payments.startCheckout(planKey);
+      window.location.href = res.url;
+    } catch (e) {
+      setCheckoutError(e?.response?.data?.detail || e.message || "Checkout failed");
+      setLoadingPlan(null);
+    }
+  };
+
+  const claimFounder = async () => {
+    setCheckoutError("");
+    const isAuth = await base44.auth.isAuthenticated();
+    if (!isAuth) {
+      navigate("/login?next=" + encodeURIComponent("/pricing"));
+      return;
+    }
+    setLoadingPlan("founder");
+    try {
+      await base44.payments.claimFounder();
+      navigate("/welcome?plan=FOUNDER");
+    } catch (e) {
+      setCheckoutError(e?.response?.data?.detail || e.message || "Couldn't claim spot");
+      setLoadingPlan(null);
+    }
+  };
 
   return (
     <div className="pt-28 pb-24 px-4">
@@ -157,8 +193,18 @@ export default function Pricing() {
               {annual ? "~$6.58/month · best value" : "or $79/year — save 30%"}
             </p>
             <p className="text-sm text-muted-foreground mt-3 leading-[1.7]">Unlock full access and get seen</p>
-            <Button className="w-full mt-6 h-11 text-sm font-semibold rounded-full text-white hover:opacity-90" style={{ background: "#FF5C35" }}>
-              <Crown className="w-4 h-4 mr-2" /> Get Spot'd PRO
+            <Button
+              data-testid="pricing-pro-cta"
+              onClick={() => startCheckout(annual ? "pro_annual" : "pro_monthly")}
+              disabled={loadingPlan === "pro_monthly" || loadingPlan === "pro_annual"}
+              className="w-full mt-6 h-11 text-sm font-semibold rounded-full text-white hover:opacity-90"
+              style={{ background: "#FF5C35" }}
+            >
+              {loadingPlan === "pro_monthly" || loadingPlan === "pro_annual" ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <><Crown className="w-4 h-4 mr-2" /> Get Spot'd PRO</>
+              )}
             </Button>
             <FeatureList features={PRO_FEATURES} />
           </motion.div>
@@ -188,8 +234,18 @@ export default function Pricing() {
                 {annual ? "~$12.42/month · best value" : "or $149/year — save 16%"}
               </p>
               <p className="text-sm text-muted-foreground mt-3 leading-[1.7]">Stand out and get ahead of the competition</p>
-              <Button className="w-full mt-6 h-11 text-sm font-semibold rounded-full text-black hover:opacity-90" style={{ background: "#E8FC6C" }}>
-                <Star className="w-4 h-4 mr-2" /> Go Elite
+              <Button
+                data-testid="pricing-elite-cta"
+                onClick={() => startCheckout(annual ? "elite_annual" : "elite_monthly")}
+                disabled={loadingPlan === "elite_monthly" || loadingPlan === "elite_annual"}
+                className="w-full mt-6 h-11 text-sm font-semibold rounded-full text-black hover:opacity-90"
+                style={{ background: "#E8FC6C" }}
+              >
+                {loadingPlan === "elite_monthly" || loadingPlan === "elite_annual" ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <><Star className="w-4 h-4 mr-2" /> Go Elite</>
+                )}
               </Button>
               <FeatureList features={ELITE_FEATURES} />
             </div>
@@ -231,13 +287,22 @@ export default function Pricing() {
 
               <Link to="/create-profile" className="block mt-6">
                 <Button
+                  data-testid="pricing-founder-cta"
                   size="lg"
-                  disabled={spotsLeft === 0}
+                  disabled={spotsLeft === 0 || loadingPlan === "founder"}
+                  onClick={(e) => { e.preventDefault(); claimFounder(); }}
                   className="font-bold px-10 h-12 text-sm rounded-full bg-primary text-primary-foreground hover:bg-primary/90"
                 >
-                  <Sparkles className="w-4 h-4 mr-2" /> Claim your spot
+                  {loadingPlan === "founder" ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <><Sparkles className="w-4 h-4 mr-2" /> Claim your spot</>
+                  )}
                 </Button>
               </Link>
+              {checkoutError && (
+                <p className="text-xs text-destructive mt-3" data-testid="pricing-error">{checkoutError}</p>
+              )}
               <p className="text-xs text-muted-foreground mt-3">Free forever · no credit card · limited to first 500</p>
             </div>
           </div>
