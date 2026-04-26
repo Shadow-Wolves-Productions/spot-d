@@ -90,8 +90,12 @@ export default function AdminDashboard() {
     setEmails(data);
   }, []);
   const loadPlatform = useCallback(async () => {
-    const { data } = await base44.http.get("/api/admin/platform");
-    setPlatform(data);
+    const [{ data: plat }, { data: settings }, { data: checklist }] = await Promise.all([
+      base44.http.get("/api/admin/platform"),
+      base44.http.get("/api/admin/platform-settings"),
+      base44.http.get("/api/admin/launch-checklist"),
+    ]);
+    setPlatform({ ...plat, settings, checklist: checklist.items });
   }, []);
   const loadLogs = useCallback(async () => {
     const { data } = await base44.http.get("/api/admin/logs");
@@ -395,24 +399,58 @@ export default function AdminDashboard() {
 
         {/* PLATFORM */}
         {tab === "platform" && platform && (
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4" data-testid="admin-platform-tab">
-            {[
-              { label: "ENV", value: platform.env },
-              { label: "Email mock", value: platform.email_mock ? "ON" : "OFF" },
-              { label: "SMS mock", value: platform.sms_mock ? "ON" : "OFF" },
-              { label: "Founders", value: platform.founder_count },
-              { label: "Users", value: platform.user_count },
-              { label: "Profiles", value: platform.profile_count },
-              { label: "Casting calls", value: platform.casting_calls },
-              { label: "Applications", value: platform.applications },
-              { label: "Endorsements", value: platform.endorsements },
-              { label: "Notifications", value: platform.notifications },
-            ].map((s) => (
-              <div key={s.label} className="bg-card border border-border/60 rounded-xl p-5">
-                <p className="text-[10px] uppercase tracking-wider font-mono text-muted-foreground">{s.label}</p>
-                <p className="font-display text-2xl font-bold text-foreground mt-1">{String(s.value)}</p>
+          <div className="space-y-6" data-testid="admin-platform-tab">
+            {/* Editable settings */}
+            <div className="bg-card border border-border/60 rounded-xl p-5">
+              <p className="text-[11px] uppercase tracking-wider font-mono text-muted-foreground mb-3">Settings</p>
+              <FounderCapEditor
+                current={platform.settings?.founder_cap ?? 100}
+                onSaved={() => loadPlatform()}
+              />
+            </div>
+
+            {/* Launch checklist */}
+            {platform.checklist && (
+              <div className="bg-card border border-border/60 rounded-xl p-5" data-testid="admin-launch-checklist">
+                <p className="text-[11px] uppercase tracking-wider font-mono text-muted-foreground mb-3">Launch checklist</p>
+                <ul className="space-y-2">
+                  {platform.checklist.map((item) => (
+                    <li key={item.key} className="flex items-center justify-between gap-3 py-2 border-b border-border/40 last:border-0" data-testid={`launch-checklist-${item.key}`}>
+                      <span className="flex items-center gap-2 text-sm">
+                        {item.ok ? (
+                          <span className="text-green-400">✓</span>
+                        ) : (
+                          <span className="text-destructive">✗</span>
+                        )}
+                        <span className="text-foreground">{item.label}</span>
+                      </span>
+                      <span className={`text-xs font-mono ${item.ok ? "text-green-400" : "text-amber-400"}`}>{item.value}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
-            ))}
+            )}
+
+            {/* Platform stats grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+              {[
+                { label: "ENV", value: platform.env },
+                { label: "Email mock", value: platform.email_mock ? "ON" : "OFF" },
+                { label: "SMS mock", value: platform.sms_mock ? "ON" : "OFF" },
+                { label: "Founders", value: platform.founder_count },
+                { label: "Users", value: platform.user_count },
+                { label: "Profiles", value: platform.profile_count },
+                { label: "Casting calls", value: platform.casting_calls },
+                { label: "Applications", value: platform.applications },
+                { label: "Endorsements", value: platform.endorsements },
+                { label: "Notifications", value: platform.notifications },
+              ].map((s) => (
+                <div key={s.label} className="bg-card border border-border/60 rounded-xl p-5">
+                  <p className="text-[10px] uppercase tracking-wider font-mono text-muted-foreground">{s.label}</p>
+                  <p className="font-display text-2xl font-bold text-foreground mt-1">{String(s.value)}</p>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
@@ -459,6 +497,50 @@ export default function AdminDashboard() {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function FounderCapEditor({ current, onSaved }) {
+  const [val, setVal] = useState(current);
+  const [saving, setSaving] = useState(false);
+
+  // Keep local state in sync if parent reloads
+  useEffect(() => { setVal(current); }, [current]);
+
+  const save = async () => {
+    const n = parseInt(val, 10);
+    if (!Number.isFinite(n) || n < 1) {
+      toast.error("Cap must be a positive integer");
+      return;
+    }
+    setSaving(true);
+    try {
+      await base44.http.put("/api/admin/platform-settings", { founder_cap: n });
+      toast.success(`Founder cap set to ${n}`);
+      onSaved?.();
+    } catch (e) {
+      toast.error(e?.response?.data?.detail || "Save failed");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+      <label className="text-sm text-foreground">Founding member cap:</label>
+      <Input
+        type="number"
+        min="1"
+        value={val}
+        onChange={(e) => setVal(e.target.value)}
+        className="w-24 bg-secondary border-border h-9"
+        data-testid="founder-cap-input"
+      />
+      <Button size="sm" onClick={save} disabled={saving} className="bg-primary text-primary-foreground" data-testid="founder-cap-save">
+        {saving ? "Saving…" : "Save"}
+      </Button>
+      <span className="text-xs text-muted-foreground">All founder counters update within 5 minutes (cache-aware).</span>
     </div>
   );
 }

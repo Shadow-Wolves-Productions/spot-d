@@ -58,10 +58,19 @@ db = mongo[DB_NAME]
 
 app = FastAPI(title="Spot'd API")
 
+# CORS — wildcard in dev, allowlist in production. The production list is the
+# Spot'd domain plus its API subdomain plus localhost for QA tooling.
+_PROD_ORIGINS = [
+    "https://getspotd.app",
+    "https://www.getspotd.app",
+    "https://api.getspotd.app",
+    "http://localhost:3000",
+]
+_IS_PROD = os.environ.get("ENV", "development").lower() == "production"
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=False,
+    allow_origins=_PROD_ORIGINS if _IS_PROD else ["*"],
+    allow_credentials=_IS_PROD,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -1564,9 +1573,10 @@ async def _send_welcome_internal(user_id: str, profile_id: str, tier: str = "pro
 @app.post("/api/stripe/founder-claim")
 async def claim_founder(request: Request):
     user = await require_user(request)
+    cap = await get_founder_cap()
     count = await db.subscriptions.count_documents({"tier": "founder", "status": "active"})
-    if count >= 500:
-        raise HTTPException(400, "All 500 founding spots claimed")
+    if count >= cap:
+        raise HTTPException(400, f"All {cap} founding spots claimed")
     existing = await db.subscriptions.find_one({"user_id": user["id"]})
     sub = {
         "tier": "founder", "status": "active", "started_at": now_iso(),
@@ -1575,16 +1585,19 @@ async def claim_founder(request: Request):
     }
     if existing:
         await db.subscriptions.update_one({"id": existing["id"]}, {"$set": sub})
+        _invalidate_public_stats_cache()
         return {"success": True, "subscription_id": existing["id"]}
     sub.update({"id": new_id(), "user_id": user["id"], "created_date": now_iso()})
     await db.subscriptions.insert_one(sub)
+    _invalidate_public_stats_cache()
     return {"success": True, "subscription_id": sub["id"]}
 
 
 @app.get("/api/stripe/founder-count")
 async def founder_count():
+    cap = await get_founder_cap()
     count = await db.subscriptions.count_documents({"tier": "founder", "status": "active"})
-    return {"count": count, "remaining": max(0, 500 - count), "max": 500}
+    return {"count": count, "remaining": max(0, cap - count), "max": cap}
 
 
 # --------------------------------------------------------------------------- #
@@ -1752,29 +1765,61 @@ async def auto_claim_dismiss(request: Request):
 
 @app.get("/api/public-settings")
 async def public_settings():
+    cap = await get_founder_cap()
     return {
-        "founder_remaining": max(0, 500 - await db.subscriptions.count_documents({"tier": "founder", "status": "active"})),
+        "founder_remaining": max(0, cap - await db.subscriptions.count_documents({"tier": "founder", "status": "active"})),
+        "founder_cap": cap,
         "email_mock": EMAIL_MOCK,
         "sms_mock": SMS_MOCK,
     }
 
 
+# In-memory cache for /api/public-stats — refreshes every 5 minutes.
+# Means signups update the homepage automatically with at most 5 min lag.
+_PUBLIC_STATS_CACHE: dict = {"data": None, "expires": 0.0}
+
+
+async def get_founder_cap() -> int:
+    """Founder cap is editable from the admin Platform tab. Defaults to 100."""
+    s = await db.platform_settings.find_one({"id": "global"}, {"_id": 0})
+    if s and isinstance(s.get("founder_cap"), int) and s["founder_cap"] > 0:
+        return s["founder_cap"]
+    return 100
+
+
 @app.get("/api/public-stats")
 async def public_stats():
-    """Live counts for the marketing landing page. All public-safe."""
-    # Only count profiles that aren't admin-hidden — they're the ones a visitor
-    # can actually click through to.
+    """Live counts for the marketing landing page. All public-safe.
+    Cached for 5 minutes to spare the database during traffic spikes."""
+    import time as _time
+    now = _time.time()
+    if _PUBLIC_STATS_CACHE["data"] and now < _PUBLIC_STATS_CACHE["expires"]:
+        return _PUBLIC_STATS_CACHE["data"]
+
     profile_filter = {"is_hidden": {"$ne": True}, "is_minor_profile": {"$ne": True}}
     distinct_roles = await db.profiles.distinct("primary_role", profile_filter)
     distinct_roles = [r for r in distinct_roles if r]
+    cap = await get_founder_cap()
     founder_count = await db.subscriptions.count_documents({"tier": "founder", "status": "active"})
-    return {
+    payload = {
         "profile_count": await db.profiles.count_documents(profile_filter),
         "role_count": len(distinct_roles),
         "casting_call_count": await db.casting_calls.count_documents({"is_active": True}),
         "founder_count": founder_count,
-        "founder_remaining": max(0, 500 - founder_count),
+        "founder_remaining": max(0, cap - founder_count),
+        "founder_cap": cap,
     }
+    _PUBLIC_STATS_CACHE["data"] = payload
+    _PUBLIC_STATS_CACHE["expires"] = now + 300  # 5 minutes
+    return payload
+
+
+def _invalidate_public_stats_cache():
+    """Call after any operation that meaningfully changes public counts
+    (founder claim, profile create, casting call create) so urgency banners
+    refresh without waiting for the 5-minute window."""
+    _PUBLIC_STATS_CACHE["data"] = None
+    _PUBLIC_STATS_CACHE["expires"] = 0.0
 
 
 # --------------------------------------------------------------------------- #
@@ -1965,6 +2010,300 @@ async def admin_profile_flag(profile_id: str, body: AdminProfileFlagBody, reques
 
 
 # --------------------------------------------------------------------------- #
+# PlatformSettings — admin-editable knobs (founder cap, etc.)
+# --------------------------------------------------------------------------- #
+class PlatformSettingsBody(BaseModel):
+    founder_cap: Optional[int] = Field(None, ge=1, le=10000)
+
+
+@app.get("/api/admin/platform-settings")
+async def admin_get_platform_settings(request: Request):
+    await _require_admin(request)
+    s = await db.platform_settings.find_one({"id": "global"}, {"_id": 0})
+    return s or {"id": "global", "founder_cap": 100}
+
+
+@app.put("/api/admin/platform-settings")
+async def admin_update_platform_settings(body: PlatformSettingsBody, request: Request):
+    user = await _require_admin(request)
+    update = {k: v for k, v in body.dict(exclude_none=True).items()}
+    update["updated_date"] = now_iso()
+    await db.platform_settings.update_one(
+        {"id": "global"},
+        {"$set": update, "$setOnInsert": {"id": "global", "created_date": now_iso()}},
+        upsert=True,
+    )
+    _invalidate_public_stats_cache()
+    await _log_admin_action(user["id"], "platform.settings.update", "global", update)
+    return {"ok": True, "settings": update}
+
+
+@app.get("/api/admin/launch-checklist")
+async def admin_launch_checklist(request: Request):
+    await _require_admin(request)
+    profile_count = await db.profiles.count_documents({})
+    pending_welcome = await db.profiles.count_documents({"welcome_email_sent": False})
+    stripe_keys_set = bool(os.environ.get("STRIPE_PRO_PRICE_ID")) and bool(os.environ.get("STRIPE_ELITE_PRICE_ID"))
+    return {
+        "items": [
+            {"key": "email_live", "label": "Postmark email live", "ok": not EMAIL_MOCK, "value": "MOCK" if EMAIL_MOCK else "LIVE"},
+            {"key": "sms_live", "label": "Twilio SMS live", "ok": not SMS_MOCK, "value": "MOCK" if SMS_MOCK else "LIVE"},
+            {"key": "stripe_keys", "label": "Stripe price IDs configured", "ok": stripe_keys_set, "value": "SET" if stripe_keys_set else "MISSING"},
+            {"key": "profile_count", "label": "Profile count ≥ 10", "ok": profile_count >= 10, "value": str(profile_count)},
+            {"key": "pending_welcome", "label": "No pending welcome emails", "ok": pending_welcome == 0, "value": f"{pending_welcome} pending"},
+        ]
+    }
+
+
+# --------------------------------------------------------------------------- #
+# Waitlist — captured when founder cap is full
+# --------------------------------------------------------------------------- #
+class WaitlistBody(BaseModel):
+    email: EmailStr
+    source: str = "landing"
+
+
+@app.post("/api/waitlist")
+async def waitlist_signup(body: WaitlistBody):
+    """Anonymous endpoint — captured when founder cap is full."""
+    email = body.email.lower().strip()
+    existing = await db.waitlist.find_one({"email": email}, {"_id": 0})
+    if existing:
+        return {"ok": True, "already_listed": True}
+    await db.waitlist.insert_one({
+        "id": new_id(),
+        "email": email,
+        "source": body.source,
+        "created_date": now_iso(),
+    })
+    return {"ok": True, "already_listed": False}
+
+
+@app.get("/api/admin/waitlist")
+async def admin_list_waitlist(request: Request):
+    await _require_admin(request)
+    items = await db.waitlist.find({}, {"_id": 0}).sort("created_date", -1).to_list(length=1000)
+    return {"total": len(items), "items": items}
+
+
+# --------------------------------------------------------------------------- #
+# OG image endpoints — Pillow-rendered share cards (1200x630 standard)
+# --------------------------------------------------------------------------- #
+from io import BytesIO
+from PIL import Image, ImageDraw, ImageFont
+from fastapi.responses import Response as _Response
+
+_OG_CACHE: dict = {}  # {key: (expires_ts, bytes)}
+
+
+def _get_font(size: int, bold: bool = False):
+    """Try to load a system font with reasonable defaults; fall back to PIL default."""
+    candidates = [
+        f"/usr/share/fonts/truetype/dejavu/DejaVuSans-{'Bold' if bold else 'Bold'}.ttf",
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+    ]
+    for path in candidates:
+        try:
+            return ImageFont.truetype(path, size)
+        except Exception:
+            continue
+    return ImageFont.load_default()
+
+
+def _draw_pill(draw: ImageDraw.ImageDraw, xy, text, *, bg, fg, font, padding=(18, 10), radius=999):
+    x, y = xy
+    bbox = draw.textbbox((0, 0), text, font=font)
+    tw, th = bbox[2] - bbox[0], bbox[3] - bbox[1]
+    rect = (x, y, x + tw + padding[0] * 2, y + th + padding[1] * 2)
+    draw.rounded_rectangle(rect, radius=radius, fill=bg)
+    draw.text((x + padding[0], y + padding[1] - bbox[1]), text, fill=fg, font=font)
+    return rect
+
+
+def _wrap(text: str, max_chars: int):
+    words = text.split()
+    lines, cur = [], ""
+    for w in words:
+        if len(cur) + len(w) + 1 <= max_chars:
+            cur = (cur + " " + w).strip()
+        else:
+            if cur:
+                lines.append(cur)
+            cur = w
+    if cur:
+        lines.append(cur)
+    return lines
+
+
+def _render_casting_og(call: dict) -> bytes:
+    """Render a 1200×630 OG image for a CastingCall."""
+    W, H = 1200, 630
+    img = Image.new("RGB", (W, H), "#0D0D0D")
+    draw = ImageDraw.Draw(img, "RGBA")
+
+    # Subtle yellow glow — radial-ish via concentric ellipses
+    for i, alpha in enumerate([8, 14, 20, 28, 38]):
+        r = 380 - i * 45
+        draw.ellipse((360 - r, 280 - r, 360 + r, 280 + r), fill=(232, 252, 108, alpha))
+
+    # Wordmark
+    f_brand = _get_font(56, bold=True)
+    draw.text((60, 56), "Spot", fill="#FFFFFF", font=f_brand)
+    draw.text((60 + draw.textlength("Spot", font=f_brand), 56), "'d", fill="#E8FC6C", font=f_brand)
+
+    # NOW CASTING chip
+    f_chip = _get_font(20, bold=True)
+    _draw_pill(draw, (W - 60 - 240, 70), "NOW CASTING", bg="#FF5C35", fg="#FFFFFF", font=f_chip, padding=(22, 12))
+
+    # Project type label
+    f_label = _get_font(22)
+    project_type = (call.get("project_type") or "PROJECT").upper()
+    draw.text((60, 175), project_type, fill="#999999", font=f_label)
+
+    # Title — wrap to 2 lines max
+    title = (call.get("project_title") or "Casting call")[:120]
+    f_title = _get_font(72, bold=True)
+    lines = _wrap(title, 26)[:2]
+    if len(_wrap(title, 26)) > 2:
+        lines[1] = lines[1].rstrip(",.;:") + "…"
+    y = 215
+    for line in lines:
+        draw.text((60, y), line, fill="#FFFFFF", font=f_title)
+        y += 84
+
+    # Roles row
+    roles = (call.get("roles_needed") or [])[:4]
+    f_pill = _get_font(22)
+    rx = 60
+    ry = max(y + 24, 410)
+    for r in roles:
+        rect = _draw_pill(draw, (rx, ry), r, bg="#2A2A2A", fg="#FFFFFF", font=f_pill, padding=(20, 10))
+        rx = rect[2] + 12
+
+    # Bottom strip — location + comp
+    f_meta = _get_font(22)
+    parts = []
+    if call.get("location"):
+        parts.append("· " + call["location"])
+    comp = call.get("compensation") or call.get("budget_range")
+    if comp:
+        parts.append("· " + str(comp))
+    if parts:
+        draw.text((60, H - 130), "  ".join(parts), fill="#999999", font=f_meta)
+
+    # CTA
+    f_cta = _get_font(28, bold=True)
+    draw.text((60, H - 70), "Apply at getspotd.app", fill="#E8FC6C", font=f_cta)
+    return _png_bytes(img)
+
+
+def _render_profile_og(profile: dict) -> bytes:
+    W, H = 1200, 630
+    img = Image.new("RGB", (W, H), "#0D0D0D")
+    draw = ImageDraw.Draw(img, "RGBA")
+    # Right-side electric warmth
+    for i, alpha in enumerate([8, 14, 22, 32]):
+        r = 380 - i * 60
+        draw.ellipse((900 - r, 320 - r, 900 + r, 320 + r), fill=(232, 252, 108, alpha))
+
+    # Left half — photo placeholder (apostrophe)
+    photo_box = (40, 40, 540, H - 40)
+    draw.rounded_rectangle(photo_box, radius=24, fill="#1A1A1A")
+    f_apos = _get_font(420, bold=True)
+    apos_w = draw.textlength("'", font=f_apos)
+    draw.text(((photo_box[0] + photo_box[2]) / 2 - apos_w / 2, photo_box[1] + 50), "'", fill=(232, 252, 108, 77), font=f_apos)
+
+    # Right half — text
+    f_label = _get_font(22)
+    draw.text((600, 90), "SPOT'D · INDIE FILM DIRECTORY", fill="#999999", font=f_label)
+
+    name = (profile.get("preferred_name") or profile.get("full_name") or "Profile")[:30]
+    f_name = _get_font(72, bold=True)
+    draw.text((600, 140), name, fill="#FFFFFF", font=f_name)
+
+    role = profile.get("primary_role") or "Profile"
+    f_role = _get_font(36)
+    draw.text((600, 240), role, fill="#E8FC6C", font=f_role)
+
+    # Location
+    place_parts = [p for p in [profile.get("city"), profile.get("state"), profile.get("country")] if p]
+    if place_parts:
+        f_loc = _get_font(26)
+        draw.text((600, 305), ", ".join(place_parts), fill="#BBBBBB", font=f_loc)
+
+    # SpotScore badge
+    score = int(profile.get("spot_score") or 0)
+    f_score_n = _get_font(96, bold=True)
+    draw.text((600, 390), str(score), fill="#E8FC6C", font=f_score_n)
+    f_score_l = _get_font(20)
+    draw.text((600, 506), "SPOTSCORE · /100", fill="#999999", font=f_score_l)
+
+    # Footer CTA
+    f_cta = _get_font(24, bold=True)
+    draw.text((600, H - 70), "Find cast & crew at getspotd.app", fill="#E8FC6C", font=f_cta)
+    return _png_bytes(img)
+
+
+def _png_bytes(img: "Image.Image") -> bytes:
+    buf = BytesIO()
+    img.save(buf, format="PNG", optimize=True)
+    return buf.getvalue()
+
+
+def _og_cache_get(key: str):
+    import time as _time
+    item = _OG_CACHE.get(key)
+    if item and _time.time() < item[0]:
+        return item[1]
+    return None
+
+
+def _og_cache_set(key: str, data: bytes, ttl: int = 3600):
+    import time as _time
+    _OG_CACHE[key] = (_time.time() + ttl, data)
+
+
+@app.get("/api/public-verified-companies")
+async def public_verified_companies(limit: int = 8):
+    """Companies that should appear in the landing 'Trusted by' row.
+    Anonymous endpoint, only returns minimal display fields."""
+    items = await db.company_profiles.find(
+        {"is_verified": True},
+        {"_id": 0, "id": 1, "company_name": 1, "company_slug": 1, "logo": 1, "company_type": 1},
+    ).limit(int(limit)).to_list(length=int(limit))
+    return items
+
+
+@app.get("/api/og/casting/{casting_call_id}.png")
+async def og_casting(casting_call_id: str):
+    call = await db.casting_calls.find_one({"id": casting_call_id}, {"_id": 0})
+    if not call:
+        raise HTTPException(404, "Casting call not found")
+    cache_key = f"casting:{casting_call_id}:{call.get('updated_date', call.get('created_date',''))}"
+    data = _og_cache_get(cache_key)
+    if data is None:
+        data = _render_casting_og(call)
+        _og_cache_set(cache_key, data)
+    return _Response(content=data, media_type="image/png", headers={"Cache-Control": "public, max-age=3600"})
+
+
+@app.get("/api/og/profile/{slug}.png")
+async def og_profile(slug: str):
+    profile = await db.profiles.find_one({"profile_slug": slug}, {"_id": 0})
+    if not profile:
+        profile = await db.profiles.find_one({"id": slug}, {"_id": 0})
+    if not profile:
+        raise HTTPException(404, "Profile not found")
+    cache_key = f"profile:{profile['id']}:{profile.get('updated_date', profile.get('created_date',''))}"
+    data = _og_cache_get(cache_key)
+    if data is None:
+        data = _render_profile_og(profile)
+        _og_cache_set(cache_key, data)
+    return _Response(content=data, media_type="image/png", headers={"Cache-Control": "public, max-age=3600"})
+
+
+# --------------------------------------------------------------------------- #
 # Startup: indexes, scheduled jobs, seed
 # --------------------------------------------------------------------------- #
 async def seed_initial_data():
@@ -2040,6 +2379,84 @@ async def seed_initial_data():
             "deadline": (datetime.now(timezone.utc) + timedelta(days=60)).isoformat(),
             "roles_needed": ["Actor", "Cinematographer"],
             "application_method": "spot_button",
+            "created_date": now_iso(),
+            "updated_date": now_iso(),
+        })
+
+    # Seed/verify the 3 production companies for the "Trusted by" landing row.
+    await _seed_verified_companies(user_id)
+
+
+async def _seed_verified_companies(default_user_id: str):
+    """Ensure 3 verified CompanyProfiles exist so the Trusted-by row renders.
+
+    Each company is keyed by `company_slug` so re-running on startup is idempotent.
+    Creates the user account if the contact email isn't already on the platform,
+    so the company has a real owner. Marks each company `is_verified=True`.
+    """
+    seeds = [
+        {
+            "slug": "shadow-wolves-productions",
+            "name": "Shadow Wolves Productions",
+            "type": "Production Company",
+            "email": ADMIN_EMAIL,
+            "owner_user_id": default_user_id,
+            "city": "Sydney",
+            "state": "NSW",
+        },
+        {
+            "slug": "phantom-digital-fx",
+            "name": "Phantom Digital FX",
+            "type": "VFX Studio",
+            "email": "sam.lewis@phantom-fx.com",
+            "city": "Melbourne",
+            "state": "VIC",
+        },
+        {
+            "slug": "mellow-pictures",
+            "name": "Mellow Pictures",
+            "type": "Production Company",
+            "email": "joshua@mellowpictures.com.au",
+            "city": "Brisbane",
+            "state": "QLD",
+        },
+    ]
+    for s in seeds:
+        existing = await db.company_profiles.find_one({"company_slug": s["slug"]}, {"_id": 0})
+        if existing:
+            if not existing.get("is_verified"):
+                await db.company_profiles.update_one(
+                    {"id": existing["id"]},
+                    {"$set": {"is_verified": True, "updated_date": now_iso()}},
+                )
+            continue
+        # Resolve or create the user account that owns this company
+        owner_id = s.get("owner_user_id")
+        if not owner_id:
+            u = await db.users.find_one({"email": s["email"].lower()}, {"_id": 0})
+            if u:
+                owner_id = u["id"]
+            else:
+                owner_id = new_id()
+                await db.users.insert_one({
+                    "id": owner_id,
+                    "email": s["email"].lower(),
+                    "full_name": s["name"],
+                    "role": "user",
+                    "created_date": now_iso(),
+                    "updated_date": now_iso(),
+                })
+        await db.company_profiles.insert_one({
+            "id": new_id(),
+            "user_id": owner_id,
+            "company_slug": s["slug"],
+            "company_name": s["name"],
+            "company_type": s["type"],
+            "email": s["email"].lower(),
+            "city": s["city"],
+            "state": s["state"],
+            "country": "Australia",
+            "is_verified": True,
             "created_date": now_iso(),
             "updated_date": now_iso(),
         })
