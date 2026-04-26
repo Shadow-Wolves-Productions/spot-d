@@ -4,15 +4,6 @@
 **URL:** getspotd.app
 **Platform:** Emergent (migrated from Base44)
 
-## Problem
-Indie producers struggle to find verified cast/crew fast. Talent and crew struggle to get discovered.
-Existing platforms target studio-scale production, not indies.
-
-## Personas
-- **Producer / Director** — needs verified talent quickly with direct contact.
-- **Talent / Crew** — needs to be discovered, build credibility (SpotScore), get notified of relevant casting.
-- **Admin (Brendan)** — operates the platform.
-
 ## Tech Stack
 - Frontend: React 18 + Vite, TailwindCSS, shadcn/ui, framer-motion, react-router-dom, html2canvas
 - Backend: FastAPI + MongoDB (Motor)
@@ -22,67 +13,64 @@ Existing platforms target studio-scale production, not indies.
 - SMS: Twilio (placeholder, mock mode ON)
 - Scheduler: APScheduler
 
-## Implemented (v1.0 — Jan 2026)
-- ✅ Project restructured to /app/frontend (Vite) + /app/backend (FastAPI)
-- ✅ MongoDB schemas for all 17+ entities + payment_transactions + email/sms/postmark logs
-- ✅ Passwordless OTP login (rate limit 3/10min, 5-attempt lockout)
-- ✅ Generic entity REST endpoints + filter/sort/limit
-- ✅ All 11 named functions: recalculateSpotScore, triggerSpotScore, sendVerificationCode, verifyCode, sendWelcomeEmail, respondToSpotRequest, sendRoleAlertNotifications, runSpottedWithMatching, sendDailyWeeklyAlerts, purgeVerificationCodes, onCastingApplicationChange
-- ✅ SpotScore auto-recalculates + percentile recomputed across cohort
-- ✅ Stripe Checkout (PRO/Elite Monthly+Annual, AUD) + Founder $0 claim flow with 500-cap + idempotent
-- ✅ Frontend pages preserved: Landing, SearchDirectory, ProfilePage, ProfileBySlug, CreateProfile, Dashboard, AdminDashboard, Analytics, Pricing, Casting, CastingApplicationsKanban, ContactFAQ
-- ✅ NEW pages: /login, /welcome, /terms, /privacy
-- ✅ Brand: dark #0D0D0D, electric yellow #E8FC6C, signal orange #FF5C35
-- ✅ Seeded admin: Brendan Byrne (founder, slug brendanbyrneofficial)
-- ✅ Scheduled jobs: nightly SpottedWith matching, daily/weekly digests, code purge
+## Implemented (cumulative through Jan 2026)
 
-## Iteration 2 (Jan 2026)
-- ✅ **Postmark integration** — API key wired, webhook /api/webhooks/postmark stores events
-- ✅ **Bulk import** of 57 CineConnect founding members via /api/admin/bulk-import
-  - All have PRO 12-month subscriptions, payment_reference='cineconnect-import'
-  - SpotScores recalculated across the new cohort
-  - Idempotent — safe to re-run
-- ✅ **Stripe customer.subscription.renewed** webhook handler — extends expires_at by 1yr/30d (was missing — could have caused annual subscribers to be auto-downgraded)
-- ✅ **Age gate on registration** (/create-profile)
-  - 18-or-older path requires Terms checkbox
-  - Under-18 path requires both responsible adult consent + Terms
-  - Persisted in localStorage so users don't re-see it
-  - Skipped for existing profile edits
-- ✅ **Minor performer profile** — toggle on Personal step + Responsible Adult section (name, relationship, email, phone)
-- ✅ **Shareable SpotScore card** — `<ShareSpotScoreCard />` component
-  - 1080×1920 (Stories) and 1080×1080 (Square) PNG output
-  - Branded design: black bg, electric apostrophe, large score, percentile badge (TOP 1% / 5% / 10% / 25%), name, role, location, getspotd.app footer, subtle film-grain overlay
-  - Download PNG + Web Share API native share (with download fallback)
-  - Triggered from Dashboard SpotScore card
+### Iteration 1 — Foundation
+- Project restructured (frontend/ + backend/), all entity collections, OTP login, generic entity REST mirroring Base44 SDK, all 11 named functions, SpotScore + percentile, Stripe Checkout, scheduled jobs, /login /welcome /terms /privacy, brand styling, admin seed.
+
+### Iteration 2 — Postmark/Imports/Age Gate/Share
+- Postmark integration with webhook handler
+- Bulk import of 57 CineConnect founding members (PRO 12mo, idempotent)
+- Stripe customer.subscription.renewed handler (extends expires_at)
+- AgeGate component on /create-profile (18+ + minor consent)
+- Minor performer toggle + Responsible Adult fields
+- Shareable SpotScore card (1080×1920 + 1080×1080 PNG via html2canvas)
+
+### Iteration 3 — Bug Fixes + Company Profiles + Uploads
+- **Bug fix**: photo upload now uses real backend (was calling non-existent base44 SDK method)
+- **Bug fix**: input focus loss eliminated by moving TagInput component to module scope (was defined inside CreateProfile, causing remount on every keystroke)
+- **Postmark webhook signature verification** — HMAC-SHA256 base64 against `POSTMARK_WEBHOOK_SECRET`; rejects unsigned/invalid with 403
+- **File upload endpoints**: `/api/upload/{profile-photo,headshot,company-logo,cover-image}` with 5MB cap, JPG/PNG/WEBP only, served at `/api/static/uploads/<type>/<id>.<ext>` (mounted under /api/ so the K8s ingress routes it correctly)
+- **ImageUploader** reusable component with drag-drop, preview, replace, remove
+- **Company Profiles**:
+  - 3-tab directory (Talent / Crew / Companies) — default Crew
+  - `CompanyProfileCard` grid card with logo / type badge / SpotScore / location
+  - `/create-company` 4-step wizard (Basics, Location & Contact, Portfolio, Review) with logo + cover upload, slug editor, services tags, past productions array
+  - `/c/[slug]` company profile page with cover banner, contact strip, services, showreel, productions list, team links
+  - "Company profile" CTA on Dashboard
+- **ProfileCard** fixes: data-testid added; nested `<a>` (IMDb badge) replaced with `<span role="link">` to avoid invalid HTML
 
 ## Backlog (P0 — needed before public launch)
-- [ ] Real Stripe price IDs (pro_monthly, pro_annual, elite_monthly, elite_annual) — switch from dynamic-amount to fixed-price mode when provided
+- [ ] Real Stripe price IDs (pro_monthly, pro_annual, elite_monthly, elite_annual)
 - [ ] Twilio creds + flip SMS_MOCK_MODE
-- [ ] Flip EMAIL_MOCK_MODE=false when ready (Postmark key already in .env)
-- [ ] Add Postmark webhook signature verification (currently anyone can POST to /api/webhooks/postmark)
+- [ ] Set production POSTMARK_WEBHOOK_SECRET (currently `spotd-dev-postmark-secret-rotate-me`)
+- [ ] Flip EMAIL_MOCK_MODE=false when ready
+- [ ] Migrate file uploads from local disk to S3/Cloudflare R2 (current MVP writes to /app/backend/static/uploads/)
+- [ ] Stream-based upload size cap (currently buffers full file before checking 5MB limit)
 
-## Backlog (P1)
-- [ ] Company profile UI (data model in place — adds 3rd directory tab)
-- [ ] Analytics dashboard for PRO/Elite (ProfileView/PortfolioClick/SearchAppearance entities exist)
-- [ ] Branded daily/weekly digest email templates (currently plain HTML)
-- [ ] File uploads for headshots/logos/showreels (currently URL inputs)
-- [ ] Hide contact fields on public profile listing for unauthenticated requests
+## Backlog (P1 — analytics + mobile UX, partial)
+- [ ] Analytics dashboard completion: full charts (already partial), "Who saved you" (PRO/Elite), "Who revealed your contact" (Elite only), SpotScoreHistory entity + nightly snapshot
+- [ ] Mobile bottom-tab bar — add Notifications tab (4 tabs)
+- [ ] SearchFilters in mobile bottom sheet
+- [ ] ProfileHero stack on mobile (photo full-width, SpotScore below, full-width CTA)
+- [ ] Pull-to-refresh confirm on Dashboard / CastingCalls
+- [ ] Skeleton loaders on remaining pages
 
 ## Backlog (P2)
-- [ ] Admin actions: tier toggle (free↔pro only — protect elite/founder), boost on/off
-- [ ] Move score recalc to background queue (currently sync per mutation)
-- [ ] Split server.py (~1500 lines) into routers: auth/, entities/, functions/, stripe/, admin/
+- [ ] Server.py refactor — split into routers/auth, routers/entities, routers/functions, routers/uploads, routers/stripe, routers/webhooks, routers/companies (~1600 lines now)
+- [ ] PIL/imghdr verification of uploaded image bytes vs declared content-type
+- [ ] Admin actions: tier toggle (free↔pro only), boost on/off
+- [ ] Move SpotScore recalc to background queue
+- [ ] startup warning when POSTMARK_WEBHOOK_SECRET is unset
 
-## Notes / Decisions
-- "spot_score" is canonical (never cine_score). Endorsement & WorkedWith deprecated; Spot + SpottedWith are canonical.
-- Always use getspotd.app, never spotd.app, in emails and links.
-- All scheduled jobs run at 17:00 UTC (≈4am AEST, AU-first).
-- Governing law: NSW, Australia. Privacy: Privacy Act 1988 (Cth).
-- Bulk-import response includes `user_created` boolean per record to distinguish new vs reused users.
-
-## Stats (post iteration 2)
-- 60 profiles in DB (1 admin + 57 imported + 2 test)
-- 57 PRO subscriptions
-- 1 founder subscription (Brendan, 499 founder spots remaining)
+## Stats
+- 60+ profiles · 57 PRO subs · 1 founder sub (Brendan) · 499 founder spots remaining
 - 1 active casting call (Thunk)
-- 21 backend tests + 10 iteration-2 tests = all green
+- 0 companies (will grow once Brendan/team add their own — `/create-company`)
+- Test suites: iter1 (21/21) + iter2 (10/10) + iter3 (11/11) = all green
+
+## Notes
+- "spot_score" is canonical; Endorsement & WorkedWith deprecated
+- All scheduled jobs run at 17:00 UTC (≈4am AEST)
+- Governing law: NSW, Australia
+- Any URL with "spotd.app" should be "getspotd.app"
