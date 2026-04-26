@@ -148,11 +148,27 @@ const payments = {
   },
 };
 
+// ---- Integrations (Base44 SDK shim) ----
+// Default upload type is "company-logo" which works for casting-call logos.
+const integrations = {
+  Core: {
+    UploadFile: async ({ file, type = "company-logo" }) => {
+      const fd = new FormData();
+      fd.append("file", file);
+      const { data } = await http.post(`/api/upload/${type}`, fd, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      return { file_url: data.file_url || data.url };
+    },
+  },
+};
+
 export const base44 = {
   entities,
   auth,
   functions,
   payments,
+  integrations,
   http,
   baseURL: BACKEND,
 };

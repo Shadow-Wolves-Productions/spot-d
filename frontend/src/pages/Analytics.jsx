@@ -9,6 +9,7 @@ import { Crown, TrendingUp, Eye, MousePointerClick, MapPin, Lock, Star, Users, A
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
+import AnalyticsAdvanced from "../components/AnalyticsAdvanced";
 
 // Build daily chart data from raw ProfileView records
 function buildViewData(views, saves, rangeDays) {
@@ -356,6 +357,9 @@ export default function Analytics() {
             </BarChart>
           </ResponsiveContainer>
         </motion.div>
+
+        {/* Tier-gated SpotScore History + Who Saved You + Who Revealed Contact */}
+        <AnalyticsAdvanced />
 
       </div>
     </div>

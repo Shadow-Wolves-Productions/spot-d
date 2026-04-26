@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useNavigate, Link } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Check, Plus, Upload } from "lucide-react";
@@ -71,6 +71,8 @@ export default function CreateCastingCall() {
   const [step, setStep] = useState(1);
   const [saving, setSaving] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [companies, setCompanies] = useState([]);
+  const [postAs, setPostAs] = useState("personal"); // "personal" | <company.id>
 
   const [form, setForm] = useState({
     // Phase 1
@@ -98,6 +100,33 @@ export default function CreateCastingCall() {
   });
 
   const update = (key, value) => setForm((f) => ({ ...f, [key]: value }));
+
+  // Load user companies once on mount so the "Post as" selector can render
+  useEffect(() => {
+    const init = async () => {
+      try {
+        const me = await base44.auth.me();
+        const myCompanies = await base44.entities.CompanyProfile.filter({ user_id: me.id });
+        setCompanies(myCompanies || []);
+      } catch { /* signed out */ }
+    };
+    init();
+  }, []);
+
+  // When user picks a company, prefill company_name + logo from that company.
+  const onPostAsChange = (val) => {
+    setPostAs(val);
+    if (val === "personal") return;
+    const c = companies.find((x) => x.id === val);
+    if (c) {
+      setForm((f) => ({
+        ...f,
+        company_name: c.company_name || f.company_name,
+        company_logo: c.logo || f.company_logo,
+        contact_email: c.email || f.contact_email,
+      }));
+    }
+  };
 
   const handleLogoUpload = async (e) => {
     const file = e.target.files?.[0];
@@ -140,8 +169,24 @@ export default function CreateCastingCall() {
 
     const roles_needed = [...new Set(form.roles.map((r) => r.category))];
 
+    // Resolve "Post as" — if user picked a company, attach attribution fields
+    let attribution = { posted_as: "personal" };
+    if (postAs !== "personal") {
+      const c = companies.find((x) => x.id === postAs);
+      if (c) {
+        attribution = {
+          posted_as: "company",
+          posted_as_company_id: c.id,
+          posted_as_company_slug: c.company_slug,
+          posted_as_company_name: c.company_name,
+          posted_as_company_logo: c.logo || null,
+        };
+      }
+    }
+
     await base44.entities.CastingCall.create({
       ...form,
+      ...attribution,
       roles_needed,
       creator_user_id: me.id,
       creator_profile_id: creatorProfileId,
@@ -174,6 +219,36 @@ export default function CreateCastingCall() {
               <h2 className="font-display text-xl font-semibold text-foreground">Who's behind the project?</h2>
               <p className="text-sm text-muted-foreground mt-1">Tell talent who they'd be working with.</p>
             </div>
+
+            {companies.length > 0 && (
+              <div data-testid="post-as-selector">
+                <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">Post as</Label>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    data-testid="post-as-personal"
+                    onClick={() => onPostAsChange("personal")}
+                    className={`px-4 py-2 rounded-full border text-sm font-medium transition-all ${postAs === "personal" ? "bg-primary/15 border-primary/50 text-primary" : "bg-secondary border-border text-muted-foreground hover:text-foreground"}`}
+                  >
+                    Personal
+                  </button>
+                  {companies.map((c) => (
+                    <button
+                      key={c.id}
+                      type="button"
+                      data-testid={`post-as-company-${c.company_slug || c.id}`}
+                      onClick={() => onPostAsChange(c.id)}
+                      className={`inline-flex items-center gap-2 px-3 py-2 rounded-full border text-sm font-medium transition-all ${postAs === c.id ? "bg-primary/15 border-primary/50 text-primary" : "bg-secondary border-border text-muted-foreground hover:text-foreground"}`}
+                    >
+                      {c.logo && <img src={c.logo.startsWith("/api/static/") ? c.logo : c.logo} alt="" className="w-5 h-5 rounded object-cover" />}
+                      <span>{c.company_name}</span>
+                    </button>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">Choose how this casting call will appear to talent.</p>
+              </div>
+            )}
+
             <div>
               <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">Company / Production Name</Label>
               <Input value={form.company_name} onChange={(e) => update("company_name", e.target.value)} placeholder="e.g. Blackbird Pictures, John Smith (Producer)" className="bg-secondary border-border" />
