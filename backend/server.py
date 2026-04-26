@@ -1842,10 +1842,10 @@ async def admin_logs(request: Request, limit: int = 100):
 
 @app.get("/api/admin/imports")
 async def admin_imports(request: Request):
-    """Returns the 58 imported founding members + claim status (welcome_email_sent + auto_claim_dismissed)."""
+    """Returns only profiles created via bulk-import (import_source set), with claim status."""
     await _require_admin(request)
     profiles = await db.profiles.find(
-        {"$or": [{"imported_from": {"$exists": True}}, {"welcome_email_sent": False}]},
+        {"import_source": {"$exists": True, "$ne": None}},
         {"_id": 0},
     ).sort("created_date", -1).to_list(length=500)
     return {
