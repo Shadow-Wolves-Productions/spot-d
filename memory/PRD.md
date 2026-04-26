@@ -18,23 +18,18 @@
 ### Iter 4 — Multi-role profiles (`all_roles`), personal+company linked profiles on Dashboard, self-apply allowed, geo-proximity HTTPS, ensureAbsoluteUrl utility
 ### Iter 5 — AnalyticsAdvanced + AutoClaimBanner + Notifications components created
 ### Iter 6 — Wired Analytics + Notifications + AutoClaim + 4-tab mobile bar; CastingCall company attribution; "Also on Spot'd" cross-link; profile completion nudge job; is_hidden enforcement; minor performer safeguard; 7-tab Admin Dashboard
-### Iter 7 (this session) — Final mobile UX + share + lockdown
-- **Filters bottom sheet** — `data-testid='mobile-filters-trigger'` opens sheet with active count badge; sheet has Apply (data-testid='mobile-filters-apply') + Clear all (data-testid='mobile-filters-clear') sticky footer
-- **ProfileHero mobile stacking** — photo full-width aspect-[4/5], info section, SpotScore as full-width card below (data-testid='profile-hero-spotscore')
-- **CreateProfile mobile dot indicator** — 4 numbered dots (filled/outlined/grey) replace text labels on `<sm`, with "Step X of 4 · <name>" caption
-- **Casting Call cards mobile** — content + Apply button stack vertically full-width below `sm`; meta row uses gap-x/gap-y
-- **CastingCallShareCard component** — 1080x1080 PNG via html2canvas with Spot'd wordmark + NOW CASTING orange chip + project title + role pills + location + comp + "Apply at getspotd.app" + company attribution. Web Share API + Download fallback. Wired to a Share button on every casting call card visible to all users (creators + talent) for organic distribution.
-- **SpotScoreHistory seeding** — every new Profile gets one snapshot inserted at create time; `backfill_spot_score_history()` runs on startup and seeded all 60 existing profiles (chart never empty for new users)
-- **Anonymous create lockdown** — `/api/entities/<X>` POST now requires auth except for telemetry (`ProfileView`, `SearchAppearance`, `PortfolioClick`, `VerificationCode`). Profile, CompanyProfile, CastingCall, CastingApplication, SpotRequest, SavedProfile, ContactReveal all return 401 without a JWT.
-- **Liberal SpotRequest action input** — `/api/functions/respondToSpotRequest` now accepts both `accept`/`decline` shorthand and `accepted`/`declined` long form
-- **Admin Imports endpoint enriched** — items now include `email` (joined from users collection) so the Imports tab UX can show contact info per row
-
-### End-to-end flow smoke tests (PASS — all 5)
-- (a) **SpotRequest** ✅ — request → accept → Spot row + spot_accepted notification + score recalculates
-- (b) **RoleAlert** ✅ — alert + matching CastingCall → role_alert notification fires via sendRoleAlertNotifications
-- (c) **ContactReveal** ✅ — reveal → analytics totals.reveals increments + month_key tracked
-- (d) **SpottedWith** ✅ — shared `Thunk` credit → SpottedWith row created via runSpottedWithMatching
-- (e) **AutoClaim** ✅ — eligible=true, suggestions returned, dismiss flips to eligible=false (verified at endpoint level)
+### Iter 7 — Mobile UX polish (filters bottom sheet, ProfileHero stack, CreateProfile dot indicator, casting card mobile); CastingCallShareCard 1080×1080; SpotScoreHistory backfill + seed; anonymous create lockdown; smoke tests for SpotRequest/RoleAlert/ContactReveal/SpottedWith/AutoClaim flows (all PASS)
+### Iter 8 (this session) — Landing page redesign with live data
+- **`/api/public-stats` endpoint** — `{profile_count, role_count, casting_call_count, founder_count, founder_remaining}` (anonymous-readable)
+- **HeroSection rewrite** — dynamic subheadline ("60 verified cast and crew profiles…"); live trust stats grid (profiles · roles · Instant); real-profile crossfade carousel in right column (3 cards, 4s cycle, dot pagination); subtle electric warmth gradient at 30% × 50%
+- **`MiniProfileCard`** in hero — same branded apostrophe placeholder when no photo, shows SpotScore + Available now badge
+- **FeaturedProfiles** — now 6 profiles in 3-col grid (was 8 in 4-col); excludes `is_minor_profile` defensively; "View full directory →" link
+- **CastingCallsPreview** new section — shows up to 3 most-recent active calls with PostedByChip (company logo + name when posted_as=company); hidden entirely if zero active calls
+- **LiveStatsBar** new section — 4 cells (profiles · roles · casting calls · Instant) using `/api/public-stats`
+- **Why Spot'd tiles** — replaced with current platform terminology: Smart search · SpotScore trust · Frequently Spotted with · Spot them · Direct contact · Casting calls (removed Worked with, Endorsements, IMDb integration)
+- **HowItWorks step 2** — copy updated to mention SpotScore + peer Spots + verified credentials + project credits
+- **Founding member section** — live `<X> of 500 founding spots claimed` counter; PRO benefits list updated to 6 current items
+- **ProfileCard branded placeholder** — replaces grey film-frame icon with electric `#E8FC6C` apostrophe at 30% opacity on `#1A1A1A` bg, sized via container queries (`min(60cqw, 80cqh)`)
 
 ## Backlog (P0 — needed before launch)
 - Real Stripe price IDs + flip dynamic-amount → fixed-price mode
@@ -43,21 +38,21 @@
 - Migrate file uploads from local disk → S3/Cloudflare R2
 
 ## Backlog (P1)
-- **Split server.py (~2090 lines) into routers** — deferred from iter 7 due to risk; high priority before launch (auth, entities, profiles, casting, uploads, webhooks, admin, scheduled)
-- Pydantic body models for create_entity payloads (ContactReveal field naming inconsistency surfaced in iter7 testing — `target_profile_id` vs `profile_id`)
-- DRY: extract `_record_spot_score_snapshot(pid, score)` helper
+- **Split server.py (~2120 lines) into routers** — overdue
+- Move `data-testid` from inner `<Button>` onto wrapping `<Link>` so test selectors expose `href` correctly (called out in iter8 review)
+- Pydantic body models for `create_entity` payloads (field-name consistency: target_profile_id vs profile_id, profile_a_id vs profile_id_a)
 
 ## Backlog (P2)
 - PIL/imghdr image bytes verification on upload
 - Strict-Transport-Security header
 - Background-task migration for >10k profiles
-- Admin profile flag should log {previous, new} for full auditability
+- Admin profile flag should log {previous, new}
+- ProfileCard placeholder fallback for browsers without container queries (acceptable to skip — modern target)
 
 ## Stats (this session)
-- 73 users · 60 profiles · 59 imports (admin imports endpoint live + enriched with email)
-- 60+ SpotScoreHistory rows (one per profile, seeded at startup)
-- Backend tests: 16/17 PASS (1 skipped, non-regression) in iteration_7 + 18/18 in iteration_6
-- Frontend: 100% testid coverage for iter7 surfaces (mobile filters, ProfileHero stacking, CreateProfile dots, casting share card)
+- 60 visible profiles · 16 distinct roles · 1 active casting call · 1 founder
+- Backend tests: iter8 100% PASS · iter7 16/17 · iter6 18/18 · iter4 13/13
+- Frontend testids: iter8 100% verified (admin UI not re-checked due to Cloudflare bot challenge — already 100% in iter6)
 
 ## Test credentials
 See `/app/memory/test_credentials.md` (admin: brendan@shadowwolvesproductions.com.au, passwordless OTP, founder tier).
