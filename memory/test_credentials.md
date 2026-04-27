@@ -1,59 +1,49 @@
-# Spot'd Test Credentials
+# Spot'd — Test credentials & integration secrets
 
-## Auth Flow
-Spot'd uses **passwordless OTP login** — there is no password field anywhere.
+## Admin login (passwordless OTP)
+- Email: `brendan@shadowwolvesproductions.com.au`
+- Method: send OTP via `POST /api/auth/request-code` then verify with `POST /api/auth/verify-code`
+- Role: `admin`, founder tier active
+- Profile slug: `brendanbyrneofficial`
 
-### Sign-in steps
-1. Visit `/login`
-2. Enter email
-3. Backend sends 6-digit code to email (mocked in dev — see notes below)
-4. **DEV MODE**: the API returns `dev_code` in the response body (also displayed in UI)
-5. Enter code on `/login` step 2 → JWT token stored in localStorage as `spotd_token`
+## Email — Postmark (LIVE)
+- Server API token: configured in `/app/backend/.env` as `POSTMARK_API_KEY`
+- Sender address: `hello@getspotd.app` (Sender Signature verified)
+- Webhook URL: `https://getspotd.app/api/webhooks/postmark`
+- Webhook auth: HTTP Basic Auth
+  - Username: `spotd-postmark`
+  - Password: stored in `/app/backend/.env` as `POSTMARK_WEBHOOK_PASSWORD`
+- `EMAIL_MOCK_MODE=false` (live)
 
-## Seeded Admin Account
-- **Email**: `brendan@shadowwolvesproductions.com.au`
-- **Role**: `admin`
-- **Tier**: `founder` (lifetime, unlimited)
-- **Profile slug**: `brendanbyrneofficial`
-- **Profile URL**: `/u/brendanbyrneofficial`
-- **SpotScore**: 41, Percentile: 99
-- **Casting call**: "Thunk" (active, deadline +60 days)
+## SMS
+- DISABLED. Phone verification removed from product entirely.
+- `SMS_MOCK_MODE=true` (function is no-op)
 
-To sign in as admin:
-```bash
-API="https://514d4fe8-96b5-4176-a74d-566d3fdc3043.preview.emergentagent.com"
-RES=$(curl -s -X POST "$API/api/auth/request-code" \
-  -H "Content-Type: application/json" \
-  -d '{"email":"brendan@shadowwolvesproductions.com.au"}')
-CODE=$(echo "$RES" | python3 -c "import sys,json;print(json.load(sys.stdin)['dev_code'])")
-TOKEN=$(curl -s -X POST "$API/api/auth/verify-code" \
-  -H "Content-Type: application/json" \
-  -d "{\"email\":\"brendan@shadowwolvesproductions.com.au\",\"code\":\"$CODE\"}" \
-  | python3 -c "import sys,json;print(json.load(sys.stdin)['token'])")
-curl "$API/api/auth/me" -H "Authorization: Bearer $TOKEN"
+## Stripe — LIVE keys, subscription mode
+- Publishable key + Secret key in `/app/backend/.env`
+- Webhook URL: `https://getspotd.app/api/webhooks/stripe`
+- Backwards-compat alias: `https://getspotd.app/api/webhook/stripe`
+- Webhook signing secret: `STRIPE_WEBHOOK_SECRET=whsec_…` in env
+- Verified events: `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.payment_succeeded`, `invoice.paid`, `payment_intent.payment_failed`
+- Price IDs (all in env):
+  - PRO Monthly: `price_1TQnT3PF6tM0yOLwHjcvfAfE` ($9.99 AUD/mo)
+  - PRO Annual: `price_1TQnTYPF6tM0yOLwLROIb66k` ($79.00 AUD/yr)
+  - Elite Monthly: `price_1TQnUGPF6tM0yOLw2pqxF1fS` ($14.99 AUD/mo)
+  - Elite Annual: `price_1TQnUGPF6tM0yOLwI09pgo0K` ($149.00 AUD/yr)
+
+## Cloudflare WAF — REQUIRED rule for production
+Stripe + Postmark webhooks must bypass the bot-fight ruleset on `getspotd.app`:
 ```
+Path:  /api/webhooks/stripe  OR  /api/webhook/stripe  OR  /api/webhooks/postmark
+Action: Skip → All managed rules + Bot Fight Mode
+```
+Without this, Cloudflare returns HTTP 403 (error 1010) before requests reach the app.
 
-## Test User
-Any new email registered via `/login` will become a `user` role with no profile.
-After verification, the user is redirected to `/create-profile`.
+## Mongo (preview/local)
+- Connection from `/app/backend/.env` `MONGO_URL` + `DB_NAME`
+- Login codes table: `db.login_codes` — clear via `db.login_codes.deleteMany({})` if rate-limited during testing
 
-## Mock Mode
-Email and SMS are **mocked** by default (env: `EMAIL_MOCK_MODE=true`, `SMS_MOCK_MODE=true`).
-- Generated codes are returned in `dev_code` field of the API response
-- Codes are also written to `email_log` / `sms_log` MongoDB collections
-- Real keys (Postmark / Twilio) can be added later — set `EMAIL_MOCK_MODE=false` after adding key
-
-## Stripe
-Using `STRIPE_API_KEY=sk_test_emergent` (Emergent test key). Real price IDs will be
-populated by the user later. Checkout uses dynamic-amount mode so it works without
-configured price IDs in dev.
-
-## Endpoints (auth)
-- `POST /api/auth/request-code` — body `{email}` → `{success, dev_code?}`
-- `POST /api/auth/verify-code`  — body `{email, code}` → `{token, user, profile}`
-- `GET  /api/auth/me`           — Bearer token → user
-- `POST /api/auth/logout`       — clears cookie
-
-## Token storage
-- `localStorage.spotd_token` (frontend)
-- Cookie `spotd_token` (also set, optional)
+## Founder cap
+- Default: 100 spots (admin-editable from /admin → Platform tab)
+- Stored in `db.platform_settings` at `id: "global"`
+- Cap reached → all founding sections auto-hide and waitlist replaces them
