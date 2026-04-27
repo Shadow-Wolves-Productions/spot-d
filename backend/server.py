@@ -1315,8 +1315,13 @@ async def stripe_webhook(request: Request):
             log.error("Stripe webhook signature verification failed: %s", e)
             raise HTTPException(400, "Invalid signature")
         evt_type = event["type"]
-        data_obj = event["data"]["object"]
-        # Pull metadata + ids in a unified shape so downstream handlers don't care.
+        # Convert StripeObject -> plain dict by re-parsing the original JSON body
+        # so all downstream .get() calls behave like a normal dict.
+        try:
+            full_event = json.loads(body.decode("utf-8") or "{}")
+            data_obj = full_event.get("data", {}).get("object", {}) or {}
+        except Exception:
+            data_obj = {}
         meta = data_obj.get("metadata") or {}
         session_id = data_obj.get("id") if data_obj.get("object") == "checkout.session" else (data_obj.get("checkout_session") or "")
         if evt_type == "checkout.session.completed" and data_obj.get("payment_status") == "paid":
