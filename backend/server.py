@@ -293,7 +293,7 @@ async def request_login_code(body: RequestCodeBody):
 
     html = f"""
     <div style="background:#0D0D0D;color:#fff;font-family:'DM Sans',Arial,sans-serif;padding:32px;">
-      <h1 style="font-family:'Sora',Arial,sans-serif;color:#E6FF00;margin:0 0 16px;">Spot'd</h1>
+      <h1 style="font-family:'Sora',Arial,sans-serif;color:#FFFFFF;margin:0 0 16px;">Spot<span style="color:#E6FF00;">'</span>d</h1>
       <p>Your sign-in code is:</p>
       <h2 style="letter-spacing:6px;font-size:36px;color:#E6FF00;margin:16px 0;">{code}</h2>
       <p style="color:#888">Expires in 10 minutes. If you didn't request this, ignore this email.</p>
@@ -878,7 +878,7 @@ async def fn_send_welcome(request: Request):
     html = f"""
 <div style="background:#0D0D0D;color:#fff;font-family:'DM Sans',Arial,sans-serif;padding:40px 24px;">
   <div style="max-width:600px;margin:0 auto;">
-    <div style="font-family:'Sora',Arial,sans-serif;font-size:24px;font-weight:700;color:#E6FF00;margin-bottom:32px;">Spot'd</div>
+    <div style="font-family:'Sora',Arial,sans-serif;font-size:24px;font-weight:700;color:#FFFFFF;margin-bottom:32px;">Spot<span style="color:#E6FF00;">&#39;</span>d</div>
     <h1 style="font-family:'Sora',Arial,sans-serif;font-size:28px;color:#fff;margin:0 0 12px;">Hey {first},</h1>
     <p style="color:#ccc;font-size:16px;line-height:1.6;">Your Spot'd profile is <strong style="color:#fff;">live in the directory.</strong></p>
     <div style="background:#1A1A1A;border:1px solid #2A2A2A;border-radius:12px;padding:24px;margin:28px 0;">
@@ -1144,10 +1144,10 @@ async def _send_daily_weekly(frequency: str = "daily"):
 # Stripe payments
 # --------------------------------------------------------------------------- #
 PLANS = {
-    "pro_monthly":   {"amount": 9.99,   "currency": "aud", "tier": "pro",   "label": "PRO Monthly",   "billing": "monthly"},
-    "pro_annual":    {"amount": 79.00,  "currency": "aud", "tier": "pro",   "label": "PRO Annual",    "billing": "annual"},
-    "elite_monthly": {"amount": 14.99,  "currency": "aud", "tier": "elite", "label": "Elite Monthly", "billing": "monthly"},
-    "elite_annual":  {"amount": 149.00, "currency": "aud", "tier": "elite", "label": "Elite Annual",  "billing": "annual"},
+    "pro_monthly":   {"amount": 9.99,   "currency": "aud", "tier": "pro",   "label": "PRO Monthly",   "billing": "monthly", "price_env": "STRIPE_PRO_MONTHLY_PRICE_ID"},
+    "pro_annual":    {"amount": 79.00,  "currency": "aud", "tier": "pro",   "label": "PRO Annual",    "billing": "annual",  "price_env": "STRIPE_PRO_ANNUAL_PRICE_ID"},
+    "elite_monthly": {"amount": 14.99,  "currency": "aud", "tier": "elite", "label": "Elite Monthly", "billing": "monthly", "price_env": "STRIPE_ELITE_MONTHLY_PRICE_ID"},
+    "elite_annual":  {"amount": 149.00, "currency": "aud", "tier": "elite", "label": "Elite Annual",  "billing": "annual",  "price_env": "STRIPE_ELITE_ANNUAL_PRICE_ID"},
 }
 
 
@@ -1163,23 +1163,63 @@ async def stripe_checkout(body: CheckoutBody, request: Request):
         raise HTTPException(400, "Invalid plan")
     plan = PLANS[body.plan_id]
 
+    api_key = os.environ.get("STRIPE_API_KEY", "sk_test_emergent")
+    price_id = os.environ.get(plan["price_env"], "").strip()
+    host_url = body.origin_url.rstrip("/")
+    success_url = f"{host_url}/welcome?plan={plan['tier']}&session_id={{CHECKOUT_SESSION_ID}}"
+    cancel_url = f"{host_url}/pricing"
+    metadata = {
+        "user_id": user["id"], "plan_id": body.plan_id, "tier": plan["tier"], "billing": plan["billing"],
+    }
+
+    # Production path — use a real Price ID for recurring subscription billing.
+    # Falls back to dynamic-amount mode when no price ID is configured (dev/sandbox).
+    if price_id and api_key.startswith(("sk_live_", "sk_test_")) and api_key != "sk_test_emergent":
+        try:
+            import stripe as stripe_sdk
+        except Exception as e:
+            raise HTTPException(500, f"stripe sdk unavailable: {e}")
+        stripe_sdk.api_key = api_key
+        try:
+            session = await asyncio.to_thread(
+                stripe_sdk.checkout.Session.create,
+                mode="subscription",
+                line_items=[{"price": price_id, "quantity": 1}],
+                success_url=success_url,
+                cancel_url=cancel_url,
+                metadata=metadata,
+                subscription_data={"metadata": metadata},
+                customer_email=user.get("email"),
+                allow_promotion_codes=True,
+            )
+        except Exception as e:
+            log.error("Stripe subscription checkout failed: %s", e)
+            raise HTTPException(502, f"Stripe error: {e}")
+        await db.payment_transactions.insert_one({
+            "id": new_id(),
+            "session_id": session.id,
+            "user_id": user["id"],
+            "plan_id": body.plan_id,
+            "tier": plan["tier"],
+            "amount": plan["amount"],
+            "currency": plan["currency"],
+            "metadata": metadata,
+            "payment_status": "initiated",
+            "status": "pending",
+            "mode": "subscription",
+            "created_date": now_iso(),
+        })
+        return {"url": session.url, "session_id": session.id}
+
+    # Sandbox / fallback — emergentintegrations one-shot dynamic-amount checkout.
     try:
         from emergentintegrations.payments.stripe.checkout import (
             StripeCheckout, CheckoutSessionRequest,
         )
     except Exception as e:
         raise HTTPException(500, f"Stripe lib unavailable: {e}")
-
-    api_key = os.environ.get("STRIPE_API_KEY", "sk_test_emergent")
-    host_url = body.origin_url.rstrip("/")
-    webhook_url = f"{host_url}/api/webhook/stripe"
+    webhook_url = f"{host_url}/api/webhooks/stripe"
     checkout = StripeCheckout(api_key=api_key, webhook_url=webhook_url)
-
-    success_url = f"{host_url}/welcome?plan={plan['tier']}&session_id={{CHECKOUT_SESSION_ID}}"
-    cancel_url = f"{host_url}/pricing"
-    metadata = {
-        "user_id": user["id"], "plan_id": body.plan_id, "tier": plan["tier"], "billing": plan["billing"],
-    }
     req = CheckoutSessionRequest(
         amount=plan["amount"], currency=plan["currency"],
         success_url=success_url, cancel_url=cancel_url, metadata=metadata,
@@ -1196,6 +1236,7 @@ async def stripe_checkout(body: CheckoutBody, request: Request):
         "metadata": metadata,
         "payment_status": "initiated",
         "status": "pending",
+        "mode": "dynamic",
         "created_date": now_iso(),
     })
     return {"url": session.url, "session_id": session.session_id}
@@ -1255,13 +1296,59 @@ async def activate_subscription_for_session(session_id: str, metadata: dict):
         await db.subscriptions.insert_one(sub)
 
 
-@app.post("/api/webhook/stripe")
+@app.post("/api/webhooks/stripe")
+@app.post("/api/webhook/stripe")  # backwards-compat alias for the older path
 async def stripe_webhook(request: Request):
     body = await request.body()
-    sig = request.headers.get("Stripe-Signature", "")
+    sig = request.headers.get("stripe-signature") or request.headers.get("Stripe-Signature", "")
+    api_key = os.environ.get("STRIPE_API_KEY", "")
+    webhook_secret = os.environ.get("STRIPE_WEBHOOK_SECRET", "").strip()
+
+    event = None
+    # Production path — native Stripe SDK verifies the whsec_ signature.
+    if webhook_secret and api_key.startswith(("sk_live_", "sk_test_")):
+        try:
+            import stripe as stripe_sdk
+            stripe_sdk.api_key = api_key
+            event = stripe_sdk.Webhook.construct_event(body, sig, webhook_secret)
+        except Exception as e:
+            log.error("Stripe webhook signature verification failed: %s", e)
+            raise HTTPException(400, "Invalid signature")
+        evt_type = event["type"]
+        data_obj = event["data"]["object"]
+        # Pull metadata + ids in a unified shape so downstream handlers don't care.
+        meta = data_obj.get("metadata") or {}
+        session_id = data_obj.get("id") if data_obj.get("object") == "checkout.session" else (data_obj.get("checkout_session") or "")
+        if evt_type == "checkout.session.completed" and data_obj.get("payment_status") == "paid":
+            await activate_subscription_for_session(session_id, meta)
+        elif evt_type in ("customer.subscription.deleted", "payment_intent.payment_failed"):
+            if meta.get("user_id"):
+                await db.subscriptions.update_one(
+                    {"user_id": meta["user_id"]},
+                    {"$set": {"tier": "free", "status": "expired", "updated_date": now_iso()}},
+                )
+        elif evt_type in ("customer.subscription.updated", "invoice.payment_succeeded", "invoice.paid"):
+            if meta.get("user_id"):
+                sub = await db.subscriptions.find_one({"user_id": meta["user_id"]})
+                if sub:
+                    billing = meta.get("billing") or "monthly"
+                    base = datetime.fromisoformat(sub["expires_at"]) if sub.get("expires_at") else datetime.now(timezone.utc)
+                    base = max(base, datetime.now(timezone.utc))
+                    extended = base + timedelta(days=365 if billing == "annual" else 30)
+                    await db.subscriptions.update_one(
+                        {"id": sub["id"]},
+                        {"$set": {
+                            "expires_at": extended.isoformat(),
+                            "status": "active",
+                            "updated_date": now_iso(),
+                        }},
+                    )
+        return {"received": True}
+
+    # Sandbox fallback — emergentintegrations parser used pre-launch.
     try:
         from emergentintegrations.payments.stripe.checkout import StripeCheckout
-        checkout = StripeCheckout(api_key=os.environ.get("STRIPE_API_KEY", "sk_test_emergent"), webhook_url="")
+        checkout = StripeCheckout(api_key=api_key or "sk_test_emergent", webhook_url="")
         evt = await checkout.handle_webhook(body, sig)
     except Exception as e:
         log.error("stripe webhook parse err: %s", e)
@@ -1269,7 +1356,6 @@ async def stripe_webhook(request: Request):
     if evt.event_type in ("checkout.session.completed",) and evt.payment_status == "paid":
         await activate_subscription_for_session(evt.session_id, evt.metadata or {})
     elif evt.event_type in ("customer.subscription.deleted", "payment_intent.payment_failed"):
-        # downgrade to free
         meta = evt.metadata or {}
         if meta.get("user_id"):
             await db.subscriptions.update_one(
@@ -1277,7 +1363,6 @@ async def stripe_webhook(request: Request):
                 {"$set": {"tier": "free", "status": "expired", "updated_date": now_iso()}},
             )
     elif evt.event_type in ("customer.subscription.updated", "invoice.payment_succeeded", "customer.subscription.renewed"):
-        # renewal: extend expires_at
         meta = evt.metadata or {}
         if meta.get("user_id"):
             sub = await db.subscriptions.find_one({"user_id": meta["user_id"]})
@@ -1554,7 +1639,7 @@ async def _send_welcome_internal(user_id: str, profile_id: str, tier: str = "pro
     html = f"""
 <div style="background:#0D0D0D;color:#fff;font-family:'DM Sans',Arial,sans-serif;padding:40px 24px;">
   <div style="max-width:600px;margin:0 auto;">
-    <div style="font-family:'Sora',Arial,sans-serif;font-size:24px;font-weight:700;color:#E6FF00;margin-bottom:32px;">Spot'd</div>
+    <div style="font-family:'Sora',Arial,sans-serif;font-size:24px;font-weight:700;color:#FFFFFF;margin-bottom:32px;">Spot<span style="color:#E6FF00;">&#39;</span>d</div>
     <h1 style="font-family:'Sora',Arial,sans-serif;font-size:28px;color:#fff;margin:0 0 12px;">Hey {first},</h1>
     <p style="color:#ccc;font-size:16px;line-height:1.6;">Your Spot'd profile is <strong style="color:#fff;">live in the directory.</strong></p>
     <div style="background:#1A1A1A;border:1px solid #2A2A2A;border-radius:12px;padding:24px;margin:28px 0;">
@@ -2044,7 +2129,7 @@ async def admin_launch_checklist(request: Request):
     await _require_admin(request)
     profile_count = await db.profiles.count_documents({})
     pending_welcome = await db.profiles.count_documents({"welcome_email_sent": False})
-    stripe_keys_set = bool(os.environ.get("STRIPE_PRO_PRICE_ID")) and bool(os.environ.get("STRIPE_ELITE_PRICE_ID"))
+    stripe_keys_set = bool(os.environ.get("STRIPE_PRO_MONTHLY_PRICE_ID")) and bool(os.environ.get("STRIPE_ELITE_MONTHLY_PRICE_ID")) and bool(os.environ.get("STRIPE_WEBHOOK_SECRET"))
     return {
         "items": [
             {"key": "email_live", "label": "Postmark email live", "ok": not EMAIL_MOCK, "value": "MOCK" if EMAIL_MOCK else "LIVE"},
