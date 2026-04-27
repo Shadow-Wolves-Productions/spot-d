@@ -338,10 +338,16 @@ async def verify_login_code(body: VerifyCodeBody, response: Response):
             "role": role,
             "created_date": now_iso(),
             "updated_date": now_iso(),
+            "first_login_at": now_iso(),
         }
         await db.users.insert_one(user)
     else:
-        await db.users.update_one({"id": user["id"]}, {"$set": {"updated_date": now_iso()}})
+        update = {"updated_date": now_iso()}
+        # Lock first-login timestamp for the founding-claim deadline job.
+        if not user.get("first_login_at"):
+            update["first_login_at"] = now_iso()
+            user["first_login_at"] = update["first_login_at"]
+        await db.users.update_one({"id": user["id"]}, {"$set": update})
 
     token = make_token(user["id"])
     response.set_cookie(
@@ -867,40 +873,12 @@ async def fn_send_welcome(request: Request):
     body = await request.json()
     user_id = body.get("user_id")
     profile_id = body.get("profile_id")
-    tier = (body.get("tier") or "pro").upper()
+    tier = (body.get("tier") or "pro").lower()
     user = await db.users.find_one({"id": user_id})
     profile = await db.profiles.find_one({"id": profile_id})
     if not user or not profile:
         raise HTTPException(404, "User or profile not found")
-    first = (profile.get("preferred_name") or profile.get("full_name") or "there").split(" ")[0]
-    score = profile.get("spot_score", 0)
-    slug = profile.get("profile_slug") or profile_id
-    html = f"""
-<div style="background:#0D0D0D;color:#fff;font-family:'DM Sans',Arial,sans-serif;padding:40px 24px;">
-  <div style="max-width:600px;margin:0 auto;">
-    <div style="font-family:'Sora',Arial,sans-serif;font-size:24px;font-weight:700;color:#FFFFFF;margin-bottom:32px;">Spot<span style="color:#E6FF00;">&#39;</span>d</div>
-    <h1 style="font-family:'Sora',Arial,sans-serif;font-size:28px;color:#fff;margin:0 0 12px;">Hey {first},</h1>
-    <p style="color:#ccc;font-size:16px;line-height:1.6;">Your Spot'd profile is <strong style="color:#fff;">live in the directory.</strong></p>
-    <div style="background:#1A1A1A;border:1px solid #2A2A2A;border-radius:12px;padding:24px;margin:28px 0;">
-      <p style="margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:#888;font-weight:600;">Your plan</p>
-      <h2 style="margin:0;font-family:'Sora',Arial,sans-serif;font-size:22px;color:#E6FF00;">12 months of {tier} access — on us.</h2>
-      <p style="margin:8px 0 0;color:#888;font-size:14px;">No credit card needed. No catch.</p>
-    </div>
-    <div style="background:#1A1A1A;border:1px solid #2A2A2A;border-radius:12px;padding:20px 24px;margin:24px 0;">
-      <p style="margin:0;font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:#888;">Your SpotScore</p>
-      <p style="margin:0;font-family:'Sora',Arial,sans-serif;font-size:32px;font-weight:700;color:#E6FF00;">{score}<span style="font-size:16px;color:#888;font-weight:400;">/100</span></p>
-    </div>
-    <p style="color:#ccc;">Sign in: <a href="{PUBLIC_APP_URL}/login" style="color:#E6FF00;text-decoration:none;font-weight:600;">{PUBLIC_APP_URL}/login</a> — enter your email, get a one-time code. No password.</p>
-    <a href="{PUBLIC_APP_URL}/u/{slug}" style="display:inline-block;background:#E6FF00;color:#0D0D0D;text-decoration:none;font-weight:700;padding:14px 32px;border-radius:8px;margin-top:20px;">View your profile →</a>
-    <p style="color:#888;margin-top:32px;">— The Spot'd team</p>
-  </div>
-</div>
-    """
-    await send_email(user["email"], "Your Spot'd profile is live", html)
-    await db.profiles.update_one({"id": profile_id}, {"$set": {
-        "welcome_email_sent": True,
-        "welcome_email_sent_at": now_iso(),
-    }})
+    await _send_welcome_internal(user_id, profile_id, tier)
     return {"success": True, "sent_to": user["email"]}
 
 
@@ -1632,40 +1610,238 @@ async def bulk_import(request: Request, background: BackgroundTasks):
 
 
 async def _send_welcome_internal(user_id: str, profile_id: str, tier: str = "pro"):
-    """Internal version of sendWelcomeEmail that doesn't require auth."""
+    """Welcome email for bulk-imported CineConnect members — personal tone
+    from Brendan, 7-day founding-spot claim deadline."""
     user = await db.users.find_one({"id": user_id})
     profile = await db.profiles.find_one({"id": profile_id})
     if not user or not profile:
         return
+
     first = (profile.get("preferred_name") or profile.get("full_name") or "there").split(" ")[0]
-    score = profile.get("spot_score", 0)
-    slug = profile.get("profile_slug") or profile_id
-    tier_label = (tier or "pro").upper()
+    # 7-day founding-spot claim window locked in at send time.
+    deadline = datetime.now(timezone.utc) + timedelta(days=7)
+    deadline_iso = deadline.isoformat()
+    login_url = f"{PUBLIC_APP_URL}/login"
+
     html = f"""
-<div style="background:#0D0D0D;color:#fff;font-family:'DM Sans',Arial,sans-serif;padding:40px 24px;">
+<div style="background:#0D0D0D;color:#E5E5E5;font-family:'DM Sans','Helvetica Neue',Arial,sans-serif;padding:40px 16px;line-height:1.6;">
   <div style="max-width:600px;margin:0 auto;">
-    <div style="font-family:'Sora',Arial,sans-serif;font-size:24px;font-weight:700;color:#FFFFFF;margin-bottom:32px;">Spot<span style="color:#E6FF00;">&#39;</span>d</div>
-    <h1 style="font-family:'Sora',Arial,sans-serif;font-size:28px;color:#fff;margin:0 0 12px;">Hey {first},</h1>
-    <p style="color:#ccc;font-size:16px;line-height:1.6;">Your Spot'd profile is <strong style="color:#fff;">live in the directory.</strong></p>
-    <div style="background:#1A1A1A;border:1px solid #2A2A2A;border-radius:12px;padding:24px;margin:28px 0;">
-      <p style="margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:#888;font-weight:600;">Your plan</p>
-      <h2 style="margin:0;font-family:'Sora',Arial,sans-serif;font-size:22px;color:#E6FF00;">12 months of {tier_label} access — on us.</h2>
-      <p style="margin:8px 0 0;color:#888;font-size:14px;">No credit card needed. No catch.</p>
+
+    <!-- Wordmark -->
+    <div style="font-family:'Sora',Arial,sans-serif;font-size:28px;font-weight:800;letter-spacing:-1px;color:#FFFFFF;margin-bottom:40px;">Spot<span style="color:#E6FF00;">&#39;</span>d</div>
+
+    <!-- Personal opener -->
+    <p style="margin:0 0 18px;font-size:16px;color:#E5E5E5;">Hey {first},</p>
+    <p style="margin:0 0 18px;font-size:16px;color:#E5E5E5;">It&rsquo;s Brendan from Shadow Wolves Productions.</p>
+    <p style="margin:0 0 18px;font-size:16px;color:#E5E5E5;">You might remember filling in our <strong style="color:#FFFFFF;">CineConnect</strong> form a little while back &mdash; our cast and crew database for upcoming productions. Well, that idea grew into something much bigger.</p>
+    <p style="margin:0 0 28px;font-size:18px;color:#FFFFFF;font-weight:600;">CineConnect has evolved into Spot&rsquo;d.</p>
+
+    <hr style="border:none;border-top:1px solid #1F1F1F;margin:32px 0;" />
+
+    <!-- What is Spot'd -->
+    <p style="margin:0 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:0.15em;color:#E6FF00;font-weight:700;">What is Spot&rsquo;d?</p>
+    <p style="margin:0 0 16px;color:#E5E5E5;">Spot&rsquo;d is an indie film directory built specifically for people like you &mdash; cast, crew, and production companies all in one place. Think of it as the indie film industry&rsquo;s own professional network, without the noise.</p>
+    <p style="margin:0 0 16px;color:#999;">Here&rsquo;s what it does:</p>
+
+    <div style="margin:20px 0;">
+      <p style="margin:0 0 6px;color:#FFFFFF;font-weight:600;">🎬 One profile, three presences</p>
+      <p style="margin:0 0 18px;color:#B8B8B8;font-size:15px;">Show up as Talent, Crew, or a Company &mdash; or all three under the one login.</p>
+
+      <p style="margin:0 0 6px;color:#FFFFFF;font-weight:600;">⭐ SpotScore</p>
+      <p style="margin:0 0 18px;color:#B8B8B8;font-size:15px;">A credibility rating out of 100, built from verifications, peer Spots, credits and activity. The higher your score, the higher you rank in search. Reputation, quantified.</p>
+
+      <p style="margin:0 0 6px;color:#FFFFFF;font-weight:600;">📋 Casting calls</p>
+      <p style="margin:0 0 18px;color:#B8B8B8;font-size:15px;">Producers post real casting calls. Set a Role Alert and get notified the moment something matches &mdash; no more trawling Facebook groups.</p>
+
+      <p style="margin:0 0 6px;color:#FFFFFF;font-weight:600;">🤝 Spot them</p>
+      <p style="margin:0 0 18px;color:#B8B8B8;font-size:15px;">Peer endorsements with teeth. You request a Spot from someone you&rsquo;ve worked with; they confirm it, and it goes on your profile. If they won&rsquo;t confirm, it doesn&rsquo;t count.</p>
+
+      <p style="margin:0 0 6px;color:#FFFFFF;font-weight:600;">📞 Direct contact</p>
+      <p style="margin:0 0 18px;color:#B8B8B8;font-size:15px;">No internal messaging, no middleman. When a producer wants you, they reveal your contact directly. You get notified. Done.</p>
     </div>
-    <p style="color:#ccc;">Sign in: <a href="{PUBLIC_APP_URL}/login" style="color:#E6FF00;text-decoration:none;font-weight:600;">{PUBLIC_APP_URL}/login</a></p>
-    <a href="{PUBLIC_APP_URL}/u/{slug}" style="display:inline-block;background:#E6FF00;color:#0D0D0D;text-decoration:none;font-weight:700;padding:14px 32px;border-radius:8px;margin-top:20px;">View your profile →</a>
-    <p style="color:#888;margin-top:32px;">— The Spot'd team</p>
+
+    <hr style="border:none;border-top:1px solid #1F1F1F;margin:32px 0;" />
+
+    <!-- Your profile -->
+    <p style="margin:0 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:0.15em;color:#E6FF00;font-weight:700;">Your profile is ready</p>
+    <p style="margin:0 0 16px;color:#E5E5E5;">Based on your CineConnect form, I&rsquo;ve already built the foundation of your Spot&rsquo;d profile. Your name, role, location and details are in there waiting for you.</p>
+    <p style="margin:0 0 12px;color:#E5E5E5;">But it needs you to bring it to life.</p>
+    <p style="margin:0 0 8px;color:#999;">When you claim your profile, make sure to:</p>
+    <ul style="margin:0 0 20px 18px;padding:0;color:#B8B8B8;">
+      <li style="margin:6px 0;">Add a headshot or profile photo</li>
+      <li style="margin:6px 0;">Link your IMDb profile (if you have one)</li>
+      <li style="margin:6px 0;">Add your showreel or portfolio</li>
+      <li style="margin:6px 0;">Fill in any missing credits or skills</li>
+      <li style="margin:6px 0;">Verify your email (boosts your SpotScore immediately)</li>
+    </ul>
+
+    <hr style="border:none;border-top:1px solid #1F1F1F;margin:32px 0;" />
+
+    <!-- Founding member -->
+    <p style="margin:0 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:0.15em;color:#FF5C35;font-weight:700;">Founding member &mdash; your spot is waiting</p>
+    <p style="margin:0 0 16px;color:#E5E5E5;">Because you were one of the first to put your hand up with CineConnect, you&rsquo;re getting first access to Spot&rsquo;d as a <strong style="color:#FFFFFF;">Founding Member</strong>.</p>
+    <p style="margin:0 0 12px;color:#999;">What that means:</p>
+    <div style="background:#131313;border:1px solid #2A2A2A;border-radius:12px;padding:20px 24px;margin:16px 0 20px;">
+      <p style="margin:0 0 8px;color:#E5E5E5;">⚡ <strong style="color:#FFFFFF;">12 months of PRO access</strong> &mdash; completely free</p>
+      <p style="margin:0 0 8px;color:#E5E5E5;">⚡ No credit card. No catch.</p>
+      <p style="margin:0 0 8px;color:#E5E5E5;">⚡ Priority placement in search</p>
+      <p style="margin:0 0 8px;color:#E5E5E5;">⚡ Unlimited contact reveals</p>
+      <p style="margin:0 0 8px;color:#E5E5E5;">⚡ Full portfolio uploads</p>
+      <p style="margin:0;color:#E5E5E5;">⚡ Founding member badge on your profile</p>
+    </div>
+    <p style="margin:0 0 16px;color:#999;font-size:14px;">After launch, PRO is <strong style="color:#FFFFFF;">$9.99/month</strong> or <strong style="color:#FFFFFF;">$79/year</strong>. As a founding member you get 12 months on us.</p>
+    <p style="margin:0 0 16px;color:#E5E5E5;">But here&rsquo;s the thing &mdash; there are only <strong style="color:#FFFFFF;">100 founding member spots total</strong>.</p>
+    <p style="margin:0 0 28px;color:#FF5C35;font-weight:700;font-size:17px;">You have 7 days to claim yours.</p>
+    <p style="margin:0 0 32px;color:#999;font-size:14px;">After that, unclaimed spots go to the public waitlist and your profile reverts to a free account.</p>
+
+    <!-- CTA -->
+    <div style="text-align:center;margin:32px 0;">
+      <a href="{login_url}" style="display:inline-block;background:#E6FF00;color:#0D0D0D;text-decoration:none;font-weight:800;padding:18px 40px;border-radius:10px;font-family:'Sora',Arial,sans-serif;font-size:15px;letter-spacing:0.04em;">CLAIM YOUR FOUNDING SPOT &rarr;</a>
+    </div>
+
+    <p style="margin:24px 0 8px;color:#999;font-size:14px;text-align:center;">Enter this email address at sign-in and we&rsquo;ll send you a code &mdash; no password needed.</p>
+    <p style="margin:0 0 32px;color:#999;font-size:14px;text-align:center;">Your profile will be waiting for you.</p>
+
+    <hr style="border:none;border-top:1px solid #1F1F1F;margin:32px 0;" />
+
+    <p style="margin:0 0 12px;color:#E5E5E5;">Can&rsquo;t wait to see you in the directory.</p>
+    <p style="margin:0 0 4px;color:#FFFFFF;font-weight:600;">Brendan Byrne</p>
+    <p style="margin:0 0 2px;color:#888;font-size:14px;">Founder &mdash; Spot&rsquo;d</p>
+    <p style="margin:0 0 2px;color:#888;font-size:14px;">Shadow Wolves Productions</p>
+    <p style="margin:0;color:#888;font-size:14px;"><a href="{PUBLIC_APP_URL}" style="color:#888;text-decoration:none;">getspotd.app</a></p>
+
+    <!-- Footer -->
+    <p style="margin:48px 0 8px;color:#555;font-size:11px;line-height:1.6;">You&rsquo;re receiving this because you submitted your details via the CineConnect crew database form run by Shadow Wolves Productions. If you&rsquo;d prefer not to receive emails from Spot&rsquo;d, <a href="{PUBLIC_APP_URL}/unsubscribe?e={user['email']}" style="color:#777;">unsubscribe here</a>.</p>
+    <p style="margin:0;color:#555;font-size:11px;">getspotd.app &middot; Shadow Wolves Productions</p>
   </div>
 </div>
 """
-    await send_email(user["email"], "Your Spot'd profile is live", html)
+    await send_email(
+        user["email"],
+        "CineConnect just became something bigger 🎬",
+        html,
+        from_name="Brendan Byrne — Spot'd",
+    )
     await db.profiles.update_one({"id": profile_id}, {"$set": {
         "welcome_email_sent": True,
         "welcome_email_sent_at": now_iso(),
+        "founding_claim_deadline": deadline_iso,
     }})
 
 
-@app.post("/api/stripe/founder-claim")
+# --------------------------------------------------------------------------- #
+# Founding-member claim deadline processor — runs daily.
+#   • Day 5 (48h before deadline): reminder email if user still hasn't logged in
+#   • After deadline: downgrade founder/pro → free and send expiry email
+# Each email only sends once (idempotency flags on the profile).
+# --------------------------------------------------------------------------- #
+async def _process_founding_deadlines():
+    now = datetime.now(timezone.utc)
+    reminder_sent = 0
+    expired = 0
+    async for profile in db.profiles.find({"founding_claim_deadline": {"$exists": True, "$ne": None}}, {"_id": 0}):
+        try:
+            deadline = datetime.fromisoformat(profile["founding_claim_deadline"].replace("Z", "+00:00"))
+        except Exception:
+            continue
+        user = await db.users.find_one({"id": profile.get("user_id")})
+        if not user or not user.get("email"):
+            continue
+        first = (profile.get("preferred_name") or profile.get("full_name") or "there").split(" ")[0]
+        hours_left = (deadline - now).total_seconds() / 3600
+
+        # Still in window — has the user logged in already?
+        has_logged_in = bool(user.get("first_login_at"))
+
+        # Day-5 reminder (24h < hours_left ≤ 72h, so roughly "48 hours left")
+        if (not has_logged_in
+            and 0 < hours_left <= 72
+            and not profile.get("claim_reminder_sent")):
+            html = f"""
+<div style="background:#0D0D0D;color:#E5E5E5;font-family:'DM Sans',Arial,sans-serif;padding:40px 24px;line-height:1.6;">
+  <div style="max-width:560px;margin:0 auto;">
+    <div style="font-family:'Sora',Arial,sans-serif;font-size:28px;font-weight:800;letter-spacing:-1px;color:#FFFFFF;margin-bottom:32px;">Spot<span style="color:#E6FF00;">&#39;</span>d</div>
+    <p style="margin:0 0 18px;color:#E5E5E5;">Hey {first},</p>
+    <p style="margin:0 0 18px;color:#E5E5E5;">Just a heads up &mdash; your <strong style="color:#FFFFFF;">founding member spot</strong> on Spot&rsquo;d expires in <strong style="color:#FF5C35;">48 hours</strong>.</p>
+    <p style="margin:0 0 18px;color:#E5E5E5;">After that the spot goes to the public waitlist and your free 12 months of PRO access will be gone.</p>
+    <p style="margin:0 0 24px;color:#999;">Takes 2 minutes to claim:</p>
+    <div style="text-align:center;margin:28px 0;">
+      <a href="{PUBLIC_APP_URL}/login" style="display:inline-block;background:#E6FF00;color:#0D0D0D;text-decoration:none;font-weight:800;padding:16px 36px;border-radius:10px;font-family:'Sora',Arial,sans-serif;letter-spacing:0.04em;">CLAIM NOW &rarr;</a>
+    </div>
+    <p style="margin:32px 0 0;color:#888;font-size:14px;">&mdash; Brendan</p>
+  </div>
+</div>
+"""
+            try:
+                await send_email(
+                    user["email"],
+                    "48 hours left to claim your Spot'd founding spot",
+                    html,
+                    from_name="Brendan Byrne — Spot'd",
+                )
+                await db.profiles.update_one({"id": profile["id"]}, {"$set": {
+                    "claim_reminder_sent": True,
+                    "claim_reminder_sent_at": now_iso(),
+                }})
+                reminder_sent += 1
+            except Exception as e:
+                log.warning("Claim reminder failed for %s: %s", user.get("email"), e)
+
+        # Expired window + no login — downgrade to free and notify once
+        elif (not has_logged_in
+              and hours_left <= 0
+              and not profile.get("claim_expired_handled")):
+            # Downgrade subscription to free
+            sub = await db.subscriptions.find_one({"user_id": user["id"]})
+            if sub and sub.get("tier") in ("pro", "founder"):
+                await db.subscriptions.update_one(
+                    {"id": sub["id"]},
+                    {"$set": {
+                        "tier": "free",
+                        "status": "active",
+                        "contact_reveal_limit": 5,
+                        "casting_call_limit": 1,
+                        "can_boost": False,
+                        "updated_date": now_iso(),
+                    }},
+                )
+            html = f"""
+<div style="background:#0D0D0D;color:#E5E5E5;font-family:'DM Sans',Arial,sans-serif;padding:40px 24px;line-height:1.6;">
+  <div style="max-width:560px;margin:0 auto;">
+    <div style="font-family:'Sora',Arial,sans-serif;font-size:28px;font-weight:800;letter-spacing:-1px;color:#FFFFFF;margin-bottom:32px;">Spot<span style="color:#E6FF00;">&#39;</span>d</div>
+    <p style="margin:0 0 18px;color:#E5E5E5;">Hey {first},</p>
+    <p style="margin:0 0 18px;color:#E5E5E5;">Your 7-day window to claim your founding member profile has passed. Your account is still active on our <strong style="color:#FFFFFF;">free plan</strong>.</p>
+    <p style="margin:0 0 24px;color:#E5E5E5;">You can upgrade to PRO any time at <a href="{PUBLIC_APP_URL}/pricing" style="color:#E6FF00;text-decoration:none;font-weight:600;">getspotd.app/pricing</a>.</p>
+    <p style="margin:32px 0 0;color:#888;font-size:14px;">&mdash; Brendan</p>
+  </div>
+</div>
+"""
+            try:
+                await send_email(
+                    user["email"],
+                    "Your Spot'd founding spot has expired",
+                    html,
+                    from_name="Brendan Byrne — Spot'd",
+                )
+            except Exception as e:
+                log.warning("Claim expiry email failed for %s: %s", user.get("email"), e)
+            await db.profiles.update_one({"id": profile["id"]}, {"$set": {
+                "claim_expired_handled": True,
+                "claim_expired_at": now_iso(),
+            }})
+            expired += 1
+    log.info("Founding-deadline sweep: %d reminders, %d expired", reminder_sent, expired)
+    return {"reminder_sent": reminder_sent, "expired": expired}
+
+
+@app.post("/api/functions/processFoundingDeadlines")
+async def fn_process_founding_deadlines(request: Request):
+    """Admin-trigger for the founding-deadline sweep (also runs nightly)."""
+    await _require_admin(request)
+    return await _process_founding_deadlines()
+
+
+
 async def claim_founder(request: Request):
     user = await require_user(request)
     cap = await get_founder_cap()
@@ -1680,12 +1856,38 @@ async def claim_founder(request: Request):
     }
     if existing:
         await db.subscriptions.update_one({"id": existing["id"]}, {"$set": sub})
-        _invalidate_public_stats_cache()
-        return {"success": True, "subscription_id": existing["id"]}
-    sub.update({"id": new_id(), "user_id": user["id"], "created_date": now_iso()})
-    await db.subscriptions.insert_one(sub)
+        sub_id = existing["id"]
+    else:
+        sub.update({"id": new_id(), "user_id": user["id"], "created_date": now_iso()})
+        await db.subscriptions.insert_one(sub)
+        sub_id = sub["id"]
+
+    # Short confirmation email — 3 lines, functional.
+    html = f"""
+<div style="background:#0D0D0D;color:#E5E5E5;font-family:'DM Sans',Arial,sans-serif;padding:40px 24px;line-height:1.6;">
+  <div style="max-width:560px;margin:0 auto;">
+    <div style="font-family:'Sora',Arial,sans-serif;font-size:28px;font-weight:800;letter-spacing:-1px;color:#FFFFFF;margin-bottom:32px;">Spot<span style="color:#E6FF00;">&#39;</span>d</div>
+    <p style="margin:0 0 18px;color:#E5E5E5;font-size:17px;">You&rsquo;re in.</p>
+    <p style="margin:0 0 18px;color:#E5E5E5;">Your founding member profile is being set up. Sign in at <a href="{PUBLIC_APP_URL}/login" style="color:#E6FF00;text-decoration:none;font-weight:600;">getspotd.app/login</a> to get started.</p>
+    <div style="text-align:center;margin:32px 0 24px;">
+      <a href="{PUBLIC_APP_URL}/login" style="display:inline-block;background:#E6FF00;color:#0D0D0D;text-decoration:none;font-weight:800;padding:14px 32px;border-radius:10px;font-family:'Sora',Arial,sans-serif;">Sign in &rarr;</a>
+    </div>
+    <p style="margin:32px 0 0;color:#888;font-size:14px;">&mdash; Brendan</p>
+  </div>
+</div>
+"""
+    try:
+        await send_email(
+            user["email"],
+            "Welcome to Spot'd — you're a founding member",
+            html,
+            from_name="Brendan Byrne — Spot'd",
+        )
+    except Exception as e:
+        log.warning("Founder claim email failed for %s: %s", user.get("email"), e)
+
     _invalidate_public_stats_cache()
-    return {"success": True, "subscription_id": sub["id"]}
+    return {"success": True, "subscription_id": sub_id}
 
 
 @app.get("/api/stripe/founder-count")
@@ -2613,6 +2815,7 @@ async def on_startup():
     # Scheduled jobs
     scheduler.add_job(_run_spotted_with, CronTrigger(hour=2, minute=0))
     scheduler.add_job(_purge_codes, CronTrigger(hour=3, minute=0))
+    scheduler.add_job(_process_founding_deadlines, CronTrigger(hour=9, minute=0))
     scheduler.add_job(_send_profile_completion_nudges, CronTrigger(hour=15, minute=0))
     scheduler.add_job(lambda: _send_daily_weekly("daily"), CronTrigger(hour=17, minute=0))
     scheduler.add_job(lambda: _send_daily_weekly("weekly"), CronTrigger(day_of_week="sun", hour=17, minute=0))
