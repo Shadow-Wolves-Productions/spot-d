@@ -57,14 +57,6 @@ export default function VerificationPanel({ profile, onVerified }) {
       hint: null,
     },
     {
-      key: "phone",
-      label: "Phone / SMS",
-      icon: Phone,
-      verified: profile.phone_verified,
-      canSend: !!profile.phone,
-      hint: !profile.phone ? "Add your phone number in Edit Profile first" : null,
-    },
-    {
       key: "union",
       label: "Union Membership",
       icon: Award,

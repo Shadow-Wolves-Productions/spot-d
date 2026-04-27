@@ -66,7 +66,6 @@ export default function AdminDashboard() {
       users: allUsers.length,
       profiles: allProfiles.length,
       verified_email: allProfiles.filter((p) => p.email_verified).length,
-      verified_phone: allProfiles.filter((p) => p.phone_verified).length,
       pro: subs.filter((s) => s.status === "active" && s.tier === "pro").length,
       elite: subs.filter((s) => s.status === "active" && s.tier === "elite").length,
       founder: subs.filter((s) => s.status === "active" && s.tier === "founder").length,
@@ -283,7 +282,6 @@ export default function AdminDashboard() {
                       <div className="flex gap-2 mt-1 flex-wrap">
                         {[
                           { label: "Email", val: p.email_verified, field: "email_verified" },
-                          { label: "Phone", val: p.phone_verified, field: "phone_verified" },
                           { label: "Union", val: p.union_verified, field: "union_verified" },
                           { label: "IMDb",  val: p.imdb_verified,  field: "imdb_verified"  },
                         ].map((v) => (
@@ -461,7 +459,6 @@ export default function AdminDashboard() {
               { label: "Total users",    value: stats.users,          icon: Users },
               { label: "Profiles",       value: stats.profiles,       icon: Film },
               { label: "Email verified", value: stats.verified_email, icon: CheckCircle2 },
-              { label: "Phone verified", value: stats.verified_phone, icon: CheckCircle2 },
               { label: "PRO",            value: stats.pro,            icon: Crown },
               { label: "Elite",          value: stats.elite,          icon: Crown },
               { label: "Founder",        value: stats.founder,        icon: Crown },

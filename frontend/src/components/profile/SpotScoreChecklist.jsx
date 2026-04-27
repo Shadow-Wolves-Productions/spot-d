@@ -9,8 +9,7 @@ const CHECKLIST = [
   { key: "imdb_link", label: "IMDb profile linked", points: 5, check: (f) => !!f.imdb_link },
   { key: "showreel_link", label: "Showreel / reel linked", points: 5, check: (f) => !!f.showreel_link },
   // Verified identity
-  { key: "email_verified", label: "Email verified", points: 7, check: (f) => !!f.email_verified },
-  { key: "phone_verified", label: "Phone verified", points: 8, check: (f) => !!f.phone_verified },
+  { key: "email_verified", label: "Email verified", points: 15, check: (f) => !!f.email_verified },
   // Extra engagement (informational — these are computed server-side)
   { key: "_endorsements", label: "Receive endorsements (Spots)", points: "up to 25", check: () => null },
   { key: "_saved", label: "Get saved by other members", points: "up to 17", check: () => null },

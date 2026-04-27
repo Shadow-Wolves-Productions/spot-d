@@ -46,7 +46,7 @@ function CardArt({ call }) {
       <div style={{
         position: "absolute", top: -200, right: -200,
         width: 700, height: 700, borderRadius: "50%",
-        background: "radial-gradient(circle, rgba(232,252,108,0.18) 0%, rgba(232,252,108,0) 60%)",
+        background: "radial-gradient(circle, rgba(230,255,0,0.18) 0%, rgba(230,255,0,0) 60%)",
         pointerEvents: "none",
       }} />
 
@@ -61,7 +61,7 @@ function CardArt({ call }) {
       {/* Wordmark */}
       <div style={{ padding: "70px 80px 0", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div style={{ fontSize: 64, fontWeight: 800, letterSpacing: "-2px", color: "#FFFFFF" }}>
-          Spot<span style={{ color: "#E8FC6C" }}>'</span>d
+          Spot<span style={{ color: "#E6FF00" }}>'</span>d
         </div>
         <div style={{
           padding: "10px 22px",
@@ -102,8 +102,8 @@ function CardArt({ call }) {
             <div key={r} style={{
               padding: "14px 26px",
               borderRadius: 999,
-              border: "2px solid rgba(232,252,108,0.5)",
-              color: "#E8FC6C",
+              border: "2px solid rgba(230,255,0,0.5)",
+              color: "#E6FF00",
               fontSize: 28,
               fontWeight: 600,
             }}>{r}</div>
@@ -147,7 +147,7 @@ function CardArt({ call }) {
           paddingTop: 28,
           borderTop: "2px solid rgba(255,255,255,0.08)",
         }}>
-          <div style={{ fontSize: 32, fontWeight: 700, color: "#E8FC6C" }}>
+          <div style={{ fontSize: 32, fontWeight: 700, color: "#E6FF00" }}>
             Apply at getspotd.app
           </div>
           <div style={{ fontSize: 20, color: "rgba(255,255,255,0.5)" }}>

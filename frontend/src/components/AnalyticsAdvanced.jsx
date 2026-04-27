@@ -79,7 +79,7 @@ export default function AnalyticsAdvanced() {
               <XAxis dataKey="date" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
               <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} domain={[0, 100]} />
               <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }} />
-              <Line type="monotone" dataKey="score" stroke="#E8FC6C" strokeWidth={2} dot={{ r: 3, fill: "#E8FC6C" }} />
+              <Line type="monotone" dataKey="score" stroke="#E6FF00" strokeWidth={2} dot={{ r: 3, fill: "#E6FF00" }} />
             </LineChart>
           </ResponsiveContainer>
         ) : (

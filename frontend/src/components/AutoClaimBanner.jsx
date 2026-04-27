@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 const ICONS = {
   profile_photo: Camera,
   showreel_link: Film,
-  phone_verified: Phone,
   email_verified: BadgeCheck,
   bio: BookOpen,
   imdb_link: Award,
@@ -90,7 +89,7 @@ export default function AutoClaimBanner() {
             <p className="text-[10px] uppercase tracking-[0.08em] font-mono text-muted-foreground">SpotScore</p>
             <motion.p
               key={data.profile.spot_score}
-              initial={scoreBumped ? { scale: 1.2, color: "#E8FC6C" } : false}
+              initial={scoreBumped ? { scale: 1.2, color: "#E6FF00" } : false}
               animate={{ scale: 1, color: "#fff" }}
               transition={{ duration: 0.45 }}
               className="font-display text-3xl font-bold mt-1"

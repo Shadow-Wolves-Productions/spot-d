@@ -293,9 +293,9 @@ async def request_login_code(body: RequestCodeBody):
 
     html = f"""
     <div style="background:#0D0D0D;color:#fff;font-family:'DM Sans',Arial,sans-serif;padding:32px;">
-      <h1 style="font-family:'Sora',Arial,sans-serif;color:#E8FC6C;margin:0 0 16px;">Spot'd</h1>
+      <h1 style="font-family:'Sora',Arial,sans-serif;color:#E6FF00;margin:0 0 16px;">Spot'd</h1>
       <p>Your sign-in code is:</p>
-      <h2 style="letter-spacing:6px;font-size:36px;color:#E8FC6C;margin:16px 0;">{code}</h2>
+      <h2 style="letter-spacing:6px;font-size:36px;color:#E6FF00;margin:16px 0;">{code}</h2>
       <p style="color:#888">Expires in 10 minutes. If you didn't request this, ignore this email.</p>
     </div>
     """
@@ -651,8 +651,7 @@ async def calculate_spot_score(profile: dict) -> int:
     if profile.get("imdb_link"): score += 5
     if profile.get("showreel_link"): score += 5
     # Verified (15)
-    if profile.get("email_verified"): score += 7
-    if profile.get("phone_verified"): score += 8
+    if profile.get("email_verified"): score += 15  # was 7, +8 redistributed from phone
     # Spots received (25)
     spots = await db.spots.count_documents({"spotted_profile_id": pid})
     if spots >= 10: score += 25
@@ -789,8 +788,10 @@ async def fn_send_verification(request: Request):
     user = await require_user(request)
     body = await request.json()
     code_type = body.get("type")
-    if code_type not in ("email", "phone"):
-        raise HTTPException(400, "Invalid type")
+    # SMS verification permanently retired — Twilio cost not justified.
+    # Email is the single source of identity verification on Spot'd.
+    if code_type != "email":
+        raise HTTPException(400, "Only email verification is supported")
 
     ten_min_ago = (datetime.now(timezone.utc) - timedelta(minutes=10)).isoformat()
     recent = await db.verification_codes.count_documents({
@@ -877,20 +878,20 @@ async def fn_send_welcome(request: Request):
     html = f"""
 <div style="background:#0D0D0D;color:#fff;font-family:'DM Sans',Arial,sans-serif;padding:40px 24px;">
   <div style="max-width:600px;margin:0 auto;">
-    <div style="font-family:'Sora',Arial,sans-serif;font-size:24px;font-weight:700;color:#E8FC6C;margin-bottom:32px;">Spot'd</div>
+    <div style="font-family:'Sora',Arial,sans-serif;font-size:24px;font-weight:700;color:#E6FF00;margin-bottom:32px;">Spot'd</div>
     <h1 style="font-family:'Sora',Arial,sans-serif;font-size:28px;color:#fff;margin:0 0 12px;">Hey {first},</h1>
     <p style="color:#ccc;font-size:16px;line-height:1.6;">Your Spot'd profile is <strong style="color:#fff;">live in the directory.</strong></p>
     <div style="background:#1A1A1A;border:1px solid #2A2A2A;border-radius:12px;padding:24px;margin:28px 0;">
       <p style="margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:#888;font-weight:600;">Your plan</p>
-      <h2 style="margin:0;font-family:'Sora',Arial,sans-serif;font-size:22px;color:#E8FC6C;">12 months of {tier} access — on us.</h2>
+      <h2 style="margin:0;font-family:'Sora',Arial,sans-serif;font-size:22px;color:#E6FF00;">12 months of {tier} access — on us.</h2>
       <p style="margin:8px 0 0;color:#888;font-size:14px;">No credit card needed. No catch.</p>
     </div>
     <div style="background:#1A1A1A;border:1px solid #2A2A2A;border-radius:12px;padding:20px 24px;margin:24px 0;">
       <p style="margin:0;font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:#888;">Your SpotScore</p>
-      <p style="margin:0;font-family:'Sora',Arial,sans-serif;font-size:32px;font-weight:700;color:#E8FC6C;">{score}<span style="font-size:16px;color:#888;font-weight:400;">/100</span></p>
+      <p style="margin:0;font-family:'Sora',Arial,sans-serif;font-size:32px;font-weight:700;color:#E6FF00;">{score}<span style="font-size:16px;color:#888;font-weight:400;">/100</span></p>
     </div>
-    <p style="color:#ccc;">Sign in: <a href="{PUBLIC_APP_URL}/login" style="color:#E8FC6C;text-decoration:none;font-weight:600;">{PUBLIC_APP_URL}/login</a> — enter your email, get a one-time code. No password.</p>
-    <a href="{PUBLIC_APP_URL}/u/{slug}" style="display:inline-block;background:#E8FC6C;color:#0D0D0D;text-decoration:none;font-weight:700;padding:14px 32px;border-radius:8px;margin-top:20px;">View your profile →</a>
+    <p style="color:#ccc;">Sign in: <a href="{PUBLIC_APP_URL}/login" style="color:#E6FF00;text-decoration:none;font-weight:600;">{PUBLIC_APP_URL}/login</a> — enter your email, get a one-time code. No password.</p>
+    <a href="{PUBLIC_APP_URL}/u/{slug}" style="display:inline-block;background:#E6FF00;color:#0D0D0D;text-decoration:none;font-weight:700;padding:14px 32px;border-radius:8px;margin-top:20px;">View your profile →</a>
     <p style="color:#888;margin-top:32px;">— The Spot'd team</p>
   </div>
 </div>
@@ -1298,32 +1299,34 @@ async def stripe_webhook(request: Request):
 
 # --------------------------------------------------------------------------- #
 # Postmark webhook (delivery / bounce / spam events)
-# Signed via X-Postmark-Signature (HMAC-SHA256, base64) using
-# POSTMARK_WEBHOOK_SECRET. Reject any request whose signature doesn't match.
+# Authenticated via HTTP Basic Auth using POSTMARK_WEBHOOK_USERNAME +
+# POSTMARK_WEBHOOK_PASSWORD. Postmark configures these in its dashboard
+# (Webhook → Custom headers and basic auth → Basic auth credentials).
 # --------------------------------------------------------------------------- #
-def verify_postmark_signature(raw_body: bytes, signature_header: str) -> bool:
-    secret = os.environ.get("POSTMARK_WEBHOOK_SECRET", "").strip()
-    # If no secret configured we deliberately reject so we never accidentally
-    # accept unsigned data in production. Set the env var to disable this check
-    # (e.g. during local dev) — empty secret means no webhook traffic accepted.
-    if not secret:
+def verify_postmark_basic_auth(request: Request) -> bool:
+    expected_user = os.environ.get("POSTMARK_WEBHOOK_USERNAME", "").strip()
+    expected_pass = os.environ.get("POSTMARK_WEBHOOK_PASSWORD", "").strip()
+    # If creds are unset we reject — never accept unauthenticated webhook data.
+    if not expected_user or not expected_pass:
         return False
-    if not signature_header:
+    auth_header = request.headers.get("authorization") or request.headers.get("Authorization") or ""
+    if not auth_header.lower().startswith("basic "):
         return False
-    expected = hmac.new(secret.encode("utf-8"), raw_body, hashlib.sha256).digest()
-    expected_b64 = base64.b64encode(expected).decode("ascii")
-    expected_hex = expected.hex()
-    # Postmark sends base64; accept hex too in case of alternate config
-    candidates = (signature_header.strip(), )
-    return any(hmac.compare_digest(c, expected_b64) or hmac.compare_digest(c.lower(), expected_hex) for c in candidates)
+    try:
+        decoded = base64.b64decode(auth_header.split(" ", 1)[1].strip()).decode("utf-8")
+    except Exception:
+        return False
+    if ":" not in decoded:
+        return False
+    user, pwd = decoded.split(":", 1)
+    return hmac.compare_digest(user, expected_user) and hmac.compare_digest(pwd, expected_pass)
 
 
 @app.post("/api/webhooks/postmark")
 async def postmark_webhook(request: Request):
+    if not verify_postmark_basic_auth(request):
+        raise HTTPException(status_code=401, detail="Unauthorized", headers={"WWW-Authenticate": "Basic"})
     raw = await request.body()
-    sig = request.headers.get("X-Postmark-Signature", "")
-    if not verify_postmark_signature(raw, sig):
-        raise HTTPException(status_code=403, detail="Invalid signature")
     try:
         payload = json.loads(raw.decode("utf-8") or "{}")
     except json.JSONDecodeError:
@@ -1551,16 +1554,16 @@ async def _send_welcome_internal(user_id: str, profile_id: str, tier: str = "pro
     html = f"""
 <div style="background:#0D0D0D;color:#fff;font-family:'DM Sans',Arial,sans-serif;padding:40px 24px;">
   <div style="max-width:600px;margin:0 auto;">
-    <div style="font-family:'Sora',Arial,sans-serif;font-size:24px;font-weight:700;color:#E8FC6C;margin-bottom:32px;">Spot'd</div>
+    <div style="font-family:'Sora',Arial,sans-serif;font-size:24px;font-weight:700;color:#E6FF00;margin-bottom:32px;">Spot'd</div>
     <h1 style="font-family:'Sora',Arial,sans-serif;font-size:28px;color:#fff;margin:0 0 12px;">Hey {first},</h1>
     <p style="color:#ccc;font-size:16px;line-height:1.6;">Your Spot'd profile is <strong style="color:#fff;">live in the directory.</strong></p>
     <div style="background:#1A1A1A;border:1px solid #2A2A2A;border-radius:12px;padding:24px;margin:28px 0;">
       <p style="margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:#888;font-weight:600;">Your plan</p>
-      <h2 style="margin:0;font-family:'Sora',Arial,sans-serif;font-size:22px;color:#E8FC6C;">12 months of {tier_label} access — on us.</h2>
+      <h2 style="margin:0;font-family:'Sora',Arial,sans-serif;font-size:22px;color:#E6FF00;">12 months of {tier_label} access — on us.</h2>
       <p style="margin:8px 0 0;color:#888;font-size:14px;">No credit card needed. No catch.</p>
     </div>
-    <p style="color:#ccc;">Sign in: <a href="{PUBLIC_APP_URL}/login" style="color:#E8FC6C;text-decoration:none;font-weight:600;">{PUBLIC_APP_URL}/login</a></p>
-    <a href="{PUBLIC_APP_URL}/u/{slug}" style="display:inline-block;background:#E8FC6C;color:#0D0D0D;text-decoration:none;font-weight:700;padding:14px 32px;border-radius:8px;margin-top:20px;">View your profile →</a>
+    <p style="color:#ccc;">Sign in: <a href="{PUBLIC_APP_URL}/login" style="color:#E6FF00;text-decoration:none;font-weight:600;">{PUBLIC_APP_URL}/login</a></p>
+    <a href="{PUBLIC_APP_URL}/u/{slug}" style="display:inline-block;background:#E6FF00;color:#0D0D0D;text-decoration:none;font-weight:700;padding:14px 32px;border-radius:8px;margin-top:20px;">View your profile →</a>
     <p style="color:#888;margin-top:32px;">— The Spot'd team</p>
   </div>
 </div>
@@ -1723,10 +1726,8 @@ async def auto_claim_check(request: Request):
         suggestions.append({"key": "profile_photo", "label": "Add a profile photo", "points": 5})
     if not profile.get("showreel_link"):
         suggestions.append({"key": "showreel_link", "label": "Link your showreel", "points": 5})
-    if not profile.get("phone_verified"):
-        suggestions.append({"key": "phone_verified", "label": "Verify your phone", "points": 8})
     if not profile.get("email_verified"):
-        suggestions.append({"key": "email_verified", "label": "Verify your email", "points": 7})
+        suggestions.append({"key": "email_verified", "label": "Verify your email", "points": 15})
     if not profile.get("bio"):
         suggestions.append({"key": "bio", "label": "Add a short bio", "points": 5})
     if not profile.get("imdb_link"):
@@ -1854,10 +1855,8 @@ async def _send_profile_completion_nudges():
         suggestions = []
         if not p.get("profile_photo"):
             suggestions.append(("Add a profile photo", 5))
-        if not p.get("phone_verified"):
-            suggestions.append(("Verify your phone", 8))
         if not p.get("email_verified"):
-            suggestions.append(("Verify your email", 7))
+            suggestions.append(("Verify your email", 15))
         if not p.get("imdb_link"):
             suggestions.append(("Link your IMDb profile", 5))
         if not p.get("showreel_link"):
@@ -2049,7 +2048,6 @@ async def admin_launch_checklist(request: Request):
     return {
         "items": [
             {"key": "email_live", "label": "Postmark email live", "ok": not EMAIL_MOCK, "value": "MOCK" if EMAIL_MOCK else "LIVE"},
-            {"key": "sms_live", "label": "Twilio SMS live", "ok": not SMS_MOCK, "value": "MOCK" if SMS_MOCK else "LIVE"},
             {"key": "stripe_keys", "label": "Stripe price IDs configured", "ok": stripe_keys_set, "value": "SET" if stripe_keys_set else "MISSING"},
             {"key": "profile_count", "label": "Profile count ≥ 10", "ok": profile_count >= 10, "value": str(profile_count)},
             {"key": "pending_welcome", "label": "No pending welcome emails", "ok": pending_welcome == 0, "value": f"{pending_welcome} pending"},
@@ -2147,12 +2145,12 @@ def _render_casting_og(call: dict) -> bytes:
     # Subtle yellow glow — radial-ish via concentric ellipses
     for i, alpha in enumerate([8, 14, 20, 28, 38]):
         r = 380 - i * 45
-        draw.ellipse((360 - r, 280 - r, 360 + r, 280 + r), fill=(232, 252, 108, alpha))
+        draw.ellipse((360 - r, 280 - r, 360 + r, 280 + r), fill=(230, 255, 0, alpha))
 
     # Wordmark
     f_brand = _get_font(56, bold=True)
     draw.text((60, 56), "Spot", fill="#FFFFFF", font=f_brand)
-    draw.text((60 + draw.textlength("Spot", font=f_brand), 56), "'d", fill="#E8FC6C", font=f_brand)
+    draw.text((60 + draw.textlength("Spot", font=f_brand), 56), "'d", fill="#E6FF00", font=f_brand)
 
     # NOW CASTING chip
     f_chip = _get_font(20, bold=True)
@@ -2196,7 +2194,7 @@ def _render_casting_og(call: dict) -> bytes:
 
     # CTA
     f_cta = _get_font(28, bold=True)
-    draw.text((60, H - 70), "Apply at getspotd.app", fill="#E8FC6C", font=f_cta)
+    draw.text((60, H - 70), "Apply at getspotd.app", fill="#E6FF00", font=f_cta)
     return _png_bytes(img)
 
 
@@ -2207,14 +2205,14 @@ def _render_profile_og(profile: dict) -> bytes:
     # Right-side electric warmth
     for i, alpha in enumerate([8, 14, 22, 32]):
         r = 380 - i * 60
-        draw.ellipse((900 - r, 320 - r, 900 + r, 320 + r), fill=(232, 252, 108, alpha))
+        draw.ellipse((900 - r, 320 - r, 900 + r, 320 + r), fill=(230, 255, 0, alpha))
 
     # Left half — photo placeholder (apostrophe)
     photo_box = (40, 40, 540, H - 40)
     draw.rounded_rectangle(photo_box, radius=24, fill="#1A1A1A")
     f_apos = _get_font(420, bold=True)
     apos_w = draw.textlength("'", font=f_apos)
-    draw.text(((photo_box[0] + photo_box[2]) / 2 - apos_w / 2, photo_box[1] + 50), "'", fill=(232, 252, 108, 77), font=f_apos)
+    draw.text(((photo_box[0] + photo_box[2]) / 2 - apos_w / 2, photo_box[1] + 50), "'", fill=(230, 255, 0, 77), font=f_apos)
 
     # Right half — text
     f_label = _get_font(22)
@@ -2226,7 +2224,7 @@ def _render_profile_og(profile: dict) -> bytes:
 
     role = profile.get("primary_role") or "Profile"
     f_role = _get_font(36)
-    draw.text((600, 240), role, fill="#E8FC6C", font=f_role)
+    draw.text((600, 240), role, fill="#E6FF00", font=f_role)
 
     # Location
     place_parts = [p for p in [profile.get("city"), profile.get("state"), profile.get("country")] if p]
@@ -2237,13 +2235,13 @@ def _render_profile_og(profile: dict) -> bytes:
     # SpotScore badge
     score = int(profile.get("spot_score") or 0)
     f_score_n = _get_font(96, bold=True)
-    draw.text((600, 390), str(score), fill="#E8FC6C", font=f_score_n)
+    draw.text((600, 390), str(score), fill="#E6FF00", font=f_score_n)
     f_score_l = _get_font(20)
     draw.text((600, 506), "SPOTSCORE · /100", fill="#999999", font=f_score_l)
 
     # Footer CTA
     f_cta = _get_font(24, bold=True)
-    draw.text((600, H - 70), "Find cast & crew at getspotd.app", fill="#E8FC6C", font=f_cta)
+    draw.text((600, H - 70), "Find cast & crew at getspotd.app", fill="#E6FF00", font=f_cta)
     return _png_bytes(img)
 
 

@@ -76,7 +76,7 @@ function AlertCard({ alert, onSave, onDelete, saving, profile }) {
                 className={`px-2 py-0.5 rounded-full text-[11px] font-medium border transition-all ${
                   on ? "border-primary text-black" : "border-border text-muted-foreground hover:border-primary/40"
                 }`}
-                style={on ? { background: "#E8FC6C" } : {}}>
+                style={on ? { background: "#E6FF00" } : {}}>
                 {role}
               </button>
             );

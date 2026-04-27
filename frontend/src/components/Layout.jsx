@@ -26,7 +26,7 @@ const NAV_LINKS = [
 // Logo component — lime apostrophe in dark, signal orange in light
 function SpotdLogo({ size = "text-lg" }) {
   const { theme } = useTheme();
-  const apostropheColor = theme === "light" ? "#FF5C35" : "#E8FC6C";
+  const apostropheColor = theme === "light" ? "#FF5C35" : "#E6FF00";
   return (
     <span className={`font-display ${size} font-bold tracking-tight text-foreground`}>
       Spot<span style={{ color: apostropheColor }}>'</span>d

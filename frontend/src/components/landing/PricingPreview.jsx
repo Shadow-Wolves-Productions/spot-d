@@ -67,7 +67,7 @@ export default function PricingPreview() {
                  className={`relative rounded-2xl p-7 border ${tier.highlight ? "sm:-mt-4 sm:-mb-4" : ""}`}
                  style={{
                    background: "hsl(var(--card))",
-                   borderColor: tier.highlight ? "#FF5C35" : tier.elite ? "#E8FC6C" : "hsl(var(--border))",
+                   borderColor: tier.highlight ? "#FF5C35" : tier.elite ? "#E6FF00" : "hsl(var(--border))",
                  }}
                >
                  {tier.label && (
@@ -75,7 +75,7 @@ export default function PricingPreview() {
                      <span
                        className="px-4 py-1 rounded-full text-[11px] font-bold uppercase tracking-[0.08em] whitespace-nowrap"
                        style={{
-                         background: tier.highlight ? "#FF5C35" : tier.elite ? "#E8FC6C" : undefined,
+                         background: tier.highlight ? "#FF5C35" : tier.elite ? "#E6FF00" : undefined,
                          color: tier.highlight ? "white" : tier.elite ? "black" : undefined,
                        }}
                      >
@@ -84,7 +84,7 @@ export default function PricingPreview() {
                    </div>
                  )}
                  <p className="text-[11px] uppercase tracking-[0.08em] font-bold mb-3 mt-2" style={{
-                   color: tier.highlight ? "#FF5C35" : tier.elite ? "#E8FC6C" : "hsl(var(--muted-foreground))",
+                   color: tier.highlight ? "#FF5C35" : tier.elite ? "#E6FF00" : "hsl(var(--muted-foreground))",
                  }}>
                    {tier.name}
                  </p>
@@ -96,7 +96,7 @@ export default function PricingPreview() {
                  </div>
                  {tier.monthly && (
                    <p className="text-xs font-semibold mt-1" style={{
-                     color: tier.highlight ? "#FF5C35" : tier.elite ? "#E8FC6C" : undefined,
+                     color: tier.highlight ? "#FF5C35" : tier.elite ? "#E6FF00" : undefined,
                    }}>
                      {tier.monthly}
                    </p>
@@ -106,7 +106,7 @@ export default function PricingPreview() {
                    <Button
                      className="w-full h-11 text-sm font-semibold rounded-full"
                      style={{
-                       background: tier.highlight ? "#FF5C35" : tier.elite ? "#E8FC6C" : undefined,
+                       background: tier.highlight ? "#FF5C35" : tier.elite ? "#E6FF00" : undefined,
                        color: tier.highlight ? "white" : tier.elite ? "black" : undefined,
                      }}
                      variant={tier.highlight || tier.elite ? "default" : "outline"}
@@ -119,7 +119,7 @@ export default function PricingPreview() {
                    {tier.features.map((f) => (
                      <li key={f} className="flex items-start gap-3 text-sm text-foreground">
                        <Check className="w-4 h-4 flex-shrink-0 mt-0.5" style={{
-                         color: tier.highlight ? "#FF5C35" : tier.elite ? "#E8FC6C" : "hsl(var(--primary))",
+                         color: tier.highlight ? "#FF5C35" : tier.elite ? "#E6FF00" : "hsl(var(--primary))",
                        }} />
                        {f}
                      </li>

@@ -71,7 +71,7 @@ export default function CompanyProfilePage() {
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-primary/20 via-card to-primary/5">
             <div className="absolute inset-0" style={{
-              backgroundImage: "radial-gradient(circle at 20% 50%, rgba(232,252,108,0.2), transparent 50%), radial-gradient(circle at 80% 30%, rgba(255,92,53,0.15), transparent 50%)"
+              backgroundImage: "radial-gradient(circle at 20% 50%, rgba(230,255,0,0.2), transparent 50%), radial-gradient(circle at 80% 30%, rgba(255,92,53,0.15), transparent 50%)"
             }} />
           </div>
         )}
