@@ -247,6 +247,8 @@ async def send_sms(to: str, body: str):
                 f"https://api.twilio.com/2010-04-01/Accounts/{sid}/Messages.json",
                 data={"From": os.environ["TWILIO_PHONE_NUMBER"], "To": to, "Body": body},
             )
+            if r.status_code >= 400:
+                log.error("Twilio error %s: %s", r.status_code, r.text[:500])
             return r.status_code < 400
     except Exception as e:
         log.error("Twilio send failed: %s", e)
