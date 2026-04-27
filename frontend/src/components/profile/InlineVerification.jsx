@@ -59,7 +59,6 @@ export default function InlineVerification({ form, onVerified }) {
 
   const items = [
     { key: "email", label: "Verify Email", icon: Shield, verified: form.email_verified, canSend: true },
-    { key: "phone", label: "Verify Phone", icon: Phone, verified: form.phone_verified, canSend: !!form.phone },
   ];
 
   return (

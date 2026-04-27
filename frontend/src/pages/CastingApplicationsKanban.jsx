@@ -11,7 +11,7 @@ import { toast } from "sonner";
 const COLUMNS = [
   { key: "pending",     label: "New",          color: "#888",    bg: "rgba(255,255,255,0.04)" },
   { key: "viewed",      label: "Viewed",        color: "#534AB7", bg: "rgba(83,74,183,0.08)" },
-  { key: "shortlisted", label: "Shortlisted",   color: "#E8FC6C", bg: "rgba(232,252,108,0.06)" },
+  { key: "shortlisted", label: "Shortlisted",   color: "#E6FF00", bg: "rgba(230,255,0,0.06)" },
   { key: "booked",      label: "Booked",        color: "#22C55E", bg: "rgba(34,197,94,0.06)" },
   { key: "rejected",    label: "Rejected",      color: "#FF5C35", bg: "rgba(255,92,53,0.06)" },
 ];
@@ -37,7 +37,7 @@ function ApplicantCard({ app, profileMap, onMove, moving }) {
           <div className="flex items-center gap-2">
             <p className="text-sm font-semibold text-foreground truncate">{profile?.full_name || app.applicant_name || "Unknown"}</p>
             {app.is_self_apply && (
-              <span data-testid="creator-badge" className="text-[9px] uppercase tracking-[0.08em] px-1.5 py-0.5 rounded font-bold" style={{ background: "#E8FC6C", color: "#0D0D0D" }}>
+              <span data-testid="creator-badge" className="text-[9px] uppercase tracking-[0.08em] px-1.5 py-0.5 rounded font-bold" style={{ background: "#E6FF00", color: "#0D0D0D" }}>
                 Creator
               </span>
             )}
@@ -84,7 +84,7 @@ function ApplicantCard({ app, profileMap, onMove, moving }) {
         {profile?.spot_score > 0 && (
           <div className="flex items-center gap-1">
             <span className="text-[10px] text-muted-foreground font-mono">SpotScore</span>
-            <span className="text-xs font-bold font-mono" style={{ color: "#E8FC6C" }}>{profile.spot_score}</span>
+            <span className="text-xs font-bold font-mono" style={{ color: "#E6FF00" }}>{profile.spot_score}</span>
           </div>
         )}
         {tsValue && (

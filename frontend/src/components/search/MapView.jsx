@@ -51,7 +51,7 @@ export default function MapView({ profiles, center }) {
                 <Link
                   to={`/profile/${p.profile_slug || p.id}`}
                   className="block mt-1 text-center py-1 px-3 rounded text-xs font-semibold text-black"
-                  style={{ background: "#E8FC6C" }}
+                  style={{ background: "#E6FF00" }}
                 >
                   View Profile
                 </Link>

@@ -261,22 +261,22 @@ export default function Pricing() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
             className="relative rounded-2xl p-7 overflow-hidden border"
-            style={{ background: "hsl(var(--card))", borderColor: "#E8FC6C" }}
+            style={{ background: "hsl(var(--card))", borderColor: "#E6FF00" }}
           >
             <div className="relative">
               <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                <span className="px-4 py-1 rounded-full text-[11px] font-bold uppercase tracking-[0.08em] whitespace-nowrap text-black" style={{ background: "#E8FC6C" }}>
+                <span className="px-4 py-1 rounded-full text-[11px] font-bold uppercase tracking-[0.08em] whitespace-nowrap text-black" style={{ background: "#E6FF00" }}>
                   Best for serious talent
                 </span>
               </div>
-              <p className="text-[11px] uppercase tracking-[0.08em] font-bold mb-3 mt-2" style={{ color: "#E8FC6C" }}>Elite</p>
+              <p className="text-[11px] uppercase tracking-[0.08em] font-bold mb-3 mt-2" style={{ color: "#E6FF00" }}>Elite</p>
               <div className="flex items-end gap-1">
                 <span className="font-display text-5xl font-semibold text-foreground" style={{ letterSpacing: "-1px" }}>
                   {annual ? "$149" : "$14.99"}
                 </span>
                 <span className="text-muted-foreground mb-2">/{annual ? "year" : "month"}</span>
               </div>
-              <p className="text-xs font-semibold mt-1" style={{ color: "#E8FC6C" }}>
+              <p className="text-xs font-semibold mt-1" style={{ color: "#E6FF00" }}>
                 {annual ? "~$12.42/month · best value" : "or $149/year — save 16%"}
               </p>
               <p className="text-sm text-muted-foreground mt-3 leading-[1.7]">Stand out and get ahead of the competition</p>
@@ -285,7 +285,7 @@ export default function Pricing() {
                 onClick={() => startCheckout(annual ? "elite_annual" : "elite_monthly")}
                 disabled={loadingPlan === "elite_monthly" || loadingPlan === "elite_annual"}
                 className="w-full mt-6 h-11 text-sm font-semibold rounded-full text-black hover:opacity-90"
-                style={{ background: "#E8FC6C" }}
+                style={{ background: "#E6FF00" }}
               >
                 {loadingPlan === "elite_monthly" || loadingPlan === "elite_annual" ? (
                   <Loader2 className="w-4 h-4 animate-spin" />

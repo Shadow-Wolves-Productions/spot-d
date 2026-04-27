@@ -2,8 +2,8 @@ import { Link } from "react-router-dom";
 import { CheckCircle2, Circle, TrendingUp } from "lucide-react";
 
 const PERCENTILE_BADGE = (percentile) => {
-  if (percentile >= 99) return { label: "Top 1%", bg: "#0D0D0D", color: "#E8FC6C", border: "#E8FC6C" };
-  if (percentile >= 95) return { label: "Top 5%", bg: "#E8FC6C", color: "#0D0D0D", border: "#E8FC6C" };
+  if (percentile >= 99) return { label: "Top 1%", bg: "#0D0D0D", color: "#E6FF00", border: "#E6FF00" };
+  if (percentile >= 95) return { label: "Top 5%", bg: "#E6FF00", color: "#0D0D0D", border: "#E6FF00" };
   if (percentile >= 90) return { label: "Top 10%", bg: "#FF5C35", color: "#fff", border: "#FF5C35" };
   if (percentile >= 75) return { label: "Top 25%", bg: "#FF5C35", color: "#fff", border: "#FF5C35" };
   return null;
@@ -36,8 +36,7 @@ export default function SpotScoreBreakdown({ profile, endorsementCount = 0, spot
     { label: "IMDb link added", earned: !!p.imdb_link, points: 5, tip: "Add your IMDb profile link" },
     { label: "Showreel link added", earned: !!p.showreel_link, points: 5, tip: "Add your showreel or portfolio link" },
     // Verification
-    { label: "Email verified", earned: !!p.email_verified, points: 7, tip: "Verify your email address" },
-    { label: "Phone verified", earned: !!p.phone_verified, points: 8, tip: "Verify your phone number" },
+    { label: "Email verified", earned: !!p.email_verified, points: 15, tip: "Verify your email address" },
     // Spots
     {
       label: `Spots received (${sc})`,

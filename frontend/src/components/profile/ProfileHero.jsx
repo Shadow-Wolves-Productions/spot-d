@@ -137,7 +137,7 @@ export default function ProfileHero({ profile }) {
 
           {/* SpotScore — full width on mobile, sidebar card on desktop */}
           <div className="w-full lg:w-auto lg:flex-shrink-0 flex flex-col items-center gap-2">
-            <div className="w-full lg:w-auto flex flex-row lg:flex-col items-center justify-center gap-4 rounded-2xl border border-primary/30 px-6 py-5" style={{ background: "rgba(232,252,108,0.06)", minWidth: 100 }} data-testid="profile-hero-spotscore">
+            <div className="w-full lg:w-auto flex flex-row lg:flex-col items-center justify-center gap-4 rounded-2xl border border-primary/30 px-6 py-5" style={{ background: "rgba(230,255,0,0.06)", minWidth: 100 }} data-testid="profile-hero-spotscore">
               <span className="font-display font-bold text-primary" style={{ fontSize: 52, lineHeight: 1, color: "hsl(var(--primary))" }}>
                 {profile.spot_score || 0}
               </span>

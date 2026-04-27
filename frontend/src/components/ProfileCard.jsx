@@ -6,7 +6,7 @@ import { ensureAbsoluteUrl } from "@/lib/url";
 
 // Score dot colour based on score value
 function ScoreDot({ score }) {
-  const color = score >= 80 ? "#E8FC6C" : score >= 55 ? "#FF5C35" : "#888";
+  const color = score >= 80 ? "#E6FF00" : score >= 55 ? "#FF5C35" : "#888";
   return (
     <div className="flex items-center gap-1" title={`SpotScore: ${score}`}>
       <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: color }} />
@@ -17,13 +17,13 @@ function ScoreDot({ score }) {
 
 const TIER_BADGE = {
   pro:     { label: "PRO",     bg: "#FF5C35", color: "#fff" },
-  founder: { label: "FOUNDER", bg: "#E8FC6C", color: "#0D0D0D" },
-  elite:   { label: "ELITE",   bg: "#E8FC6C", color: "#0D0D0D" },
+  founder: { label: "FOUNDER", bg: "#E6FF00", color: "#0D0D0D" },
+  elite:   { label: "ELITE",   bg: "#E6FF00", color: "#0D0D0D" },
 };
 
 export default function ProfileCard({ profile, subscription, onSave, isSaved, index = 0, featured = false, spotCount }) {
   const availabilityStyle = profile.availability_status === "Available Now"
-    ? { background: "#E8FC6C", color: "#0D0D0D", label: "Available now" }
+    ? { background: "#E6FF00", color: "#0D0D0D", label: "Available now" }
     : profile.availability_status === "Available Soon"
     ? { background: "#FF5C35", color: "#fff", label: "Available soon" }
     : { background: "#2A2A2A", color: "#888", label: "Unavailable" };
@@ -54,7 +54,7 @@ export default function ProfileCard({ profile, subscription, onSave, isSaved, in
                 <span
                   className="font-display font-bold leading-none"
                   style={{
-                    color: "#E8FC6C",
+                    color: "#E6FF00",
                     opacity: 0.3,
                     fontSize: "min(60cqw, 80cqh)",
                     lineHeight: 0.7,

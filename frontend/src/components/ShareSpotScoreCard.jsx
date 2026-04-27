@@ -5,7 +5,7 @@ import { Download, Share2, Loader2 } from "lucide-react";
 import html2canvas from "html2canvas";
 
 const PERCENTILE_BADGES = [
-  { min: 99, label: "TOP 1%",   bg: "#0D0D0D", fg: "#E8FC6C", border: "#E8FC6C" },
+  { min: 99, label: "TOP 1%",   bg: "#0D0D0D", fg: "#E6FF00", border: "#E6FF00" },
   { min: 95, label: "TOP 5%",   bg: "#7C3AED", fg: "#FFFFFF", border: "#7C3AED" },
   { min: 90, label: "TOP 10%",  bg: "#22C55E", fg: "#FFFFFF", border: "#22C55E" },
   { min: 75, label: "TOP 25%",  bg: "#F59E0B", fg: "#0D0D0D", border: "#F59E0B" },
@@ -55,14 +55,14 @@ function CardArt({ profile, format = "story" }) {
       <div style={{
         position: "absolute", top: -200, right: -200,
         width: 700, height: 700, borderRadius: "50%",
-        background: "radial-gradient(circle, rgba(232,252,108,0.18) 0%, rgba(232,252,108,0) 60%)",
+        background: "radial-gradient(circle, rgba(230,255,0,0.18) 0%, rgba(230,255,0,0) 60%)",
         pointerEvents: "none",
       }} />
 
       {/* Top: wordmark */}
       <div style={{ padding: "70px 80px 0", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div style={{ fontSize: 64, fontWeight: 800, letterSpacing: "-2px", color: "#FFFFFF" }}>
-          Spot<span style={{ color: "#E8FC6C" }}>'</span>d
+          Spot<span style={{ color: "#E6FF00" }}>'</span>d
         </div>
         <div style={{ fontSize: 22, letterSpacing: "0.2em", color: "rgba(255,255,255,0.4)", textTransform: "uppercase" }}>
           SpotScore
@@ -117,7 +117,7 @@ function CardArt({ profile, format = "story" }) {
         <div style={{ fontSize: 52, fontWeight: 700, color: "#FFFFFF", letterSpacing: "-1.5px" }}>
           {profile.preferred_name || profile.full_name || "Spot'd member"}
         </div>
-        <div style={{ marginTop: 16, fontSize: 32, color: "#E8FC6C", fontWeight: 600 }}>
+        <div style={{ marginTop: 16, fontSize: 32, color: "#E6FF00", fontWeight: 600 }}>
           {profile.primary_role || "Filmmaker"}
         </div>
         {(profile.city || profile.country) && (
@@ -133,7 +133,7 @@ function CardArt({ profile, format = "story" }) {
         bottom: 70,
         textAlign: "center",
       }}>
-        <div style={{ fontSize: 30, fontWeight: 600, color: "#E8FC6C", letterSpacing: "-0.5px" }}>
+        <div style={{ fontSize: 30, fontWeight: 600, color: "#E6FF00", letterSpacing: "-0.5px" }}>
           getspotd.app
         </div>
         <div style={{ marginTop: 8, fontSize: 18, color: "rgba(255,255,255,0.4)", letterSpacing: "0.16em", textTransform: "uppercase" }}>

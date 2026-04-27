@@ -8,7 +8,7 @@ const SIZE_MAP = {
 };
 
 function getColor(score, isLight) {
-  if (score >= 80) return isLight ? "#FF5C35" : "#E8FC6C";
+  if (score >= 80) return isLight ? "#FF5C35" : "#E6FF00";
   if (score >= 50) return "#FF5C35";
   return "#6B6B6B";
 }

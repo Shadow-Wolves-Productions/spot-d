@@ -34,9 +34,9 @@ export default function WelcomeBanner({ user, profile }) {
   };
 
   return (
-    <div className="mb-6 rounded-xl border border-primary/30 bg-card overflow-hidden" style={{ boxShadow: "0 0 0 1px rgba(232,252,108,0.1), 0 4px 24px rgba(232,252,108,0.06)" }}>
+    <div className="mb-6 rounded-xl border border-primary/30 bg-card overflow-hidden" style={{ boxShadow: "0 0 0 1px rgba(230,255,0,0.1), 0 4px 24px rgba(230,255,0,0.06)" }}>
       {/* Accent top bar */}
-      <div className="h-1 w-full" style={{ background: "#E8FC6C" }} />
+      <div className="h-1 w-full" style={{ background: "#E6FF00" }} />
 
       <div className="p-5 sm:p-6">
         <div className="flex items-start justify-between gap-4">

@@ -23,14 +23,14 @@ function MiniProfileCard({ profile }) {
           <img src={photoSrc} alt={name} className="w-full h-full object-cover" />
         ) : (
           <div className="w-full h-full flex items-center justify-center" style={{ containerType: "size" }}>
-            <span style={{ color: "#E8FC6C", opacity: 0.3, fontSize: "min(60cqw, 80cqh)", lineHeight: 0.7, fontWeight: 800, letterSpacing: "-0.05em", transform: "translateY(8%)" }} aria-hidden="true">'</span>
+            <span style={{ color: "#E6FF00", opacity: 0.3, fontSize: "min(60cqw, 80cqh)", lineHeight: 0.7, fontWeight: 800, letterSpacing: "-0.05em", transform: "translateY(8%)" }} aria-hidden="true">'</span>
           </div>
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
         {/* SpotScore badge top-right */}
         {profile.spot_score > 0 && (
-          <div className="absolute top-2.5 right-2.5 px-1.5 py-0.5 rounded-md text-[10px] font-bold flex items-center gap-1" style={{ background: "rgba(0,0,0,0.65)", color: "#E8FC6C" }}>
-            <span className="w-1.5 h-1.5 rounded-full" style={{ background: "#E8FC6C" }} />
+          <div className="absolute top-2.5 right-2.5 px-1.5 py-0.5 rounded-md text-[10px] font-bold flex items-center gap-1" style={{ background: "rgba(0,0,0,0.65)", color: "#E6FF00" }}>
+            <span className="w-1.5 h-1.5 rounded-full" style={{ background: "#E6FF00" }} />
             {profile.spot_score}
           </div>
         )}
@@ -47,7 +47,7 @@ function MiniProfileCard({ profile }) {
           </span>
         ) : <span />}
         {isAvailableNow && (
-          <span className="text-[9px] uppercase tracking-[0.08em] font-semibold px-2 py-0.5 rounded-full" style={{ background: "#E8FC6C", color: "#0D0D0D" }}>
+          <span className="text-[9px] uppercase tracking-[0.08em] font-semibold px-2 py-0.5 rounded-full" style={{ background: "#E6FF00", color: "#0D0D0D" }}>
             Available now
           </span>
         )}
@@ -96,7 +96,7 @@ export default function HeroSection() {
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
-          background: "radial-gradient(ellipse 60% 40% at 30% 50%, rgba(232, 252, 108, 0.06) 0%, transparent 70%)",
+          background: "radial-gradient(ellipse 60% 40% at 30% 50%, rgba(230, 255, 0, 0.06) 0%, transparent 70%)",
         }}
         aria-hidden="true"
       />
@@ -203,7 +203,7 @@ export default function HeroSection() {
                         aria-label={`Show profile ${i + 1}`}
                         className="w-1.5 h-1.5 rounded-full transition-all"
                         style={{
-                          background: i === activeIdx ? "#E8FC6C" : "rgba(255,255,255,0.18)",
+                          background: i === activeIdx ? "#E6FF00" : "rgba(255,255,255,0.18)",
                           width: i === activeIdx ? 16 : 6,
                         }}
                       />
