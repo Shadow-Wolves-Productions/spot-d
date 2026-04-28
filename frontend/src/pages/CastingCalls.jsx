@@ -34,8 +34,16 @@ function CastingCallCard({ call, myProfile, index, user, appliedCallIds }) {
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.05, duration: 0.3 }}
-      className="bg-card border border-border/60 rounded-xl p-6 hover:border-primary/30 transition-all hover:shadow-lg hover:shadow-primary/5"
+      className="bg-card border border-border/60 rounded-xl p-6 hover:border-primary/30 transition-all hover:shadow-lg hover:shadow-primary/5 cursor-pointer"
       data-testid={`casting-call-card-${call.id}`}
+      onClick={(e) => {
+        // Allow clicks on inner buttons/links (Apply, Share, Manage, etc.) to
+        // do their own thing. Outside of those, clicking the card navigates
+        // to the detail page.
+        const t = e.target;
+        if (t.closest("button") || t.closest("a") || t.closest("[role='dialog']")) return;
+        window.location.href = `/casting/${call.id}`;
+      }}
     >
       {/* Posted-by chip — links to company if company-posted */}
       {(attributionName || attributionLogo) && (

@@ -141,13 +141,11 @@ export default function ContactFAQ() {
           {/* Quick info */}
           <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.15 }} className="space-y-4">
             {[
-              { label: "General inquiries", value: "hello@spotd.io" },
-              { label: "Support", value: "support@spotd.io" },
-              { label: "Partnerships", value: "partners@spotd.io" },
+              { label: "Get in touch", value: "hello@getspotd.app" },
             ].map((item) => (
-              <div key={item.label} className="bg-card border border-border/60 rounded-xl px-6 py-5 flex items-center justify-between">
+              <div key={item.label} className="bg-card border border-border/60 rounded-xl px-6 py-5 flex items-center justify-between" data-testid="contact-email-card">
                 <span className="text-muted-foreground text-sm">{item.label}</span>
-                <span className="text-primary text-sm font-medium">{item.value}</span>
+                <a href={`mailto:${item.value}`} className="text-primary text-sm font-medium hover:underline">{item.value}</a>
               </div>
             ))}
             <div className="bg-card border border-border/60 rounded-xl px-6 py-5">

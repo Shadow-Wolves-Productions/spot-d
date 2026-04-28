@@ -79,6 +79,7 @@ export default function CreateCastingCall() {
     company_name: "",
     company_logo: "",
     contact_email: "",
+    poster_image: "",   // ← new: optional project poster (drag-drop)
     // Phase 2
     project_title: "",
     project_type: "",
@@ -135,6 +136,35 @@ export default function CreateCastingCall() {
     const { file_url } = await base44.integrations.Core.UploadFile({ file });
     update("company_logo", file_url);
     setUploadingLogo(false);
+  };
+
+  const [uploadingPoster, setUploadingPoster] = useState(false);
+  const [posterDrag, setPosterDrag] = useState(false);
+  const handlePosterFile = async (file) => {
+    if (!file || !file.type.startsWith("image/")) {
+      toast.error("Please drop an image file");
+      return;
+    }
+    setUploadingPoster(true);
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      update("poster_image", file_url);
+      toast.success("Poster uploaded");
+    } catch {
+      toast.error("Upload failed");
+    } finally {
+      setUploadingPoster(false);
+    }
+  };
+  const handlePosterDrop = (e) => {
+    e.preventDefault();
+    setPosterDrag(false);
+    const file = e.dataTransfer?.files?.[0];
+    if (file) handlePosterFile(file);
+  };
+  const handlePosterPick = (e) => {
+    const file = e.target.files?.[0];
+    if (file) handlePosterFile(file);
   };
 
   const addRole = (category) => {

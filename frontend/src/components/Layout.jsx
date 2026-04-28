@@ -26,7 +26,7 @@ const NAV_LINKS = [
 import Logo from "./Logo";
 
 // Wordmark — picks the transparent variant that matches the current theme.
-function SpotdLogo({ size = "h-9" }) {
+function SpotdLogo({ size = "h-16" }) {
   const { theme } = useTheme();
   return (
     <Logo
@@ -79,7 +79,7 @@ export default function Layout() {
             : "bg-background border-b border-border"
         }`}>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-between h-14 lg:h-16">
+            <div className="flex items-center justify-between h-20 lg:h-24">
               {/* Back button on child routes (mobile) */}
               {isChildRoute && (
                 <button
