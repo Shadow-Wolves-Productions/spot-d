@@ -37,7 +37,6 @@ export default function Privacy() {
           <h2 className="text-lg font-semibold text-foreground mb-2">Third parties we share with</h2>
           <ul className="list-disc list-inside space-y-1">
             <li><strong>Stripe</strong> — payment processing.</li>
-            <li><strong>Twilio</strong> — SMS verification codes.</li>
             <li><strong>Postmark</strong> — transactional email delivery.</li>
           </ul>
           <p>We never sell your personal information.</p>

@@ -40,7 +40,7 @@ export default function Terms() {
 
         <section>
           <h2 className="text-lg font-semibold text-foreground mb-2">7. Third parties</h2>
-          <p>We use Stripe (payments) and Twilio (SMS verification). Use of those services is subject to their own terms.</p>
+          <p>We use Stripe (payments) and Postmark (transactional email). Use of those services is subject to their own terms.</p>
         </section>
 
         <section>
