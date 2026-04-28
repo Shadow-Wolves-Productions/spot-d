@@ -198,7 +198,7 @@ export default function AdminDashboard() {
               <Shield className="w-5 h-5 text-primary" />
               <h1 className="font-display text-2xl sm:text-3xl font-bold text-foreground">Admin Dashboard</h1>
             </div>
-            <p className="text-muted-foreground text-sm">7-tab admin · users · profiles · casting · imports · emails · platform · stats · logs</p>
+            <p className="text-muted-foreground text-sm">7-tab admin · profiles · casting · imports · emails · platform · stats · logs</p>
           </div>
           <Button variant="outline" size="sm" className="border-border" onClick={loadCore} data-testid="admin-refresh-btn">
             <RefreshCw className="w-4 h-4 mr-1" /> Refresh

@@ -55,6 +55,16 @@ Foundation migration, OTP auth, Stripe checkout, Postmark, bulk import, SpotScor
 - **Launch checklist** updated: `email_live`, `stripe_keys`, `profile_count ≥ 10`, `pending_welcome=0` — all 4 green.
 - Stripe webhook handler now safely converts `StripeObject` → plain dict via JSON re-parse (avoids the `KeyError` from naive `dict()` cast).
 
+### Iter 11 (Feb 2026 — final UX polish) — TESTED ✓
+- **Casting Call Detail page** (`/casting/:id`) live — full wireframe (header, poster hero, role cards, apply/share buttons, footer meta, OG share preview).
+- **Casting cards clickable** — click anywhere on a card (except inner buttons / links) navigates to detail.
+- **Drag-and-drop poster upload** added to `CreateCastingCall.jsx` Phase 2: `data-testid="poster-dropzone"` accepts files via drag-drop or click-browse, with live preview + remove button. Persists `poster_image` URL on the CastingCall doc (verified by pytest 5/5).
+- **Admin tab merge**: Users tab removed; merged into Profiles. Per-row "Make Admin / Remove Admin" toggle (`data-testid="admin-toggle-role-{userId}"`) flips `User.role`. Search filters by name + email. Subtitle fixed to remove stale "users" reference.
+- **Logo size** confirmed at h-16 (64px) in navbar.
+- **FAQ rewrite**: "How do I get verified?" no longer references the non-existent Phone (Twilio removed) or Union verification flows — only Email + IMDb listed.
+- **Privacy + Terms cleanup**: removed every Twilio reference; Postmark called out as the email vendor.
+- Backend pytest iteration10: 5/5 PASS — OTP login, upload→file_url, CastingCall poster_image persistence, User role flip, casting list.
+
 ## Backlog (P1 — post-launch)
 - **Server.py 9-router split** (now ~2625 lines) — high priority for maintainability
 - Pydantic models for 7 entity types (consistency around field naming)
