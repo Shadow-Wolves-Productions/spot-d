@@ -31,10 +31,12 @@ from fastapi import FastAPI, HTTPException, Request, Response, Depends, Query, B
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, ValidationError
 from motor.motor_asyncio import AsyncIOMotorClient
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
+
+from models import ENTITY_MODELS
 
 # --------------------------------------------------------------------------- #
 # Setup
@@ -92,11 +94,38 @@ if os.environ.get("ENV", "development").lower() == "production":
             return JSONResponse(status_code=301, content={"detail": "HTTPS required"}, headers={"Location": str(url)})
         return await call_next(request)
 
+    # Strict-Transport-Security — instruct browsers to only contact us over HTTPS
+    # for the next year, including all subdomains. Production-only because dev
+    # tooling often runs on bare http://localhost which the header would break.
+    @app.middleware("http")
+    async def add_hsts_header(request: Request, call_next):
+        response = await call_next(request)
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+        return response
+
 # Static file hosting for uploads
 UPLOAD_ROOT = Path(__file__).parent / "static" / "uploads"
 for sub in ("profiles", "headshots", "company-logos", "company-covers"):
     (UPLOAD_ROOT / sub).mkdir(parents=True, exist_ok=True)
 app.mount("/api/static", StaticFiles(directory=str(Path(__file__).parent / "static")), name="static")
+
+# --------------------------------------------------------------------------- #
+# Mount routers (auth + uploads + view-counters + public). The remaining
+# endpoint groups (entities, webhooks, admin, scheduled) still live in this
+# file and will be lifted out incrementally — see ``/app/backend/routers/``
+# for the per-group placeholder modules.
+# --------------------------------------------------------------------------- #
+from routers import auth as _auth_router
+from routers import uploads as _uploads_router
+from routers import profiles as _profiles_router
+from routers import casting as _casting_router
+from routers import public as _public_router
+
+app.include_router(_auth_router.router)
+app.include_router(_uploads_router.router)
+app.include_router(_profiles_router.router)
+app.include_router(_casting_router.router)
+app.include_router(_public_router.router)
 
 scheduler = AsyncIOScheduler(timezone="UTC")
 
@@ -262,7 +291,9 @@ async def send_sms(to: str, body: str):
 
 
 # --------------------------------------------------------------------------- #
-# Auth endpoints
+# Auth endpoints — moved to routers/auth.py (mounted via include_router below).
+# RequestCodeBody / VerifyCodeBody are kept in their original location to
+# avoid breaking any older imports; new code should import from routers.auth.
 # --------------------------------------------------------------------------- #
 class RequestCodeBody(BaseModel):
     email: EmailStr
@@ -271,116 +302,6 @@ class RequestCodeBody(BaseModel):
 class VerifyCodeBody(BaseModel):
     email: EmailStr
     code: str
-
-
-@app.post("/api/auth/request-code")
-async def request_login_code(body: RequestCodeBody):
-    email = body.email.lower().strip()
-
-    # Rate limit: 3 codes per email per 10 minutes
-    ten_min_ago = (datetime.now(timezone.utc) - timedelta(minutes=10)).isoformat()
-    recent = await db.login_codes.count_documents({
-        "email": email, "created_at": {"$gt": ten_min_ago},
-    })
-    if recent >= 3:
-        raise HTTPException(429, "Too many requests. Please wait 10 minutes.")
-
-    code = f"{secrets.randbelow(1_000_000):06d}"
-    expires = (datetime.now(timezone.utc) + timedelta(minutes=10)).isoformat()
-    await db.login_codes.insert_one({
-        "id": new_id(),
-        "email": email,
-        "code": code,
-        "expires_at": expires,
-        "used": False,
-        "attempts": 0,
-        "created_at": now_iso(),
-    })
-
-    html = f"""
-    <div style="background:#0D0D0D;color:#fff;font-family:'DM Sans',Arial,sans-serif;padding:32px;">
-      <img src="{EMAIL_LOGO_URL}" alt="Spot&#39;d" width="120" style="display:block;margin-bottom:32px;border:0;outline:none;" />
-      <p>Your sign-in code is:</p>
-      <h2 style="letter-spacing:6px;font-size:36px;color:#E6FF00;margin:16px 0;">{code}</h2>
-      <p style="color:#888">Expires in 10 minutes. If you didn't request this, ignore this email.</p>
-    </div>
-    """
-    await send_email(email, "Your Spot'd sign-in code", html)
-    payload = {"success": True}
-    if EMAIL_MOCK:
-        payload["dev_code"] = code  # surfaced in mock mode for testing
-    return payload
-
-
-@app.post("/api/auth/verify-code")
-async def verify_login_code(body: VerifyCodeBody, response: Response):
-    email = body.email.lower().strip()
-    code_record = await db.login_codes.find_one(
-        {"email": email, "used": False},
-        sort=[("created_at", -1)],
-    )
-    if not code_record:
-        raise HTTPException(400, "No active code. Request a new one.")
-    if datetime.fromisoformat(code_record["expires_at"]) < datetime.now(timezone.utc):
-        raise HTTPException(400, "Code expired.")
-    attempts = code_record.get("attempts", 0) + 1
-    if attempts >= 5 and code_record["code"] != body.code:
-        await db.login_codes.update_one({"id": code_record["id"]}, {"$set": {"used": True, "attempts": attempts}})
-        raise HTTPException(400, "Too many attempts. Request a new code.")
-    if code_record["code"] != body.code:
-        await db.login_codes.update_one({"id": code_record["id"]}, {"$set": {"attempts": attempts}})
-        raise HTTPException(400, "Invalid code.")
-
-    await db.login_codes.update_one({"id": code_record["id"]}, {"$set": {"used": True, "attempts": attempts}})
-
-    # Find or create user
-    user = await db.users.find_one({"email": email})
-    if not user:
-        role = "admin" if email == ADMIN_EMAIL else "user"
-        user = {
-            "id": new_id(),
-            "email": email,
-            "full_name": email.split("@")[0],
-            "role": role,
-            "created_date": now_iso(),
-            "updated_date": now_iso(),
-            "first_login_at": now_iso(),
-        }
-        await db.users.insert_one(user)
-    else:
-        update = {"updated_date": now_iso()}
-        # Lock first-login timestamp for the founding-claim deadline job.
-        if not user.get("first_login_at"):
-            update["first_login_at"] = now_iso()
-            user["first_login_at"] = update["first_login_at"]
-        await db.users.update_one({"id": user["id"]}, {"$set": update})
-
-    token = make_token(user["id"])
-    response.set_cookie(
-        "spotd_token", token, max_age=60 * 60 * 24 * 30,
-        httponly=False, samesite="lax", path="/", secure=False,
-    )
-
-    profile = await db.profiles.find_one({"user_id": user["id"]})
-    return {
-        "token": token,
-        "user": serialize(user),
-        "profile": serialize(profile),
-    }
-
-
-@app.get("/api/auth/me")
-async def me(request: Request):
-    user = await current_user(request)
-    if not user:
-        raise HTTPException(401, "Not authenticated")
-    return user
-
-
-@app.post("/api/auth/logout")
-async def logout(response: Response):
-    response.delete_cookie("spotd_token", path="/")
-    return {"ok": True}
 
 
 # --------------------------------------------------------------------------- #
@@ -533,6 +454,20 @@ async def create_entity(entity: str, request: Request):
     if not isinstance(payload, dict):
         raise HTTPException(400, "Body must be an object")
 
+    # Pydantic typed validation for the 7 core entities. Falls back to free-form
+    # for everything else (telemetry, ad-hoc sub-entities). `extra="allow"`
+    # means extra fields are kept untouched — only the declared fields are
+    # validated/normalised.
+    if entity in ENTITY_MODELS:
+        Create, _ = ENTITY_MODELS[entity]
+        try:
+            validated = Create(**payload)
+        except ValidationError as ve:
+            raise HTTPException(422, ve.errors())
+        # Merge: validated/normalised values overwrite the raw payload, but
+        # any extra keys the client sent are preserved.
+        payload = {**payload, **validated.model_dump(exclude_unset=True)}
+
     doc = dict(payload)
     doc["id"] = doc.get("id") or new_id()
     doc.setdefault("created_date", now_iso())
@@ -624,6 +559,17 @@ async def update_entity(entity: str, item_id: str, request: Request):
     payload = await request.json()
     payload.pop("_id", None)
     payload.pop("id", None)
+
+    # Pydantic typed validation for entities with an Update model.
+    if entity in ENTITY_MODELS:
+        _, Update = ENTITY_MODELS[entity]
+        if Update is not None:
+            try:
+                validated = Update(**payload)
+            except ValidationError as ve:
+                raise HTTPException(422, ve.errors())
+            payload = {**payload, **validated.model_dump(exclude_unset=True)}
+
     payload["updated_date"] = now_iso()
     # Recompute all_roles when role fields change on a Profile
     if entity == "Profile" and ("primary_role" in payload or "secondary_roles" in payload):
@@ -1418,51 +1364,8 @@ async def postmark_webhook(request: Request):
 
 
 # --------------------------------------------------------------------------- #
-# File uploads — local disk MVP. Single source of truth for upload validation.
-# TODO(prod): swap local disk for S3 / Cloudflare R2; currently writes to
-# /app/backend/static/uploads/<type>/. Files are served via /static/...
+# File uploads — moved to routers/uploads.py
 # --------------------------------------------------------------------------- #
-ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/jpg", "image/png", "image/webp"}
-MAX_UPLOAD_BYTES = 5 * 1024 * 1024  # 5 MB
-
-
-async def _save_upload(file: UploadFile, subdir: str, public_url_base: str) -> dict:
-    if file.content_type not in ALLOWED_IMAGE_TYPES:
-        raise HTTPException(400, "Only JPEG, PNG and WEBP images are allowed.")
-    contents = await file.read()
-    if len(contents) > MAX_UPLOAD_BYTES:
-        raise HTTPException(413, "File too large. Max 5MB.")
-    if not contents:
-        raise HTTPException(400, "Empty file.")
-    ext = {"image/jpeg": "jpg", "image/jpg": "jpg", "image/png": "png", "image/webp": "webp"}[file.content_type]
-    filename = f"{new_id()}.{ext}"
-    path = UPLOAD_ROOT / subdir / filename
-    path.write_bytes(contents)
-    return {"url": f"{public_url_base}/{filename}", "filename": filename, "size": len(contents)}
-
-
-@app.post("/api/upload/profile-photo")
-async def upload_profile_photo(request: Request, file: UploadFile = File(...)):
-    await require_user(request)
-    return await _save_upload(file, "profiles", "/api/static/uploads/profiles")
-
-
-@app.post("/api/upload/headshot")
-async def upload_headshot(request: Request, file: UploadFile = File(...)):
-    await require_user(request)
-    return await _save_upload(file, "headshots", "/api/static/uploads/headshots")
-
-
-@app.post("/api/upload/company-logo")
-async def upload_company_logo(request: Request, file: UploadFile = File(...)):
-    await require_user(request)
-    return await _save_upload(file, "company-logos", "/api/static/uploads/company-logos")
-
-
-@app.post("/api/upload/cover-image")
-async def upload_cover_image(request: Request, file: UploadFile = File(...)):
-    await require_user(request)
-    return await _save_upload(file, "company-covers", "/api/static/uploads/company-covers")
 
 
 # --------------------------------------------------------------------------- #
@@ -1904,11 +1807,11 @@ async def founder_count():
 
 
 # --------------------------------------------------------------------------- #
-# Health + meta
+# Health + meta — moved to routers/public.py
 # --------------------------------------------------------------------------- #
-@app.get("/api/health")
-async def health():
-    return {"ok": True, "time": now_iso()}
+# /api/health → routers/public.py
+# /api/profiles/{id}/view  → routers/profiles.py
+# /api/casting/{id}/view   → routers/casting.py
 
 
 @app.get("/api/analytics/summary")
@@ -2810,6 +2713,11 @@ async def create_indexes():
     await db.verification_codes.create_index("user_id")
     await db.login_codes.create_index("email")
     await db.payment_transactions.create_index("session_id")
+    # view_events — TTL index auto-purges entries 1h after creation, which is
+    # exactly the rate-limit window for a viewer × target. Compound index
+    # speeds the "is there a fresh row already?" lookup.
+    await db.view_events.create_index("created_at", expireAfterSeconds=3600)
+    await db.view_events.create_index([("kind", 1), ("target_id", 1), ("viewer_id", 1)])
 
 
 @app.on_event("startup")

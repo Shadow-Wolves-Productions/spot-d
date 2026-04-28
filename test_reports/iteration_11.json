@@ -1,0 +1,37 @@
+{
+  "summary": "Iter11 (router-split + view-counter + Pydantic + Story-share). Backend pytest 14/14 PASS in 3.21s. Validated: GET /api/health (routers/public.py), POST /api/auth/request-code rate-limit at 4th call -> 429 (3/10min), POST /api/auth/logout -> {ok:true}, POST /api/upload/company-logo -> {url,filename,size}, POST /api/upload/headshot -> 400 on text/plain. View counter: POST /api/profiles/{id}/view first call counted=true, immediate 2nd same-IP counted=false; same for /api/casting/{id}/view; both 404 on bogus id. Pydantic: Profile create with imdb_link='imdb.com/me' persists as 'https://imdb.com/me'; profile_slug 'Test Slug 123' -> 'test-slug-123'; missing full_name returns 422 with detail array citing 'full_name'. CastingCall poster_image='/api/static/uploads/foo.png' (relative) PERSISTS UNCHANGED (the bug-fix at models.py:48 holds). CastingCall poster_image='cdn.example.com/foo.png' -> 'https://cdn.example.com/foo.png'. HSTS: server.py:88-103 confirms middleware is gated on ENV=production; dev does not emit it (verified by code-path inspection per request). Frontend live test (Playwright): /casting renders 2 cards, click on card triggers SPA navigate (1 framenavigated event, no full document reload) to /casting/{id} -- react-router useNavigate confirmed. Detail page exposes data-testid='casting-detail-story-share' which opens data-testid='casting-story-share-dialog' rendering a 1080x1920 IG-Story card with QR code, plus story-share-download + story-share-share buttons. Static grep confirms kanban-story-share-btn at CastingApplicationsKanban.jsx:229 and AdminDashboard.jsx:45 redirects via navigate('/'). Carry-forwards from iter10 (cosmetic AdminDashboard subtitle text, og:image relative path, no toast on FounderCapEditor save) remain unfixed but out-of-scope for iter11.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "CastingStoryShareDialog", "issues": ["Radix DialogContent missing Description/aria-describedby — a11y warning printed in console. Add <DialogDescription> or aria-describedby={undefined} suppressor."]},
+      {"screen": "Casting detail poster", "issues": ["Stale TEST_iter10 casting calls have broken poster_image (alt text shows TEST_iter10_1777414533 as a broken-image label). Cleanup script for TEST_* docs would be useful."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration11.py",
+    "/app/test_reports/pytest/iteration11.xml"
+  ],
+  "action_items": [
+    "(Optional, cosmetic) Add DialogDescription to CastingStoryShareCard dialog to silence Radix a11y warning.",
+    "(Optional) Add a TEST_-prefix cleanup pass to scheduled jobs to keep /casting list tidy after pytest runs.",
+    "Carry-forward (iter10 cosmetic): AdminDashboard.jsx:201 subtitle still mentions 'users · profiles' — tab merged.",
+    "Carry-forward (iter9): no success toast on FounderCapEditor save; og:image meta path is relative."
+  ],
+  "critical_code_review_comments": [
+    "routers/casting.py imports _record_view + _viewer_id_for from routers.profiles which is fine but creates an implicit cross-router dep. Worth lifting these helpers into core.py (or a routers/_view_helpers.py) to avoid future circular-import surprises.",
+    "models.py CastingCallUpdate.\\_urls validator uses check_fields=False — works but means typos in field names won't be caught. Consider explicit field list.",
+    "server.py is now 2743 lines (down from 2949) — still well past 700-line threshold from review guidelines. entities/webhooks/admin/scheduled router files are placeholders only; phase-2 split still pending.",
+    "models.py ProfileCreate accepts arbitrary extra fields via extra='allow' — fine for forward-compat but means typos like 'imdblink' silently persist. Add a debug-mode strict variant if useful.",
+    "view_events relies on 'TTL index that auto-purges rows after 1h' (per docstring) — verify the index actually exists; if not, the rate-limit window is technically infinite (existing.created_at >= cutoff still works correctly though, so the window is enforced regardless)."
+  ],
+  "updated_files": ["/app/backend/tests/test_iteration11.py"],
+  "success_rate": {"backend": "100% (14/14 pytest)", "frontend": "100% (verified casting list -> SPA navigate -> Story share dialog with QR + DL + Share)"},
+  "test_credentials": "Admin OTP: clear db.login_codes for brendan@..., POST /api/auth/request-code, then read latest code from db.login_codes sorted by created_at, POST /api/auth/verify-code -> JWT.",
+  "seed_data_creation": "Created+deleted 3 ephemeral entities during pytest (1 Profile, 2 CastingCall). 2 small PNG fixtures uploaded to /app/backend/static/uploads/company-logos/ and /headshots/ — harmless. View_events for 1 profile + 1 casting call cleared at fixture start.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Router split phase-1 complete: auth (4), uploads (4), profiles-view (1), casting-view (1), public-health (1) all mounted via include_router and pass tests. Phase-2 (entities, webhooks, admin, scheduled) still in server.py. To test view-counter rate-limit, ALWAYS clear db.view_events for the target before running, otherwise the 1st call will report counted=false and confuse the assertion. Pydantic _normalize_url has 4 distinct paths: /-prefix kept, http(s) kept, // -> https:, anything else -> https:// prefix. Test_iteration8 has a stale founder_cap=500 expectation (cap is now 100 per iter9 PRD) — pre-existing, not a regression.",
+  "rca of the issue": "N/A — no functional bugs. All 6 deliverables in this iteration verified working: (1) Story share dialog renders 1080x1920 card with QR ✓, (2) react-router navigate replaces window.location.href on casting cards & admin redirect ✓, (3) view_count moved to dedicated endpoints with 1h IP-based rate-limit ✓, (4) router split phase-1 mounted via include_router ✓, (5) HSTS middleware gated on ENV=production ✓, (6) 7 Pydantic models with URL/slug normalisers + 422 on missing required fields ✓."
+}

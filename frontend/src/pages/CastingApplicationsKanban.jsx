@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Link } from "react-router-dom";
-import { ArrowLeft, MapPin, Users, Loader2, ExternalLink, Film } from "lucide-react";
+import { ArrowLeft, MapPin, Users, Loader2, ExternalLink, Film, Instagram } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
+import CastingStoryShareCard from "../components/CastingStoryShareCard";
 
 const COLUMNS = [
   { key: "pending",     label: "New",          color: "#888",    bg: "rgba(255,255,255,0.04)" },
@@ -218,6 +219,19 @@ export default function CastingApplicationsKanban() {
               </div>
             </div>
           </div>
+          <CastingStoryShareCard
+            call={castingCall}
+            trigger={
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-primary/40 text-primary hover:bg-primary/10 mt-1"
+                data-testid="kanban-story-share-btn"
+              >
+                <Instagram className="w-4 h-4 mr-1.5" /> Share to Story
+              </Button>
+            }
+          />
         </div>
 
         {/* Kanban */}
