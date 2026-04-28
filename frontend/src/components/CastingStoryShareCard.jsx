@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Download, Share2, Loader2, Instagram } from "lucide-react";
 import html2canvas from "html2canvas";
@@ -374,6 +374,9 @@ export default function CastingStoryShareCard({ call, trigger }) {
           <DialogTitle className="font-display flex items-center gap-2">
             <Instagram className="w-5 h-5 text-primary" /> Share to Story
           </DialogTitle>
+          <DialogDescription className="text-xs text-muted-foreground">
+            Generates a 1080×1920 PNG with a QR code linking back to this casting call. Perfect for Instagram, WhatsApp and Snapchat Stories.
+          </DialogDescription>
         </DialogHeader>
         <div className="flex justify-center py-2">
           <div ref={wrapRef} className="rounded-xl overflow-hidden border border-border">

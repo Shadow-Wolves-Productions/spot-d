@@ -65,9 +65,17 @@ Foundation migration, OTP auth, Stripe checkout, Postmark, bulk import, SpotScor
 - **Privacy + Terms cleanup**: removed every Twilio reference; Postmark called out as the email vendor.
 - Backend pytest iteration10: 5/5 PASS — OTP login, upload→file_url, CastingCall poster_image persistence, User role flip, casting list.
 
+### Iter 12 (Feb 2026 — pre-launch architecture) — TESTED ✓ (14/14 pytest)
+- **Instagram Story share** — `CastingStoryShareCard.jsx` generates a 1080×1920 PNG via `html2canvas` (#0D0D0D bg, NOW CASTING chip in #FF5C35, role pills, QR code via `qrcode` lib pointing to /casting/{id}). Triggers Web Share API on mobile, falls back to PNG download on desktop. Wired into `CastingCallDetail.jsx` (`data-testid=casting-detail-story-share`) and `CastingApplicationsKanban.jsx` (`data-testid=kanban-story-share-btn`).
+- **React-router navigation** — replaced `window.location.href` with `useNavigate()` for internal routes in `CastingCalls.jsx` (card click) and `AdminDashboard.jsx` (non-admin redirect). External Stripe URLs (`Pricing.jsx`) and auth-flow modules (`AuthContext.jsx`, `base44Client.js`) intentionally retain full reload.
+- **Server-side view counts** — new endpoints `POST /api/profiles/{id}/view` + `POST /api/casting/{id}/view`. Rate-limited 1 increment per viewer (user_id or IP) per hour via Mongo TTL collection `view_events`. Owner self-views skipped server-side. Frontend (`ProfilePage`, `CastingCallDetail`) calls them on mount.
+- **server.py router split — Phase 1 of 2** — created `core.py` (shared db + scheduler + helpers) + `routers/` package with all 9 router files per spec (auth, entities, profiles, casting, uploads, webhooks, admin, scheduled, public). Auth (4 routes), uploads (4), profiles-view (1), casting-view (1), public-health (1) fully migrated and mounted via `include_router`. Entities/webhooks/admin/scheduled remain in `server.py` with placeholder router modules calling out the migration plan in their docstrings. server.py: 2949 → 2743 lines.
+- **HSTS middleware** — `Strict-Transport-Security: max-age=31536000; includeSubDomains` added to FastAPI middleware chain, gated on `ENV=production`.
+- **7 Pydantic body models** in `models.py`: ProfileCreate/Update, CompanyProfileCreate/Update, CastingCallCreate/Update, CastingApplicationCreate, SpotRequestCreate, SavedProfileCreate, ContactRevealCreate. `_normalize_url` auto-prepends `https://` to bare-domain URLs but **leaves relative paths untouched** (critical: paths starting with `/` like `/api/static/uploads/foo.png` must stay relative). `_normalize_slug` lowercases + hyphenates. Wired into `create_entity` + `update_entity` with 422 on validation failure.
+- **DialogDescription a11y** added to Story share dialog (silences Radix a11y warning).
+
 ## Backlog (P1 — post-launch)
-- **Server.py 9-router split** (now ~2625 lines) — high priority for maintainability
-- Pydantic models for 7 entity types (consistency around field naming)
+- **Server.py 9-router split — Phase 2** — entities/webhooks/admin/scheduled groups still live in `server.py` (~2400 lines remaining). Placeholder router modules are in place; lift the implementations across in a follow-up iteration with regression coverage.
 - Cloudflare WAF skip rule for webhook paths (admin task — one-time)
 
 ## Backlog (P2)
