@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { usePullToRefresh } from "../hooks/usePullToRefresh";
 import { base44 } from "@/api/base44Client";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Plus, MapPin, Calendar, DollarSign, Briefcase, Users, Settings2, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +20,7 @@ const TYPE_COLORS = {
 
 function CastingCallCard({ call, myProfile, index, user, appliedCallIds }) {
   const [applyOpen, setApplyOpen] = useState(false);
+  const navigate = useNavigate();
   const alreadyApplied = appliedCallIds?.has(call.id);
   const isCreator = user?.id === call.creator_user_id;
 
@@ -42,7 +43,7 @@ function CastingCallCard({ call, myProfile, index, user, appliedCallIds }) {
         // to the detail page.
         const t = e.target;
         if (t.closest("button") || t.closest("a") || t.closest("[role='dialog']")) return;
-        window.location.href = `/casting/${call.id}`;
+        navigate(`/casting/${call.id}`);
       }}
     >
       {/* Posted-by chip — links to company if company-posted */}

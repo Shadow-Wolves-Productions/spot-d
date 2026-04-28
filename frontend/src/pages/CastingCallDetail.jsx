@@ -9,9 +9,12 @@ import {
 } from "lucide-react";
 import ApplyModal from "../components/casting/ApplyModal";
 import CastingCallShareCard from "../components/CastingCallShareCard";
+import CastingStoryShareCard from "../components/CastingStoryShareCard";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { usePageMeta } from "@/lib/usePageMeta";
+
+import { Instagram } from "lucide-react";
 
 const TYPE_COLORS = {
   "Feature Film": "text-blue-400 bg-blue-500/10 border-blue-500/20",
@@ -37,10 +40,8 @@ export default function CastingCallDetail() {
       try {
         const c = await base44.entities.CastingCall.get(id);
         setCall(c);
-        // Fire-and-forget view-count increment
-        try {
-          await base44.entities.CastingCall.update(id, { view_count: (c.view_count || 0) + 1 });
-        } catch { /* non-critical */ }
+        // Server-side, rate-limited view-count increment (1/hour per viewer).
+        try { await base44.http.post(`/api/casting/${id}/view`, {}); } catch { /* non-critical */ }
 
         const me = await base44.auth.me().catch(() => null);
         setUser(me);
@@ -194,6 +195,19 @@ export default function CastingCallDetail() {
             trigger={
               <Button size="lg" variant="outline" className="border-border rounded-full px-8 w-full sm:w-auto" data-testid="casting-detail-share">
                 <Share2 className="w-4 h-4 mr-2" /> Share
+              </Button>
+            }
+          />
+          <CastingStoryShareCard
+            call={call}
+            trigger={
+              <Button
+                size="lg"
+                variant="outline"
+                className="border-primary/40 text-primary hover:bg-primary/10 rounded-full px-8 w-full sm:w-auto"
+                data-testid="casting-detail-story-share"
+              >
+                <Instagram className="w-4 h-4 mr-2" /> Share to Story
               </Button>
             }
           />

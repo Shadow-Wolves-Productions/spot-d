@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import {
   Shield, Users, Film, CheckCircle2, Crown, Search, RefreshCw, Award, Zap,
@@ -20,6 +21,7 @@ const TABS = [
 ];
 
 export default function AdminDashboard() {
+  const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [tab, setTab] = useState("profiles");
   const [loading, setLoading] = useState(true);
@@ -40,7 +42,7 @@ export default function AdminDashboard() {
   useEffect(() => {
     const init = async () => {
       const me = await base44.auth.me().catch(() => null);
-      if (!me || me.role !== "admin") { window.location.href = "/"; return; }
+      if (!me || me.role !== "admin") { navigate("/"); return; }
       setUser(me);
       await loadCore();
       setLoading(false);

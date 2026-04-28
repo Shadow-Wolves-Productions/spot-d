@@ -77,6 +77,9 @@ export default function ProfilePage() {
       if (profiles.length > 0) {
         const p = profiles[0];
         setProfile(p);
+        // Server-side, rate-limited view-count increment (1/hour per viewer).
+        // Owner self-views are skipped server-side.
+        try { await base44.http.post(`/api/profiles/${p.id}/view`, {}); } catch { /* non-critical */ }
         // Load similar profiles
         if (p.primary_role) {
           const similar = await base44.entities.Profile.filter(
