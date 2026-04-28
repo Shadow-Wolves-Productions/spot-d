@@ -327,6 +327,67 @@ export default function CreateCastingCall() {
               <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">Project Title *</Label>
               <Input value={form.project_title} onChange={(e) => update("project_title", e.target.value)} placeholder="e.g. 'Red Desert' Feature Film" className="bg-secondary border-border" />
             </div>
+
+            {/* Poster Image — drag-and-drop */}
+            <div>
+              <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">
+                Poster / Key Art <span className="normal-case text-muted-foreground/60">(optional)</span>
+              </Label>
+              {form.poster_image ? (
+                <div className="relative inline-block" data-testid="poster-preview">
+                  <img
+                    src={form.poster_image}
+                    alt="Poster"
+                    className="rounded-xl border border-border max-h-72 object-cover"
+                  />
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="absolute top-2 right-2 h-7 text-xs bg-background/90 backdrop-blur"
+                    onClick={() => update("poster_image", "")}
+                    data-testid="poster-remove-btn"
+                  >
+                    Remove
+                  </Button>
+                </div>
+              ) : (
+                <label
+                  onDragOver={(e) => { e.preventDefault(); setPosterDrag(true); }}
+                  onDragLeave={() => setPosterDrag(false)}
+                  onDrop={handlePosterDrop}
+                  className={`flex flex-col items-center justify-center gap-2 px-6 py-10 rounded-xl border-2 border-dashed cursor-pointer transition-all text-center ${
+                    posterDrag
+                      ? "border-primary bg-primary/10"
+                      : "border-border bg-secondary/40 hover:border-primary/40 hover:bg-secondary/60"
+                  }`}
+                  data-testid="poster-dropzone"
+                >
+                  {uploadingPoster ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                      <span className="text-sm text-muted-foreground">Uploading…</span>
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="w-6 h-6 text-muted-foreground" />
+                      <span className="text-sm text-foreground font-medium">
+                        Drop your poster here, or click to browse
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        Recommended 1080×1350 · JPG or PNG
+                      </span>
+                    </>
+                  )}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handlePosterPick}
+                    data-testid="poster-file-input"
+                  />
+                </label>
+              )}
+            </div>
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
                 <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">Project Type</Label>

@@ -19,7 +19,7 @@ const FAQS = [
   },
   {
     question: "How do I get verified?",
-    answer: "There are four verification types: Email (via confirmation link), Phone (via SMS code), IMDb (by linking your IMDb profile), and Union (by submitting your union credentials for review). Each verified badge increases your SpotScore and builds credibility.",
+    answer: "Right now we offer email verification — confirm your email address (one-tap from the link we send you) and you'll get a verified badge on your profile, plus a +15 SpotScore boost. Adding your IMDb link also adds credibility (+5 points). More verification types are on the roadmap.",
   },
   {
     question: "What is SpotScore?",
