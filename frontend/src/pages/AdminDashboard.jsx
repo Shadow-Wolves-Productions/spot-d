@@ -10,7 +10,6 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 
 const TABS = [
-  { id: "users",    label: "Users",    icon: Users },
   { id: "profiles", label: "Profiles", icon: Film },
   { id: "casting",  label: "Casting",  icon: Award },
   { id: "imports",  label: "Imports",  icon: Building2 },
@@ -22,7 +21,7 @@ const TABS = [
 
 export default function AdminDashboard() {
   const [user, setUser] = useState(null);
-  const [tab, setTab] = useState("users");
+  const [tab, setTab] = useState("profiles");
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
 
@@ -58,6 +57,7 @@ export default function AdminDashboard() {
     const profilesWithSubs = allProfiles.map((p) => ({
       ...p,
       _sub: subs.find((s) => s.user_id === p.user_id && s.status === "active"),
+      _user: allUsers.find((u) => u.id === p.user_id),
     }));
     setUsers(allUsers);
     setProfiles(profilesWithSubs);
@@ -172,7 +172,11 @@ export default function AdminDashboard() {
 
   const lc = (s) => (s || "").toLowerCase();
   const filteredUsers = users.filter((u) => lc(u.full_name).includes(lc(search)) || lc(u.email).includes(lc(search)));
-  const filteredProfiles = profiles.filter((p) => lc(p.full_name).includes(lc(search)) || lc(p.primary_role).includes(lc(search)));
+  const filteredProfiles = profiles.filter((p) =>
+    lc(p.full_name).includes(lc(search)) ||
+    lc(p.primary_role).includes(lc(search)) ||
+    lc(p._user?.email).includes(lc(search))
+  );
   const filteredCasting = castingCalls.filter((c) => lc(c.project_title).includes(lc(search)) || lc(c.creator_email).includes(lc(search)));
   const filteredImports = imports.items.filter((p) => lc(p.full_name).includes(lc(search)) || lc(p.email).includes(lc(search)));
 
@@ -217,7 +221,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Search */}
-        {["users", "profiles", "casting", "imports"].includes(tab) && (
+        {["profiles", "casting", "imports"].includes(tab) && (
           <div className="relative mb-4">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
@@ -230,37 +234,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* USERS */}
-        {tab === "users" && (
-          <div className="space-y-2" data-testid="admin-users-tab">
-            {filteredUsers.map((u) => (
-              <div key={u.id} className="bg-card border border-border/60 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center gap-3">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-medium text-foreground text-sm">{u.full_name || "—"}</span>
-                    <Badge variant="outline" className={`text-[10px] ${u.role === "admin" ? "border-primary/40 text-primary" : "border-border text-muted-foreground"}`}>
-                      {u.role || "user"}
-                    </Badge>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-0.5 truncate">{u.email}</p>
-                </div>
-                {u.id !== user.id && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className={`text-xs h-7 ${u.role === "admin" ? "border-destructive/40 text-destructive" : "border-primary/30 text-primary"}`}
-                    onClick={() => setAdminRole(u.id, u.role !== "admin")}
-                  >
-                    <Crown className="w-3 h-3 mr-1" />
-                    {u.role === "admin" ? "Remove Admin" : "Make Admin"}
-                  </Button>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* PROFILES */}
+        {/* PROFILES (merged with Users — Make Admin lives here too) */}
         {tab === "profiles" && (
           <div className="space-y-2" data-testid="admin-profiles-tab">
             {filteredProfiles.map((p) => (
@@ -274,11 +248,16 @@ export default function AdminDashboard() {
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-medium text-foreground text-sm">{p.full_name}</span>
                         <span className="text-xs text-muted-foreground">{p.primary_role}</span>
+                        {p._user?.role === "admin" && <Badge className="text-[10px] bg-primary/15 text-primary border-0">Admin</Badge>}
                         {p.is_minor_profile && <Badge className="text-[10px] bg-amber-500/20 text-amber-400 border-0">Minor</Badge>}
                         {p.is_hidden && <Badge className="text-[10px] bg-destructive/20 text-destructive border-0">Hidden</Badge>}
                         {p.is_boosted && <Badge className="text-[10px] bg-yellow-500/20 text-yellow-400 border-0">Boosted</Badge>}
                         <span className="text-[10px] text-muted-foreground">SpotScore {p.spot_score || 0}</span>
                       </div>
+                      {/* User email — kept here so the merged Users+Profiles tab is still searchable by email */}
+                      {p._user?.email && (
+                        <p className="text-[11px] text-muted-foreground/80 mt-0.5 truncate font-mono">{p._user.email}</p>
+                      )}
                       <div className="flex gap-2 mt-1 flex-wrap">
                         {[
                           { label: "Email", val: p.email_verified, field: "email_verified" },
@@ -291,6 +270,18 @@ export default function AdminDashboard() {
                     </div>
                   </div>
                   <div className="flex gap-2 flex-wrap">
+                    {p._user && p._user.id !== user.id && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className={`text-xs h-7 ${p._user.role === "admin" ? "border-destructive/40 text-destructive" : "border-primary/30 text-primary"}`}
+                        onClick={() => setAdminRole(p._user.id, p._user.role !== "admin")}
+                        data-testid={`admin-toggle-role-${p._user.id}`}
+                      >
+                        <Crown className="w-3 h-3 mr-1" />
+                        {p._user.role === "admin" ? "Remove Admin" : "Make Admin"}
+                      </Button>
+                    )}
                     {!p.email_verified && (
                       <Button size="sm" variant="outline" className="text-xs h-7 border-green-500/30 text-green-400" onClick={() => manualVerify(p.id, "email_verified")}>
                         <CheckCircle2 className="w-3 h-3 mr-1" /> Verify Email

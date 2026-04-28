@@ -14,6 +14,7 @@ import Dashboard from './pages/Dashboard';
 import ContactFAQ from './pages/ContactFAQ';
 import CastingCalls from './pages/CastingCalls';
 import CreateCastingCall from './pages/CreateCastingCall';
+import CastingCallDetail from './pages/CastingCallDetail';
 import AdminDashboard from './pages/AdminDashboard';
 import Analytics from './pages/Analytics';
 import CastingApplicationsKanban from './pages/CastingApplicationsKanban';
@@ -50,6 +51,7 @@ const AuthenticatedApp = () => {
         <Route path="/casting" element={<CastingCalls />} />
         <Route path="/casting/new" element={<CreateCastingCall />} />
         <Route path="/casting/applications" element={<CastingApplicationsKanban />} />
+        <Route path="/casting/:id" element={<CastingCallDetail />} />
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/analytics" element={<Analytics />} />
         <Route path="/u/:slug" element={<ProfileBySlug />} />

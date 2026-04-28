@@ -11,10 +11,8 @@ export default function FeaturedProfiles() {
 
   useEffect(() => {
     const load = async () => {
-      const top = await base44.entities.Profile.list("-spot_score", 12);
-      // Backend already filters out is_hidden — also exclude minor performers
-      // from the public landing page.
-      const visible = top.filter((p) => !p.is_minor_profile).slice(0, 6);
+      const top = await base44.entities.Profile.list("-spot_score", 16);
+      const visible = top.filter((p) => !p.is_minor_profile).slice(0, 8);
       setProfiles(visible);
       setLoading(false);
     };
@@ -51,7 +49,7 @@ export default function FeaturedProfiles() {
             </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
           {profiles.map((profile, i) => (
             <ProfileCard key={profile.id} profile={profile} index={i} featured={profile.is_boosted} subscription={null} />
           ))}
