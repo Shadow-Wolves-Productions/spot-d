@@ -23,14 +23,16 @@ const NAV_LINKS = [
   { path: "/contact", label: "Contact & FAQ" },
 ];
 
-// Logo component — lime apostrophe in dark, signal orange in light
-function SpotdLogo({ size = "text-lg" }) {
+import Logo from "./Logo";
+
+// Wordmark — picks the transparent variant that matches the current theme.
+function SpotdLogo({ size = "h-9" }) {
   const { theme } = useTheme();
-  const apostropheColor = theme === "light" ? "#FF5C35" : "#E6FF00";
   return (
-    <span className={`font-display ${size} font-bold tracking-tight text-foreground`}>
-      Spot<span style={{ color: apostropheColor }}>'</span>d
-    </span>
+    <Logo
+      variant={theme === "light" ? "light" : "dark"}
+      className={`${size} w-auto`}
+    />
   );
 }
 

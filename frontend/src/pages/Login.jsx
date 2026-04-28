@@ -64,8 +64,9 @@ export default function Login() {
         data-testid="login-container"
       >
         <div className="rounded-2xl border border-border bg-card p-8 sm:p-10">
+          <img src="/brand/dark-transparent.png" alt="Spot'd" className="h-12 w-auto mb-6" data-testid="login-logo" />
           <h1 className="font-display text-3xl font-500 text-foreground" style={{ letterSpacing: "-0.5px" }}>
-            Sign in to Spot<span className="text-primary">'</span>d
+            Sign in
           </h1>
           <p className="text-sm text-muted-foreground mt-2 leading-[1.7]">
             {step === "email"
