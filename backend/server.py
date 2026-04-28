@@ -47,6 +47,12 @@ DB_NAME = os.environ["DB_NAME"]
 JWT_SECRET = os.environ["JWT_SECRET"]
 APP_URL = os.environ.get("APP_URL", "")
 PUBLIC_APP_URL = os.environ.get("PUBLIC_APP_URL", "https://getspotd.app")
+# Public logo URL used across transactional emails. Using our own domain in
+# production; falls back to the Emergent CDN asset during preview + tests.
+EMAIL_LOGO_URL = os.environ.get(
+    "EMAIL_LOGO_URL",
+    "https://customer-assets.emergentagent.com/job_indie-film-casting/artifacts/e35r9rdr_Dark%20Mode%20-%20Transparent%20Logo%20Export%203000%20%C3%97%203000.png",
+)
 ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL", "").lower().strip()
 EMAIL_MOCK = os.environ.get("EMAIL_MOCK_MODE", "true").lower() == "true"
 SMS_MOCK = os.environ.get("SMS_MOCK_MODE", "true").lower() == "true"
@@ -293,7 +299,7 @@ async def request_login_code(body: RequestCodeBody):
 
     html = f"""
     <div style="background:#0D0D0D;color:#fff;font-family:'DM Sans',Arial,sans-serif;padding:32px;">
-      <h1 style="font-family:'Sora',Arial,sans-serif;color:#FFFFFF;margin:0 0 16px;">Spot<span style="color:#E6FF00;">'</span>d</h1>
+      <img src="{EMAIL_LOGO_URL}" alt="Spot&#39;d" width="120" style="display:block;margin-bottom:32px;border:0;outline:none;" />
       <p>Your sign-in code is:</p>
       <h2 style="letter-spacing:6px;font-size:36px;color:#E6FF00;margin:16px 0;">{code}</h2>
       <p style="color:#888">Expires in 10 minutes. If you didn't request this, ignore this email.</p>
@@ -1628,7 +1634,7 @@ async def _send_welcome_internal(user_id: str, profile_id: str, tier: str = "pro
   <div style="max-width:600px;margin:0 auto;">
 
     <!-- Wordmark -->
-    <div style="font-family:'Sora',Arial,sans-serif;font-size:28px;font-weight:800;letter-spacing:-1px;color:#FFFFFF;margin-bottom:40px;">Spot<span style="color:#E6FF00;">&#39;</span>d</div>
+    <img src="{EMAIL_LOGO_URL}" alt="Spot&#39;d" width="140" style="display:block;margin-bottom:40px;border:0;outline:none;" />
 
     <!-- Personal opener -->
     <p style="margin:0 0 18px;font-size:16px;color:#E5E5E5;">Hey {first},</p>
@@ -1760,7 +1766,7 @@ async def _process_founding_deadlines():
             html = f"""
 <div style="background:#0D0D0D;color:#E5E5E5;font-family:'DM Sans',Arial,sans-serif;padding:40px 24px;line-height:1.6;">
   <div style="max-width:560px;margin:0 auto;">
-    <div style="font-family:'Sora',Arial,sans-serif;font-size:28px;font-weight:800;letter-spacing:-1px;color:#FFFFFF;margin-bottom:32px;">Spot<span style="color:#E6FF00;">&#39;</span>d</div>
+    <img src="{EMAIL_LOGO_URL}" alt="Spot&#39;d" width="120" style="display:block;margin-bottom:32px;border:0;outline:none;" />
     <p style="margin:0 0 18px;color:#E5E5E5;">Hey {first},</p>
     <p style="margin:0 0 18px;color:#E5E5E5;">Just a heads up &mdash; your <strong style="color:#FFFFFF;">founding member spot</strong> on Spot&rsquo;d expires in <strong style="color:#FF5C35;">48 hours</strong>.</p>
     <p style="margin:0 0 18px;color:#E5E5E5;">After that the spot goes to the public waitlist and your free 12 months of PRO access will be gone.</p>
@@ -1808,7 +1814,7 @@ async def _process_founding_deadlines():
             html = f"""
 <div style="background:#0D0D0D;color:#E5E5E5;font-family:'DM Sans',Arial,sans-serif;padding:40px 24px;line-height:1.6;">
   <div style="max-width:560px;margin:0 auto;">
-    <div style="font-family:'Sora',Arial,sans-serif;font-size:28px;font-weight:800;letter-spacing:-1px;color:#FFFFFF;margin-bottom:32px;">Spot<span style="color:#E6FF00;">&#39;</span>d</div>
+    <img src="{EMAIL_LOGO_URL}" alt="Spot&#39;d" width="120" style="display:block;margin-bottom:32px;border:0;outline:none;" />
     <p style="margin:0 0 18px;color:#E5E5E5;">Hey {first},</p>
     <p style="margin:0 0 18px;color:#E5E5E5;">Your 7-day window to claim your founding member profile has passed. Your account is still active on our <strong style="color:#FFFFFF;">free plan</strong>.</p>
     <p style="margin:0 0 24px;color:#E5E5E5;">You can upgrade to PRO any time at <a href="{PUBLIC_APP_URL}/pricing" style="color:#E6FF00;text-decoration:none;font-weight:600;">getspotd.app/pricing</a>.</p>
@@ -1866,7 +1872,7 @@ async def claim_founder(request: Request):
     html = f"""
 <div style="background:#0D0D0D;color:#E5E5E5;font-family:'DM Sans',Arial,sans-serif;padding:40px 24px;line-height:1.6;">
   <div style="max-width:560px;margin:0 auto;">
-    <div style="font-family:'Sora',Arial,sans-serif;font-size:28px;font-weight:800;letter-spacing:-1px;color:#FFFFFF;margin-bottom:32px;">Spot<span style="color:#E6FF00;">&#39;</span>d</div>
+    <img src="{EMAIL_LOGO_URL}" alt="Spot&#39;d" width="120" style="display:block;margin-bottom:32px;border:0;outline:none;" />
     <p style="margin:0 0 18px;color:#E5E5E5;font-size:17px;">You&rsquo;re in.</p>
     <p style="margin:0 0 18px;color:#E5E5E5;">Your founding member profile is being set up. Sign in at <a href="{PUBLIC_APP_URL}/login" style="color:#E6FF00;text-decoration:none;font-weight:600;">getspotd.app/login</a> to get started.</p>
     <div style="text-align:center;margin:32px 0 24px;">
