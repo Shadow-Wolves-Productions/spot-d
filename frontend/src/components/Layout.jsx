@@ -26,7 +26,9 @@ const NAV_LINKS = [
 import Logo from "./Logo";
 
 // Wordmark — picks the transparent variant that matches the current theme.
-function SpotdLogo({ size = "h-16" }) {
+// Default size: h-14 on mobile (56px) → h-20 on md+ (80px). Both well above the
+// 36/40px floor the brand brief requires.
+function SpotdLogo({ size = "h-14 md:h-20" }) {
   const { theme } = useTheme();
   return (
     <Logo
@@ -91,7 +93,7 @@ export default function Layout() {
               )}
 
               {/* Logo */}
-              <Link to="/" className="flex items-center gap-2">
+              <Link to="/" className="flex items-center gap-2 px-1 py-1 -mx-1" data-testid="nav-logo">
                 <SpotdLogo />
               </Link>
 
@@ -309,9 +311,9 @@ export default function Layout() {
       <footer className="border-t border-border bg-background mt-16 hidden md:block" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
-            <div>
-              <SpotdLogo />
-              <p className="text-xs text-muted-foreground mt-2">getspotd.app — The indie film directory.</p>
+            <div data-testid="footer-logo">
+              <SpotdLogo size="h-14 md:h-16" />
+              <p className="text-xs text-muted-foreground mt-3">getspotd.app — The indie film directory.</p>
             </div>
             <div className="flex items-center gap-6 text-sm text-muted-foreground">
               <Link to="/search" className="hover:text-foreground transition-colors">Directory</Link>

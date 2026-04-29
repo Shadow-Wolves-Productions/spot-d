@@ -29,16 +29,29 @@ export function usePageMeta({ title, description, image, url, type = "website" }
       return el;
     };
 
+    // Crawlers (Twitter, Slack, FB, LinkedIn, iMessage) ignore relative paths
+    // for og:image / twitter:image — they MUST be absolute URLs. Resolve any
+    // /api/... or /static/... value against window.location.origin (which on
+    // production is https://getspotd.app).
+    const toAbsolute = (v) => {
+      if (!v || typeof v !== "string") return v;
+      if (/^https?:\/\//i.test(v)) return v;
+      const origin = (typeof window !== "undefined" && window.location?.origin) || "https://getspotd.app";
+      return v.startsWith("/") ? origin + v : `${origin}/${v}`;
+    };
+    const absImage = toAbsolute(image);
+    const absUrl = toAbsolute(url);
+
     const tags = [
       setMeta("og:title", "property", "og:title", title),
       setMeta("og:description", "property", "og:description", description),
-      setMeta("og:image", "property", "og:image", image),
-      setMeta("og:url", "property", "og:url", url),
+      setMeta("og:image", "property", "og:image", absImage),
+      setMeta("og:url", "property", "og:url", absUrl),
       setMeta("og:type", "property", "og:type", type),
-      setMeta("twitter:card", "name", "twitter:card", image ? "summary_large_image" : "summary"),
+      setMeta("twitter:card", "name", "twitter:card", absImage ? "summary_large_image" : "summary"),
       setMeta("twitter:title", "name", "twitter:title", title),
       setMeta("twitter:description", "name", "twitter:description", description),
-      setMeta("twitter:image", "name", "twitter:image", image),
+      setMeta("twitter:image", "name", "twitter:image", absImage),
     ];
 
     return () => {
