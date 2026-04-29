@@ -67,16 +67,27 @@ Foundation migration, OTP auth, Stripe checkout, Postmark, bulk import, SpotScor
 
 ### Iter 12 (Feb 2026 — pre-launch architecture) — TESTED ✓ (14/14 pytest)
 - **Instagram Story share** — `CastingStoryShareCard.jsx` generates a 1080×1920 PNG via `html2canvas` (#0D0D0D bg, NOW CASTING chip in #FF5C35, role pills, QR code via `qrcode` lib pointing to /casting/{id}). Triggers Web Share API on mobile, falls back to PNG download on desktop. Wired into `CastingCallDetail.jsx` (`data-testid=casting-detail-story-share`) and `CastingApplicationsKanban.jsx` (`data-testid=kanban-story-share-btn`).
-- **React-router navigation** — replaced `window.location.href` with `useNavigate()` for internal routes in `CastingCalls.jsx` (card click) and `AdminDashboard.jsx` (non-admin redirect). External Stripe URLs (`Pricing.jsx`) and auth-flow modules (`AuthContext.jsx`, `base44Client.js`) intentionally retain full reload.
-- **Server-side view counts** — new endpoints `POST /api/profiles/{id}/view` + `POST /api/casting/{id}/view`. Rate-limited 1 increment per viewer (user_id or IP) per hour via Mongo TTL collection `view_events`. Owner self-views skipped server-side. Frontend (`ProfilePage`, `CastingCallDetail`) calls them on mount.
-- **server.py router split — Phase 1 of 2** — created `core.py` (shared db + scheduler + helpers) + `routers/` package with all 9 router files per spec (auth, entities, profiles, casting, uploads, webhooks, admin, scheduled, public). Auth (4 routes), uploads (4), profiles-view (1), casting-view (1), public-health (1) fully migrated and mounted via `include_router`. Entities/webhooks/admin/scheduled remain in `server.py` with placeholder router modules calling out the migration plan in their docstrings. server.py: 2949 → 2743 lines.
-- **HSTS middleware** — `Strict-Transport-Security: max-age=31536000; includeSubDomains` added to FastAPI middleware chain, gated on `ENV=production`.
-- **7 Pydantic body models** in `models.py`: ProfileCreate/Update, CompanyProfileCreate/Update, CastingCallCreate/Update, CastingApplicationCreate, SpotRequestCreate, SavedProfileCreate, ContactRevealCreate. `_normalize_url` auto-prepends `https://` to bare-domain URLs but **leaves relative paths untouched** (critical: paths starting with `/` like `/api/static/uploads/foo.png` must stay relative). `_normalize_slug` lowercases + hyphenates. Wired into `create_entity` + `update_entity` with 422 on validation failure.
-- **DialogDescription a11y** added to Story share dialog (silences Radix a11y warning).
+- **React-router navigation** — replaced `window.location.href` with `useNavigate()` for internal routes in `CastingCalls.jsx` (card click) and `AdminDashboard.jsx` (non-admin redirect).
+- **Server-side view counts** — new endpoints `POST /api/profiles/{id}/view` + `POST /api/casting/{id}/view`. Rate-limited 1 increment per viewer per hour via TTL `view_events` collection. Owner self-views skipped.
+- **server.py router split — Phase 1** — created `core.py` + 9-file `routers/` package. Auth, uploads, profile-view, casting-view, health migrated. server.py: 2949 → 2743 lines.
+- **HSTS middleware** — `Strict-Transport-Security` gated on `ENV=production`.
+- **7 Pydantic body models** with URL auto-https + slug normalisers. Relative paths preserved. 422 on validation failure.
+
+### Iter 13 (Feb 2026 — Profile poster + Phase-2 router split) — TESTED ✓ (37/37 pytest)
+- **Profile poster download** — `ProfilePosterCard.jsx` generates a 1080×1920 owner-only card via `html2canvas` (background #0D0D0D, yellow radial glow, large headshot or branded `'` placeholder, name/role/location, SpotScore N/100 badge, percentile badge if qualifying, verified tick if email_verified, IMDb hint if set, QR code linking to `/u/{slug}`, getspotd.app footer). Triggers Web Share API on mobile, PNG download on desktop. Visibility gated at the parent — component only mounts when `myProfile?.id === profile?.id`.
+- **Phase-2 router split — COMPLETE.** server.py: 2743 → **132 lines** (thin app factory: middleware + static mount + include_router + startup/shutdown). Endpoints fully migrated:
+  - `routers/entities.py` (432 lines): generic CRUD + spot-score helpers + `_on_casting_application_created`
+  - `routers/scheduled.py` (646 lines): `/api/functions/*` (14 routes) + `_run_spotted_with` + `_purge_codes` + `_send_daily_weekly` + `_process_founding_deadlines` + `_send_profile_completion_nudges`
+  - `routers/webhooks.py` (324 lines): Stripe checkout/status/webhook + Postmark webhook + verifiers
+  - `routers/admin.py` (505 lines): 11 `/api/admin/*` routes + bulk-import + welcome-email + admin gates
+  - `routers/public.py` (469 lines): health, analytics, auto-claim, public-settings, public-stats, OG images (Pillow), waitlist, founder-count
+  - `bootstrap.py` (226 lines): `seed_initial_data`, `create_indexes`, `migrate_all_roles`, `backfill_spot_score_history`
+- Cross-router calls handled via lazy import wrappers (`_lazy()` pattern in `scheduled.py` + `admin.py`) to dodge module-load circular imports while preserving async semantics.
+- `core.py` hosts `coll`, `compute_all_roles`, `parse_value` so every router shares one source of truth.
+- Backend pytest iter11 (14) + iter12 (23) = **37/37 PASS**.
 
 ## Backlog (P1 — post-launch)
-- **Server.py 9-router split — Phase 2** — entities/webhooks/admin/scheduled groups still live in `server.py` (~2400 lines remaining). Placeholder router modules are in place; lift the implementations across in a follow-up iteration with regression coverage.
-- Cloudflare WAF skip rule for webhook paths (admin task — one-time)
+- (none currently — Phase-2 router split shipped in iter13)
 
 ## Backlog (P2)
 - PIL/imghdr image bytes verification on upload
