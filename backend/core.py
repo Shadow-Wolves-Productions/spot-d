@@ -107,6 +107,7 @@ ENTITIES = {
     "CompanyProfile": "company_profiles",
     "PaymentTransaction": "payment_transactions",
     "SpotScoreHistory": "spot_score_history",
+    "SpotlightPick": "spotlight_picks",
 }
 
 PUBLIC_READ = {

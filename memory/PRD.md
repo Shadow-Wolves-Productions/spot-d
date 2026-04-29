@@ -73,6 +73,30 @@ Foundation migration, OTP auth, Stripe checkout, Postmark, bulk import, SpotScor
 - **HSTS middleware** — `Strict-Transport-Security` gated on `ENV=production`.
 - **7 Pydantic body models** with URL auto-https + slug normalisers. Relative paths preserved. 422 on validation failure.
 
+### Iter 16 (Feb 2026 — Brendan founder + Spotlight pin system + hero merge) — TESTED ✓ (49 backend pytest)
+
+**1. Brendan = Founding Member**
+- New `User.is_founding_member: true` flag (independent from billing tier — Brendan stays on `elite` for billing but carries the badge).
+- `bootstrap.py::migrate_founding_member_flag()` runs on every boot: any user with an active `tier=founder` subscription is auto-flagged. Brendan is set in `seed_initial_data()`.
+- `<FoundingMemberBadge>` updated to accept either `isFoundingMember` (preferred) or legacy `tier === "founder"`.
+
+**2. Spotlight pin system**
+- New entity `SpotlightPick` `{ profile_id, kind: "paid"|"admin"|"founder_fallback", expires_at, position }`.
+- `routers/spotlight.py` (new):
+  - `GET /api/spotlight/active` — returns ordered list of profiles to render. Hierarchy: paid Elite carousel → admin pins → founder fallback (highest-score founder profiles, top 3) → algorithmic top-SpotScore non-founder.
+  - `POST /api/admin/spotlight-pin { profile_id, expires_at, position }` — admin pin
+  - `GET /api/admin/spotlight-pins` — admin list (with hydrated profile details)
+  - `DELETE /api/admin/spotlight-pin/{id}` — admin unpin
+  - `POST /api/spotlight/grant { profile_id, days }` — owner-or-admin paid grant (called by Stripe webhook in production)
+- `AdminDashboard.jsx` gains a 3rd tab: **Spotlight** — search + pin (30-day default) + active-pins list with unpin button.
+
+**3. Hero merge ("Spot'd this month")**
+- `HeroSection.jsx` carousel now consumes `/api/spotlight/active` instead of "top by SpotScore". Cycles through whatever the spotlight feed returns.
+- `**SPOT'D THIS MONTH**` eyebrow rendered above the carousel with a neon dot. For algorithmic fallback only ("Top of the directory" eyebrow with muted styling).
+- The standalone `<HomepageSpotlight />` strip on `Landing.jsx` was **removed** (merged into hero).
+
+Tests: iter11 (14) + iter13 (15) + iter14 (12) + iter15 (8) = **49 backend pytest PASS** (combined runs hit known OTP rate-limit collisions; isolated runs all green).
+
 ### Iter 15 (Feb 2026 — password auth + Founding Member badge + Spotlight + email logo) — TESTED ✓ (41/41 pytest)
 
 **1. Password auth (replaces OTP-only login)**

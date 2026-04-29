@@ -1,7 +1,6 @@
 import HeroSection from "../components/landing/HeroSection";
 import HowItWorks from "../components/landing/HowItWorks";
 import FeaturedProfiles from "../components/landing/FeaturedProfiles";
-import HomepageSpotlight from "../components/landing/HomepageSpotlight";
 import PricingPreview from "../components/landing/PricingPreview";
 import CastingCallsPreview from "../components/landing/CastingCallsPreview";
 import LiveStatsBar from "../components/landing/LiveStatsBar";
@@ -29,8 +28,6 @@ export default function Landing() {
       <TrustedByRow />
 
       <FeaturedProfiles />
-
-      <HomepageSpotlight />
 
       {/* Why Spot'd — feature tiles updated to current platform */}
       <section className="py-20 px-4 border-t border-border" data-testid="why-spotd-section">

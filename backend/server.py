@@ -24,7 +24,7 @@ from apscheduler.triggers.cron import CronTrigger
 from core import IS_PROD, mongo, scheduler
 from bootstrap import (
     backfill_spot_score_history, create_indexes, migrate_all_roles,
-    seed_initial_data,
+    migrate_founding_member_flag, seed_initial_data,
 )
 from routers import auth as _auth_router
 from routers import entities as _entities_router
@@ -35,6 +35,7 @@ from routers import webhooks as _webhooks_router
 from routers import admin as _admin_router
 from routers import scheduled as _scheduled_router
 from routers import public as _public_router
+from routers import spotlight as _spotlight_router
 
 # --------------------------------------------------------------------------- #
 # App + middleware
@@ -93,7 +94,7 @@ app.mount(
 for _r in (
     _auth_router, _entities_router, _profiles_router, _casting_router,
     _uploads_router, _webhooks_router, _admin_router, _scheduled_router,
-    _public_router,
+    _public_router, _spotlight_router,
 ):
     app.include_router(_r.router)
 
@@ -112,6 +113,7 @@ async def on_startup():
     await create_indexes()
     await seed_initial_data()
     await migrate_all_roles()
+    await migrate_founding_member_flag()
     await backfill_spot_score_history()
 
     scheduler.add_job(_run_spotted_with, CronTrigger(hour=2, minute=0))
