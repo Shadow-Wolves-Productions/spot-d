@@ -22,7 +22,7 @@ import re
 import uuid
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 import jwt
 from fastapi import HTTPException, Request
@@ -45,6 +45,7 @@ SMS_MOCK = os.environ.get("SMS_MOCK_MODE", "true").lower() == "true"
 IS_PROD = os.environ.get("ENV", "development").lower() == "production"
 
 ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL", "").lower().strip()
+PUBLIC_APP_URL = os.environ.get("PUBLIC_APP_URL", "https://getspotd.app").rstrip("/")
 EMAIL_LOGO_URL = os.environ.get(
     "EMAIL_LOGO_URL",
     "https://customer-assets.emergentagent.com/job_indie-film-casting/artifacts/2lj4urlc_dark-transparent.png",
@@ -268,14 +269,22 @@ _viewer_id_for = viewer_id_for
 # Email + SMS (mockable)
 # --------------------------------------------------------------------------- #
 async def send_email(to: str, subject: str, html: str, from_name: str = "Spot'd"):
+    """Send an email via Postmark (or mock). Logs every attempt to ``email_log``
+    with the resulting status. Returns True on delivery (Postmark 2xx), False
+    otherwise.
+    """
     if EMAIL_MOCK or not os.environ.get("POSTMARK_API_KEY"):
         log.info("[EMAIL MOCK] to=%s subject=%s", to, subject)
         await db.email_log.insert_one({
             "id": new_id(), "to": to, "subject": subject,
             "html": html, "from_name": from_name,
-            "created_at": now_iso(), "mocked": True,
+            "status": "mocked",
+            "created_date": now_iso(),
+            "mocked": True,
         })
         return True
+    status = "error"
+    error_detail: Optional[str] = None
     try:
         import httpx
         async with httpx.AsyncClient(timeout=10) as client:
@@ -294,9 +303,35 @@ async def send_email(to: str, subject: str, html: str, from_name: str = "Spot'd"
                     "MessageStream": "outbound",
                 },
             )
+            if r.status_code < 400:
+                status = "sent"
+            else:
+                status = "failed"
+                try:
+                    error_detail = r.json().get("Message") or r.text[:300]
+                except Exception:
+                    error_detail = r.text[:300]
+                log.warning("Postmark %s for %s: %s", r.status_code, to, error_detail)
+            await db.email_log.insert_one({
+                "id": new_id(), "to": to, "subject": subject,
+                "from_name": from_name,
+                "status": status,
+                "postmark_status_code": r.status_code,
+                "error": error_detail,
+                "created_date": now_iso(),
+                "mocked": False,
+            })
             return r.status_code < 400
     except Exception as e:
         log.error("Postmark send failed: %s", e)
+        await db.email_log.insert_one({
+            "id": new_id(), "to": to, "subject": subject,
+            "from_name": from_name,
+            "status": "exception",
+            "error": str(e)[:300],
+            "created_date": now_iso(),
+            "mocked": False,
+        })
         return False
 
 

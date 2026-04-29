@@ -73,6 +73,26 @@ Foundation migration, OTP auth, Stripe checkout, Postmark, bulk import, SpotScor
 - **HSTS middleware** — `Strict-Transport-Security` gated on `ENV=production`.
 - **7 Pydantic body models** with URL auto-https + slug normalisers. Relative paths preserved. 422 on validation failure.
 
+### Iter 17 (Feb 2026 — go-live: bulk welcome resend + lens placeholder + bug fixes) — TESTED ✓ (6 new pytest)
+
+**1. Bulk welcome email resend (Admin)**
+- New endpoint `POST /api/admin/send-pending-welcomes { dry_run, limit }` — finds every imported profile with `welcome_email_sent ≠ true` and queues `_send_welcome_internal` via FastAPI `BackgroundTasks`. Logs the action to `admin_logs`.
+- Admin Dashboard → **Imports** tab now has a "Send N pending welcomes" button (`data-testid=admin-send-pending-welcomes-btn`) that surfaces the unclaimed counter and triggers the bulk send with confirm dialog.
+- **Triggered live on go-live: 58 imported CineConnect members were sent the founding-member welcome email via Postmark.** A handful of Postmark 422 "Inactive Recipient" rejections (stale addresses from the original CineConnect form) are expected and logged.
+
+**2. Email delivery tracking hardened**
+- `core.send_email` now writes every send attempt to `db.email_log` (was only logging in mock mode), including Postmark status code + error message. Added `status` field: `sent | failed | exception | mocked`.
+- `_send_welcome_internal` only sets `welcome_email_sent: true` when Postmark returns 2xx. Failed sends instead set `welcome_email_failed_at`, so the bulk endpoint can be safely re-run for retries without spamming successfully delivered recipients.
+
+**3. Lens placeholder**
+- New asset: `/app/frontend/public/brand/lens-only.png` (1024×1024 → cropped + resized to 256×256, ~50KB).
+- Wired into 4 placeholder render paths: `ProfileCard.jsx` (directory grid), `HeroSection.jsx` (mini hero card), `ProfileHero.jsx` (profile-detail page header), `ProfilePosterCard.jsx` (1080×1920 share poster). Replaces the previous yellow-apostrophe placeholder.
+
+**4. Bug fixes (pre-existing post-refactor NameErrors)**
+- `core.PUBLIC_APP_URL` was referenced from `routers/admin.py` and `routers/scheduled.py` but never defined after the Phase-1 router split — would have crashed on first welcome / nudge / role-alert digest send. Now defined in `core.py` from env and imported by both routers.
+- `core.SMS_MOCK` was referenced from `routers/admin.py::admin_platform()` but not imported. Fixed.
+- `typing.Any` was referenced in `core.parse_value` but only `Optional` was imported. Fixed.
+
 ### Iter 16 (Feb 2026 — Brendan founder + Spotlight pin system + hero merge) — TESTED ✓ (49 backend pytest)
 
 **1. Brendan = Founding Member**

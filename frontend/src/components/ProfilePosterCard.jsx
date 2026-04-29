@@ -123,7 +123,7 @@ function PosterArt({ profile, qrSrc }) {
             }}
           />
         ) : (
-          // Branded apostrophe placeholder
+          // Branded lens placeholder
           <div style={{
             width: "100%",
             height: "100%",
@@ -132,17 +132,17 @@ function PosterArt({ profile, qrSrc }) {
             justifyContent: "center",
             background: "radial-gradient(circle at 50% 35%, rgba(230,255,0,0.18) 0%, rgba(13,13,13,1) 70%)",
           }}>
-            <div style={{
-              fontFamily: "'Sora', 'Helvetica Neue', Arial, sans-serif",
-              fontSize: 520,
-              fontWeight: 900,
-              color: "#E8FC6C",
-              lineHeight: 1,
-              letterSpacing: -20,
-              transform: "translateY(-30px)",
-            }}>
-              '
-            </div>
+            <img
+              src="/brand/lens-only.png"
+              alt=""
+              crossOrigin="anonymous"
+              style={{
+                width: "60%",
+                height: "60%",
+                objectFit: "contain",
+                opacity: 0.9,
+              }}
+            />
           </div>
         )}
       </div>

@@ -12,7 +12,7 @@ from fastapi.responses import JSONResponse, Response as FastAPIResponse
 from pydantic import BaseModel, EmailStr, Field, ValidationError
 
 from core import (
-    ADMIN_EMAIL, EMAIL_LOGO_URL, EMAIL_MOCK, IS_PROD, UPLOAD_ROOT,
+    ADMIN_EMAIL, EMAIL_LOGO_URL, EMAIL_MOCK, IS_PROD, PUBLIC_APP_URL, SMS_MOCK, UPLOAD_ROOT,
     ENTITIES, PUBLIC_READ,
     coll, compute_all_roles, current_user, db, decode_token, email_logo_html,
     log, make_token, new_id, now_iso, parse_value, require_user, scheduler,
@@ -292,17 +292,78 @@ async def _send_welcome_internal(user_id: str, profile_id: str, tier: str = "pro
   </div>
 </div>
 """
-    await send_email(
+    delivered = await send_email(
         user["email"],
         "CineConnect just became something bigger 🎬",
         html,
         from_name="Brendan Byrne — Spot'd",
     )
-    await db.profiles.update_one({"id": profile_id}, {"$set": {
-        "welcome_email_sent": True,
-        "welcome_email_sent_at": now_iso(),
-        "founding_claim_deadline": deadline_iso,
-    }})
+    if delivered:
+        await db.profiles.update_one({"id": profile_id}, {"$set": {
+            "welcome_email_sent": True,
+            "welcome_email_sent_at": now_iso(),
+            "founding_claim_deadline": deadline_iso,
+        }})
+    else:
+        await db.profiles.update_one({"id": profile_id}, {"$set": {
+            "welcome_email_failed_at": now_iso(),
+        }})
+    return delivered
+
+
+# --------------------------------------------------------------------------- #
+# Bulk re-send pending welcomes — Admin-only.
+# Targets every imported profile (import_source set) that still hasn't had
+# its welcome email sent. Resets the 7-day claim deadline to now+7d when it
+# fires, so members get the full window from this send.
+# --------------------------------------------------------------------------- #
+class SendPendingWelcomesBody(BaseModel):
+    dry_run: Optional[bool] = False
+    limit: Optional[int] = Field(None, ge=1, le=2000)
+
+
+@router.post("/api/admin/send-pending-welcomes")
+async def admin_send_pending_welcomes(
+    body: SendPendingWelcomesBody,
+    background: BackgroundTasks,
+    request: Request,
+):
+    user = await _require_admin(request)
+    query = {
+        "import_source": {"$exists": True, "$ne": None},
+        "$or": [
+            {"welcome_email_sent": {"$ne": True}},
+            {"welcome_email_sent": {"$exists": False}},
+        ],
+        "auto_claim_dismissed": {"$ne": True},
+    }
+    cursor = db.profiles.find(query, {"_id": 0, "id": 1, "user_id": 1, "email": 1, "full_name": 1})
+    if body.limit:
+        cursor = cursor.limit(int(body.limit))
+    pending = await cursor.to_list(length=body.limit or 2000)
+
+    queued = []
+    for p in pending:
+        queued.append({
+            "profile_id": p["id"],
+            "email": p.get("email"),
+            "full_name": p.get("full_name"),
+        })
+        if not body.dry_run:
+            background.add_task(_send_welcome_internal, p["user_id"], p["id"], "pro")
+
+    await _log_admin_action(
+        user["id"],
+        "welcome.bulk_resend",
+        "imports",
+        {"count": len(queued), "dry_run": bool(body.dry_run)},
+    )
+    return {
+        "ok": True,
+        "dry_run": bool(body.dry_run),
+        "count": len(queued),
+        "queued": queued,
+    }
 
 
 # --------------------------------------------------------------------------- #

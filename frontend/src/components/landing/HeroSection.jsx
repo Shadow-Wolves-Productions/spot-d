@@ -22,8 +22,8 @@ function MiniProfileCard({ profile }) {
         {photoSrc ? (
           <img src={photoSrc} alt={name} className="w-full h-full object-cover" />
         ) : (
-          <div className="w-full h-full flex items-center justify-center" style={{ containerType: "size" }}>
-            <span style={{ color: "#E6FF00", opacity: 0.3, fontSize: "min(60cqw, 80cqh)", lineHeight: 0.7, fontWeight: 800, letterSpacing: "-0.05em", transform: "translateY(8%)" }} aria-hidden="true">'</span>
+          <div className="w-full h-full flex items-center justify-center" style={{ background: "#0D0D0D" }}>
+            <img src="/brand/lens-only.png" alt="" aria-hidden="true" className="object-contain" style={{ width: "45%", height: "75%", opacity: 0.85 }} />
           </div>
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
