@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
-import { Bookmark, Share2, ArrowLeft, Zap, Check } from "lucide-react";
+import { Bookmark, Share2, ArrowLeft, Zap, Check, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ProfileHero from "../components/profile/ProfileHero";
 import ContactPanel from "../components/profile/ContactPanel";
@@ -12,6 +12,7 @@ import SpottedWithSection from "../components/profile/SpottedWithSection";
 import SpotRequestModal from "../components/profile/SpotRequestModal";
 import SpotScoreBadge from "../components/SpotScoreBadge";
 import ProfileCard from "../components/ProfileCard";
+import ProfilePosterCard from "../components/ProfilePosterCard";
 import { usePageMeta } from "@/lib/usePageMeta";
 
 export default function ProfilePage() {
@@ -255,9 +256,24 @@ export default function ProfilePage() {
             </>
           )}
           {user && myProfile?.id === profile?.id && (
-            <Button variant="outline" size="sm" className="border-border" onClick={handleCopySpotMe}>
-              <Share2 className="w-4 h-4 mr-1" /> Spot Me Link
-            </Button>
+            <>
+              <Button variant="outline" size="sm" className="border-border" onClick={handleCopySpotMe}>
+                <Share2 className="w-4 h-4 mr-1" /> Spot Me Link
+              </Button>
+              <ProfilePosterCard
+                profile={profile}
+                trigger={
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="border-primary/40 text-primary hover:bg-primary/10"
+                    data-testid="download-my-poster-btn"
+                  >
+                    <ImageIcon className="w-4 h-4 mr-1" /> Download my poster
+                  </Button>
+                }
+              />
+            </>
           )}
           <Button variant="outline" size="sm" onClick={handleSave} className="border-border hover:border-primary/20">
             <Bookmark className={`w-4 h-4 mr-1 ${isSaved ? "fill-primary text-primary" : ""}`} />
