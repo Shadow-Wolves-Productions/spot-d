@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   ArrowLeft, MapPin, Calendar, DollarSign, Briefcase, Users, Mail,
   Building2, User as UserIcon, Share2, Send, Loader2,
+  Pencil, Lock, Unlock, Trash2, AlertTriangle,
 } from "lucide-react";
 import ApplyModal from "../components/casting/ApplyModal";
 import CastingCallShareCard from "../components/CastingCallShareCard";
@@ -72,10 +73,44 @@ export default function CastingCallDetail() {
   });
 
   const isCreator = user?.id === call?.creator_user_id;
+  const isClosed = call ? (call.is_closed || call.is_active === false || (call.deadline && new Date(call.deadline) < new Date())) : false;
   const isCompanyPost = call?.posted_as === "company" && call?.posted_as_company_id;
   const attributionName = isCompanyPost ? call?.posted_as_company_name : call?.company_name;
   const attributionLogo = isCompanyPost ? call?.posted_as_company_logo : call?.company_logo;
   const attributionHref = isCompanyPost && call?.posted_as_company_slug ? `/c/${call.posted_as_company_slug}` : null;
+
+  const handleToggleClosed = async () => {
+    const reopen = isClosed;
+    const msg = reopen
+      ? "Reopen this casting call? Applicants will be able to apply again."
+      : "End this casting call? It will be marked CLOSED and no new applications will be accepted.";
+    if (!window.confirm(msg)) return;
+    try {
+      const updates = { is_active: reopen };
+      if (reopen && call.deadline && new Date(call.deadline) < new Date()) {
+        // Pushing deadline 30 days out so reopened calls actually accept apps.
+        const d = new Date();
+        d.setDate(d.getDate() + 30);
+        updates.deadline = d.toISOString();
+      }
+      const updated = await base44.entities.CastingCall.update(id, updates);
+      setCall({ ...call, ...updates, ...updated, is_closed: !reopen });
+      toast.success(reopen ? "Casting call reopened" : "Casting call closed");
+    } catch (e) {
+      toast.error("Update failed");
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!window.confirm("Delete this casting call? This cannot be undone. All applications attached to it will also be removed.")) return;
+    try {
+      await base44.entities.CastingCall.delete(id);
+      toast.success("Casting call deleted");
+      navigate("/casting");
+    } catch (e) {
+      toast.error("Delete failed");
+    }
+  };
 
   if (loading) {
     return (
@@ -101,6 +136,53 @@ export default function CastingCallDetail() {
         <Link to="/casting" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-6">
           <ArrowLeft className="w-4 h-4" /> All casting calls
         </Link>
+
+        {/* CLOSED banner — full-width, sits above poster/header */}
+        {isClosed && (
+          <div
+            className="mb-6 rounded-xl border border-destructive/40 bg-destructive/5 px-5 py-4 flex items-start gap-3"
+            data-testid="casting-detail-closed-banner"
+          >
+            <AlertTriangle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="font-display text-base font-semibold text-foreground">Casting call closed</p>
+              <p className="text-sm text-muted-foreground mt-0.5">
+                {call.is_active === false
+                  ? "The producer ended this call. New applications are no longer being accepted."
+                  : `Apply-by deadline (${new Date(call.deadline).toLocaleDateString()}) has passed. New applications are no longer being accepted.`}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Owner controls — Edit / End / Reopen / Delete */}
+        {isCreator && (
+          <div className="flex flex-wrap gap-2 mb-6" data-testid="casting-detail-owner-controls">
+            <Link to={`/casting/${id}/edit`}>
+              <Button size="sm" variant="outline" className="border-border" data-testid="casting-detail-edit-btn">
+                <Pencil className="w-3.5 h-3.5 mr-1.5" /> Edit
+              </Button>
+            </Link>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleToggleClosed}
+              className={isClosed ? "border-primary/40 text-primary hover:bg-primary/10" : "border-amber-500/40 text-amber-400 hover:bg-amber-500/10"}
+              data-testid="casting-detail-toggle-closed-btn"
+            >
+              {isClosed ? (<><Unlock className="w-3.5 h-3.5 mr-1.5" /> Reopen</>) : (<><Lock className="w-3.5 h-3.5 mr-1.5" /> End call</>)}
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleDelete}
+              className="border-destructive/40 text-destructive hover:bg-destructive/10"
+              data-testid="casting-detail-delete-btn"
+            >
+              <Trash2 className="w-3.5 h-3.5 mr-1.5" /> Delete
+            </Button>
+          </div>
+        )}
 
         {/* Poster (if uploaded) */}
         {call.poster_image && (
@@ -138,7 +220,14 @@ export default function CastingCallDetail() {
             <span className={`px-3 py-1 text-[11px] uppercase tracking-[0.06em] rounded-full border ${TYPE_COLORS[call.project_type] || "text-muted-foreground border-border bg-secondary/40"}`}>
               {call.project_type || "Project"}
             </span>
-            {!call.is_active && <Badge variant="outline" className="border-destructive/40 text-destructive">Closed</Badge>}
+            {isClosed && (
+              <span
+                data-testid="casting-detail-closed-pill"
+                className="px-3 py-1 text-[11px] uppercase tracking-[0.06em] font-bold rounded-full bg-destructive/10 text-destructive border border-destructive/30"
+              >
+                Closed
+              </span>
+            )}
           </div>
 
           <h1 className="font-display text-4xl sm:text-5xl font-500 text-foreground leading-tight" style={{ letterSpacing: "-1px" }} data-testid="casting-detail-title">
@@ -169,6 +258,10 @@ export default function CastingCallDetail() {
                 <Users className="w-4 h-4 mr-2" /> View applications ({call.application_count || 0})
               </Button>
             </Link>
+          ) : isClosed ? (
+            <Button size="lg" disabled className="bg-secondary text-muted-foreground rounded-full px-8 w-full sm:w-auto" data-testid="casting-detail-closed-apply">
+              <Lock className="w-4 h-4 mr-2" /> Applications closed
+            </Button>
           ) : hasApplied ? (
             <Button size="lg" disabled className="bg-secondary text-muted-foreground rounded-full px-8 w-full sm:w-auto" data-testid="casting-detail-applied">
               ✓ You've applied

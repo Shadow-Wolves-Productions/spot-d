@@ -202,14 +202,31 @@ async def verify_login_code(body: VerifyCodeBody, response: Response):
     await _consume_otp(email, body.code)
 
     user = await _ensure_user(email)
-    if not user.get("email_verified"):
+    first_verification = not user.get("email_verified")
+    if first_verification:
         await db.users.update_one({"id": user["id"]}, {"$set": {"email_verified": True}})
         user["email_verified"] = True
+
+    profile = await db.profiles.find_one({"user_id": user["id"]})
+
+    # On first verification, an imported CineConnect member is officially
+    # claiming their reserved founding-member spot — flip the flag and
+    # invalidate the public-stats cache so the homepage counter updates.
+    if first_verification and profile and profile.get("import_source") and not user.get("is_founding_member"):
+        await db.users.update_one(
+            {"id": user["id"]},
+            {"$set": {"is_founding_member": True, "founding_claimed_at": now_iso()}},
+        )
+        user["is_founding_member"] = True
+        try:
+            from routers.public import _invalidate_public_stats_cache
+            _invalidate_public_stats_cache()
+        except Exception:
+            pass
 
     token = make_token(user["id"])
     _set_session_cookie(response, token)
 
-    profile = await db.profiles.find_one({"user_id": user["id"]})
     return {
         "token": token,
         "user": serialize(user),
