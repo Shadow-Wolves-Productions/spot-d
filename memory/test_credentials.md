@@ -31,14 +31,6 @@
   - Elite Monthly: `price_1TQnUGPF6tM0yOLw2pqxF1fS` ($14.99 AUD/mo)
   - Elite Annual: `price_1TQnUGPF6tM0yOLwI09pgo0K` ($149.00 AUD/yr)
 
-## Cloudflare WAF — REQUIRED rule for production
-Stripe + Postmark webhooks must bypass the bot-fight ruleset on `getspotd.app`:
-```
-Path:  /api/webhooks/stripe  OR  /api/webhook/stripe  OR  /api/webhooks/postmark
-Action: Skip → All managed rules + Bot Fight Mode
-```
-Without this, Cloudflare returns HTTP 403 (error 1010) before requests reach the app.
-
 ## Mongo (preview/local)
 - Connection from `/app/backend/.env` `MONGO_URL` + `DB_NAME`
 - Login codes table: `db.login_codes` — clear via `db.login_codes.deleteMany({})` if rate-limited during testing

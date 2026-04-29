@@ -193,6 +193,29 @@ async def create_entity(entity: str, request: Request):
     if user:
         doc.setdefault("created_by", user["id"])
 
+    # ----- Pre-insert ownership / self-action guards ------------------------ #
+    if entity == "CastingApplication":
+        # Block duplicate applications by the same user to the same call.
+        existing = await db.casting_applications.find_one({
+            "casting_call_id": doc.get("casting_call_id"),
+            "applicant_user_id": user["id"] if user else doc.get("applicant_user_id"),
+        })
+        if existing:
+            raise HTTPException(409, "You have already applied to this casting call.")
+        # Stamp applicant from session if not provided.
+        if user and not doc.get("applicant_user_id"):
+            doc["applicant_user_id"] = user["id"]
+    elif entity == "ContactReveal":
+        # Reveal-yourself is meaningless and would skew analytics.
+        target_profile = doc.get("profile_id") and await db.profiles.find_one({"id": doc["profile_id"]}, {"_id": 0, "user_id": 1})
+        if user and target_profile and target_profile.get("user_id") == user["id"]:
+            raise HTTPException(400, "You can't reveal contact info on your own profile.")
+    elif entity == "SpotRequest":
+        # Endorsing yourself is similarly invalid.
+        target_profile = doc.get("target_profile_id") and await db.profiles.find_one({"id": doc["target_profile_id"]}, {"_id": 0, "user_id": 1})
+        if user and target_profile and target_profile.get("user_id") == user["id"]:
+            raise HTTPException(400, "You can't request a spot from yourself.")
+
     # Special handling
     if entity == "Profile":
         if not doc.get("user_id") and user:
@@ -278,6 +301,31 @@ async def update_entity(entity: str, item_id: str, request: Request):
     payload.pop("_id", None)
     payload.pop("id", None)
 
+    # Owner-or-admin gate. Only enforced for entities where the resource has a
+    # known "owner" field. Admin endpoints flow through dedicated routers, so
+    # any /api/entities/{X}/{id} mutation must be by the original owner unless
+    # the caller has the admin role.
+    OWNER_FIELDS = {
+        "Profile":            "user_id",
+        "CompanyProfile":     "owner_user_id",
+        "CastingCall":        "creator_user_id",
+        "CastingApplication": "applicant_user_id",
+        "SpotRequest":        "requester_user_id",
+        "SavedProfile":       "user_id",
+        "ContactReveal":      "revealer_user_id",
+        "Subscription":       "user_id",
+        "Notification":       "user_id",
+        "RoleAlert":          "user_id",
+    }
+    if user.get("role") != "admin" and entity in OWNER_FIELDS:
+        existing = await coll(entity).find_one({"id": item_id}, {"_id": 0})
+        if existing is None:
+            raise HTTPException(404, "Not found")
+        owner_field = OWNER_FIELDS[entity]
+        owner = existing.get(owner_field)
+        if owner is not None and owner != user["id"]:
+            raise HTTPException(403, "You don't have permission to modify this resource.")
+
     # Pydantic typed validation for entities with an Update model.
     if entity in ENTITY_MODELS:
         _, Update = ENTITY_MODELS[entity]
@@ -306,6 +354,23 @@ async def update_entity(entity: str, item_id: str, request: Request):
 async def delete_entity(entity: str, item_id: str, request: Request):
     user = await require_user(request)
     item = await coll(entity).find_one({"id": item_id}, {"_id": 0})
+    # Owner-or-admin gate (mirror of update_entity above).
+    OWNER_FIELDS = {
+        "Profile":            "user_id",
+        "CompanyProfile":     "owner_user_id",
+        "CastingCall":        "creator_user_id",
+        "CastingApplication": "applicant_user_id",
+        "SpotRequest":        "requester_user_id",
+        "SavedProfile":       "user_id",
+        "ContactReveal":      "revealer_user_id",
+        "Subscription":       "user_id",
+        "Notification":       "user_id",
+        "RoleAlert":          "user_id",
+    }
+    if user.get("role") != "admin" and entity in OWNER_FIELDS and item:
+        owner = item.get(OWNER_FIELDS[entity])
+        if owner is not None and owner != user["id"]:
+            raise HTTPException(403, "You don't have permission to delete this resource.")
     await coll(entity).delete_one({"id": item_id})
     if item:
         await maybe_recalc_score(entity, item)

@@ -507,7 +507,7 @@ function FounderCapEditor({ current, onSaved }) {
     setSaving(true);
     try {
       await base44.http.put("/api/admin/platform-settings", { founder_cap: n });
-      toast.success(`Founder cap set to ${n}`);
+      toast.success(`Founder cap updated to ${n}`, { duration: 4000 });
       onSaved?.();
     } catch (e) {
       toast.error(e?.response?.data?.detail || "Save failed");

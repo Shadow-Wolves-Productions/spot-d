@@ -73,6 +73,19 @@ Foundation migration, OTP auth, Stripe checkout, Postmark, bulk import, SpotScor
 - **HSTS middleware** — `Strict-Transport-Security` gated on `ENV=production`.
 - **7 Pydantic body models** with URL auto-https + slug normalisers. Relative paths preserved. 422 on validation failure.
 
+### Iter 14 (Feb 2026 — logo + cosmetics + pre-launch checklist) — TESTED ✓ (52 backend pytest)
+- **Logo size bumped** — header `h-14 md:h-20` (56→80px) with breathing-room padding around the Link wrapper; footer `h-14 md:h-16` (56→64px). Brand mark legible on both dark and light themes.
+- **FounderCapEditor success toast** — `toast.success("Founder cap updated to N", { duration: 4000 })` on save.
+- **og:image absolute-URL hardening** — `usePageMeta.js` resolves any relative path to `window.location.origin + path` before injecting the meta tag, so Twitter/Slack/LinkedIn/iMessage previews work correctly. Also normalizes `og:url` and `twitter:image`.
+- **Helpers consolidated** — `record_view`, `viewer_id_for` lifted from `routers/profiles.py` into `core.py`. `routers/casting.py` imports cleanly without cross-router. Backwards-compat aliases retained.
+- **Pre-launch security gaps closed (4 critical):**
+  1. **Owner-or-admin gate on update_entity / delete_entity** — non-admin user can no longer edit/delete other users' Profile, CompanyProfile, CastingCall, CastingApplication, SpotRequest, SavedProfile, ContactReveal, Subscription, Notification, RoleAlert (returns 403).
+  2. **Duplicate CastingApplication 409** — same user applying twice to the same call returns 409.
+  3. **ContactReveal on own profile blocked** — returns 400.
+  4. **SpotRequest to self blocked** — returns 400.
+- New regression suite at `tests/test_iteration13.py` (15 tests). **52 backend pytest PASS** total.
+- Removed stale Cloudflare WAF section from `test_credentials.md` (no longer relevant).
+
 ### Iter 13 (Feb 2026 — Profile poster + Phase-2 router split) — TESTED ✓ (37/37 pytest)
 - **Profile poster download** — `ProfilePosterCard.jsx` generates a 1080×1920 owner-only card via `html2canvas` (background #0D0D0D, yellow radial glow, large headshot or branded `'` placeholder, name/role/location, SpotScore N/100 badge, percentile badge if qualifying, verified tick if email_verified, IMDb hint if set, QR code linking to `/u/{slug}`, getspotd.app footer). Triggers Web Share API on mobile, PNG download on desktop. Visibility gated at the parent — component only mounts when `myProfile?.id === profile?.id`.
 - **Phase-2 router split — COMPLETE.** server.py: 2743 → **132 lines** (thin app factory: middleware + static mount + include_router + startup/shutdown). Endpoints fully migrated:
