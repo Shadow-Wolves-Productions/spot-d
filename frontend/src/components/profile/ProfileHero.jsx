@@ -39,8 +39,8 @@ export default function ProfileHero({ profile, subscription, isFoundingMember })
               {profile.profile_photo ? (
                 <img src={profile.profile_photo} alt={profile.full_name} className="w-full h-full object-cover" />
               ) : (
-                <div className="w-full h-full bg-secondary flex items-center justify-center">
-                  <Film className="w-12 h-12 text-muted-foreground/30" />
+                <div className="w-full h-full flex items-center justify-center" style={{ background: "#0D0D0D" }}>
+                  <img src="/brand/lens-only.png" alt="" aria-hidden="true" className="object-contain" style={{ width: "55%", height: "55%", opacity: 0.85 }} />
                 </div>
               )}
             </div>

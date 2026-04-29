@@ -173,6 +173,20 @@ export default function AdminDashboard() {
       setSendingNudges(false);
     }
   };
+  const [resendingWelcomes, setResendingWelcomes] = useState(false);
+  const sendPendingWelcomes = async () => {
+    if (!window.confirm(`Send the founding-member welcome email to all ${imports.unclaimed} unclaimed imported member${imports.unclaimed === 1 ? "" : "s"}?`)) return;
+    setResendingWelcomes(true);
+    try {
+      const { data } = await base44.http.post("/api/admin/send-pending-welcomes", {});
+      toast.success(`Queued ${data.count} welcome email${data.count === 1 ? "" : "s"}`);
+      loadImports();
+    } catch (e) {
+      toast.error("Failed to queue welcome emails");
+    } finally {
+      setResendingWelcomes(false);
+    }
+  };
 
   const lc = (s) => (s || "").toLowerCase();
   const filteredUsers = users.filter((u) => lc(u.full_name).includes(lc(search)) || lc(u.email).includes(lc(search)));
@@ -351,6 +365,20 @@ export default function AdminDashboard() {
               <div className="bg-card border border-border rounded-xl p-4"><p className="text-[10px] uppercase tracking-wider font-mono text-muted-foreground">Total</p><p className="font-display text-2xl font-bold">{imports.total}</p></div>
               <div className="bg-card border border-border rounded-xl p-4"><p className="text-[10px] uppercase tracking-wider font-mono text-muted-foreground">Claimed</p><p className="font-display text-2xl font-bold text-green-400">{imports.claimed}</p></div>
               <div className="bg-card border border-border rounded-xl p-4"><p className="text-[10px] uppercase tracking-wider font-mono text-muted-foreground">Unclaimed</p><p className="font-display text-2xl font-bold text-amber-400">{imports.unclaimed}</p></div>
+            </div>
+            <div className="flex justify-end mb-3">
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-primary/40 text-primary hover:bg-primary/10"
+                onClick={sendPendingWelcomes}
+                disabled={resendingWelcomes || imports.unclaimed === 0}
+                data-testid="admin-send-pending-welcomes-btn"
+                title={imports.unclaimed === 0 ? "No pending welcomes" : `Send to ${imports.unclaimed} unclaimed`}
+              >
+                <Send className="w-3.5 h-3.5 mr-1" />
+                {resendingWelcomes ? "Queuing…" : `Send ${imports.unclaimed} pending welcome${imports.unclaimed === 1 ? "" : "s"}`}
+              </Button>
             </div>
             <div className="space-y-2">
               {filteredImports.map((p) => (

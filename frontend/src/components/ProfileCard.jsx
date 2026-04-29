@@ -49,23 +49,19 @@ export default function ProfileCard({ profile, subscription, isFoundingMember, o
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               />
             ) : (
-              // Branded placeholder — Spot'd electric apostrophe at 30% opacity.
-              // Replaces the generic film-frame icon for a cohesive directory grid.
-              <div className="w-full h-full flex items-center justify-center select-none" data-testid="profile-card-placeholder" style={{ containerType: "size" }}>
-                <span
-                  className="font-display font-bold leading-none"
-                  style={{
-                    color: "#E6FF00",
-                    opacity: 0.3,
-                    fontSize: "min(60cqw, 80cqh)",
-                    lineHeight: 0.7,
-                    letterSpacing: "-0.05em",
-                    transform: "translateY(8%)",
-                  }}
+              // Branded placeholder — Spot'd lens-only mark, centred on dark bg.
+              <div
+                className="w-full h-full flex items-center justify-center select-none"
+                data-testid="profile-card-placeholder"
+                style={{ background: "#0D0D0D" }}
+              >
+                <img
+                  src="/brand/lens-only.png"
+                  alt=""
                   aria-hidden="true"
-                >
-                  '
-                </span>
+                  className="object-contain"
+                  style={{ width: "55%", height: "55%", opacity: 0.85 }}
+                />
               </div>
             )}
 

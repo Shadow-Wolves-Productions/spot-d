@@ -12,7 +12,7 @@ from fastapi.responses import JSONResponse, Response as FastAPIResponse
 from pydantic import BaseModel, EmailStr, Field, ValidationError
 
 from core import (
-    ADMIN_EMAIL, EMAIL_LOGO_URL, EMAIL_MOCK, IS_PROD, UPLOAD_ROOT,
+    ADMIN_EMAIL, EMAIL_LOGO_URL, EMAIL_MOCK, IS_PROD, PUBLIC_APP_URL, UPLOAD_ROOT,
     ENTITIES, PUBLIC_READ,
     coll, compute_all_roles, current_user, db, decode_token, email_logo_html,
     log, make_token, new_id, now_iso, parse_value, require_user, scheduler,

@@ -163,7 +163,8 @@ def test_founding_member_badge_renders_only_for_founder_tier():
     # legacy tier === "founder" check passes.
     assert 'tier === "founder"' in src
     assert "Founding Member" in src
-    assert "#E8FC6C" in src
+    # Pill colour switched to blue (#38BDF8) per latest brand direction.
+    assert "#38BDF8" in src
 
 
 # --------------------------------------------------------------------------- #
