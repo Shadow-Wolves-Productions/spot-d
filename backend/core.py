@@ -50,6 +50,27 @@ EMAIL_LOGO_URL = os.environ.get(
     "https://customer-assets.emergentagent.com/job_indie-film-casting/artifacts/2lj4urlc_dark-transparent.png",
 )
 
+
+def email_logo_html(font_size: int = 32) -> str:
+    """
+    Return an inline HTML+CSS rendering of the spot'd wordmark for use in
+    email bodies. We render the logo with web-safe text instead of an
+    <img> tag because (a) Postmark+Outlook+Gmail will frequently block
+    referenced images on the first open, and (b) hosting the PNG on a
+    CDN means it can fail to load when the asset is rotated. The wordmark
+    is small enough that pure HTML reads identically to the brand asset.
+
+    Output:
+        <span style="...">spot<span style="color:#E8FC6C">'</span>d</span>
+    """
+    return (
+        f'<span style="display:inline-block;font-family:Helvetica,Arial,sans-serif;'
+        f'font-weight:800;font-size:{font_size}px;letter-spacing:-1px;color:#FFFFFF;'
+        f'line-height:1;">'
+        f'spot<span style="color:#E8FC6C;">\'</span>d'
+        f'</span>'
+    )
+
 UPLOAD_ROOT = Path(__file__).parent / "static" / "uploads"
 for _sub in ("profiles", "headshots", "company-logos", "company-covers"):
     (UPLOAD_ROOT / _sub).mkdir(parents=True, exist_ok=True)

@@ -17,6 +17,7 @@ import { usePageMeta } from "@/lib/usePageMeta";
 
 export default function ProfilePage() {
   const [profile, setProfile] = useState(null);
+  const [profileSubscription, setProfileSubscription] = useState(null);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
   const [myProfile, setMyProfile] = useState(null);
@@ -95,6 +96,13 @@ export default function ProfilePage() {
         if (p.user_id) {
           const linked = await base44.entities.CompanyProfile.filter({ user_id: p.user_id }).catch(() => []);
           setLinkedCompanies(linked || []);
+          // Load this profile's active subscription (for the founding-member badge).
+          try {
+            const subs = await base44.entities.Subscription.filter(
+              { user_id: p.user_id, status: "active" }, "-created_date", 1
+            );
+            setProfileSubscription(subs?.[0] || null);
+          } catch { /* non-critical */ }
         }
       }
       setLoading(false);
@@ -219,7 +227,7 @@ export default function ProfilePage() {
           myProfile={myProfile}
         />
       )}
-      <ProfileHero profile={profile} />
+      <ProfileHero profile={profile} subscription={profileSubscription} />
 
       {/* Actions strip */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">

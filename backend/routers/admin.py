@@ -14,8 +14,8 @@ from pydantic import BaseModel, EmailStr, Field, ValidationError
 from core import (
     ADMIN_EMAIL, EMAIL_LOGO_URL, EMAIL_MOCK, IS_PROD, UPLOAD_ROOT,
     ENTITIES, PUBLIC_READ,
-    coll, compute_all_roles, current_user, db, decode_token, log,
-    make_token, new_id, now_iso, parse_value, require_user, scheduler,
+    coll, compute_all_roles, current_user, db, decode_token, email_logo_html,
+    log, make_token, new_id, now_iso, parse_value, require_user, scheduler,
     send_email, send_sms, serialize, slugify,
 )
 from models import ENTITY_MODELS
@@ -204,7 +204,7 @@ async def _send_welcome_internal(user_id: str, profile_id: str, tier: str = "pro
   <div style="max-width:600px;margin:0 auto;">
 
     <!-- Wordmark -->
-    <img src="{EMAIL_LOGO_URL}" alt="Spot&#39;d" width="140" style="display:block;margin-bottom:40px;border:0;outline:none;" />
+    <div style="margin-bottom:32px;">{email_logo_html(40)}</div>
 
     <!-- Personal opener -->
     <p style="margin:0 0 18px;font-size:16px;color:#E5E5E5;">Hey {first},</p>
@@ -258,14 +258,14 @@ async def _send_welcome_internal(user_id: str, profile_id: str, tier: str = "pro
     <p style="margin:0 0 16px;color:#E5E5E5;">Because you were one of the first to put your hand up with CineConnect, you&rsquo;re getting first access to Spot&rsquo;d as a <strong style="color:#FFFFFF;">Founding Member</strong>.</p>
     <p style="margin:0 0 12px;color:#999;">What that means:</p>
     <div style="background:#131313;border:1px solid #2A2A2A;border-radius:12px;padding:20px 24px;margin:16px 0 20px;">
-      <p style="margin:0 0 8px;color:#E5E5E5;">⚡ <strong style="color:#FFFFFF;">12 months of PRO access</strong> &mdash; completely free</p>
+      <p style="margin:0 0 8px;color:#E5E5E5;">⚡ <strong style="color:#FFFFFF;">Lifetime free PRO access</strong> &mdash; on us, forever</p>
       <p style="margin:0 0 8px;color:#E5E5E5;">⚡ No credit card. No catch.</p>
       <p style="margin:0 0 8px;color:#E5E5E5;">⚡ Priority placement in search</p>
       <p style="margin:0 0 8px;color:#E5E5E5;">⚡ Unlimited contact reveals</p>
       <p style="margin:0 0 8px;color:#E5E5E5;">⚡ Full portfolio uploads</p>
       <p style="margin:0;color:#E5E5E5;">⚡ Founding member badge on your profile</p>
     </div>
-    <p style="margin:0 0 16px;color:#999;font-size:14px;">After launch, PRO is <strong style="color:#FFFFFF;">$9.99/month</strong> or <strong style="color:#FFFFFF;">$79/year</strong>. As a founding member you get 12 months on us.</p>
+    <p style="margin:0 0 16px;color:#999;font-size:14px;">After launch, PRO is <strong style="color:#FFFFFF;">$9.99/month</strong> or <strong style="color:#FFFFFF;">$79/year</strong>. As a founding member, your PRO access is free for life.</p>
     <p style="margin:0 0 16px;color:#E5E5E5;">But here&rsquo;s the thing &mdash; there are only <strong style="color:#FFFFFF;">100 founding member spots total</strong>.</p>
     <p style="margin:0 0 28px;color:#FF5C35;font-weight:700;font-size:17px;">You have 7 days to claim yours.</p>
     <p style="margin:0 0 32px;color:#999;font-size:14px;">After that, unclaimed spots go to the public waitlist and your profile reverts to a free account.</p>

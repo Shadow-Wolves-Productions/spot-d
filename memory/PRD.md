@@ -73,6 +73,40 @@ Foundation migration, OTP auth, Stripe checkout, Postmark, bulk import, SpotScor
 - **HSTS middleware** — `Strict-Transport-Security` gated on `ENV=production`.
 - **7 Pydantic body models** with URL auto-https + slug normalisers. Relative paths preserved. 422 on validation failure.
 
+### Iter 15 (Feb 2026 — password auth + Founding Member badge + Spotlight + email logo) — TESTED ✓ (41/41 pytest)
+
+**1. Password auth (replaces OTP-only login)**
+- New endpoints: `POST /api/auth/login` (email+password, JWT), `POST /api/auth/set-password` (auth required), `POST /api/auth/reset-password` (email+code+new_password), `POST /api/auth/forgot-password` (alias of request-code).
+- `verify-code` now returns `needs_password_setup` flag — frontend prompts to set a password if user has none.
+- Legacy / imported users (no `password_hash`) → `POST /api/auth/login` returns 409 with `{ code: "set_password_required" }`. Frontend auto-falls into OTP → set-password flow.
+- bcrypt cost factor 12 (passlib). Brute-force gate: 5 failed attempts in 15min → 429 soft-lock. Successful login wipes failed history.
+- New collections: `db.users.password_hash`, `db.users.password_set_at`, `db.login_attempts` (tracks failed attempts).
+- Frontend: full Login.jsx rewrite — email+password as default, with `Forgot password?` link, `Show/hide password` toggle, `New here? Create account` register flow (email → OTP → set-password), and seamless legacy-user migration via 409 detection.
+
+**2. Founding Member badge**
+- `<FoundingMemberBadge tier={subscription?.tier} />` — pill: `#E8FC6C` bg, `#0D0D0D` text, `◆` glyph + "Founding Member" label, only renders when `tier === "founder"`.
+- Wired into ProfileCard (between photo and name row), ProfileHero (next to tier badges), and SearchDirectory (batched founder lookup).
+- FeaturedProfiles on landing also tags founder cards.
+
+**3. Spot'd this month (Spotlight)**
+- New `<HomepageSpotlight />` component on the landing page — surfaces the highest-SpotScore non-founder non-minor profile (≥30 score) of the month.
+- Heading: **"Spot'd this month"** (per user direction).
+- Hidden if no qualifying profile exists.
+- Dashboard sidebar gains a Spotlight card: Elite users see `"You'll appear in the public Spotlight this month"`; Free/PRO/Founder users see `"Upgrade to Elite to get featured"` + CTA to /pricing.
+
+**4. Email logo fix**
+- All 5 email templates (auth OTP, welcome, founding-deadline, profile-completion-nudge ×3) now render the wordmark via inline HTML+CSS — `<span ...>spot<span style="color:#E8FC6C">'</span>d</span>` — instead of `<img>`. Works in Outlook/Gmail/Postmark even when remote image-loading is blocked.
+- Helper: `core.email_logo_html(font_size=40)`.
+
+**5. Lifetime PRO copy**
+- All `"12 months of PRO"` → `"Lifetime free PRO"` across `routers/admin.py` (welcome email), `routers/scheduled.py` (founding-deadline reminder).
+- Pricing page already used "lifetime free PRO" wording — no change needed.
+
+**6. Cosmetic**
+- Privacy + Terms `Contact:` updated to `hello@getspotd.app` (was Brendan's personal email).
+
+Backend pytest: iter11 (14) + iter13 (15) + iter14 (12) = **41/41 PASS**.
+
 ### Iter 14 (Feb 2026 — logo + cosmetics + pre-launch checklist) — TESTED ✓ (52 backend pytest)
 - **Logo size bumped** — header `h-14 md:h-20` (56→80px) with breathing-room padding around the Link wrapper; footer `h-14 md:h-16` (56→64px). Brand mark legible on both dark and light themes.
 - **FounderCapEditor success toast** — `toast.success("Founder cap updated to N", { duration: 4000 })` on save.

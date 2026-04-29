@@ -21,6 +21,7 @@ const SORT_OPTIONS = [
 
 export default function SearchDirectory() {
   const [profiles, setProfiles] = useState([]);
+  const [founderUserIds, setFounderUserIds] = useState(() => new Set());
   const [companies, setCompanies] = useState([]);
   const [tab, setTab] = useState("crew"); // "talent" | "crew" | "companies"
   const [spotCountMap, setSpotCountMap] = useState({});
@@ -194,6 +195,16 @@ export default function SearchDirectory() {
     }
 
     setProfiles(data);
+
+    // Look up active founder subscriptions for the visible profiles in one
+    // batch so the directory can render the Founding Member pill on each
+    // card without extra round-trips.
+    try {
+      const subs = await base44.entities.Subscription.filter(
+        { tier: "founder", status: "active" }, "-created_date", 200
+      );
+      setFounderUserIds(new Set((subs || []).map((s) => s.user_id)));
+    } catch { /* non-critical */ }
 
     // Apply tab split — Talent shows anyone with Actor anywhere; Crew shows
     // anyone whose roles include at least one non-Actor role. A profile can
@@ -454,6 +465,7 @@ export default function SearchDirectory() {
                      onSave={handleSave}
                      isSaved={savedIds.has(profile.id)}
                      spotCount={spotCountMap[profile.id] || 0}
+                     subscription={founderUserIds.has(profile.user_id) ? { tier: "founder" } : null}
                    />
                    {profile._distKm !== undefined && (
                      <div className="absolute top-3 left-3 px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold bg-primary text-primary-foreground z-10">

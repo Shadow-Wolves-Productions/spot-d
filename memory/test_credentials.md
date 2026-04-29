@@ -1,10 +1,16 @@
 # Spot'd — Test credentials & integration secrets
 
-## Admin login (passwordless OTP)
+## Admin login (hybrid auth — iter15)
 - Email: `brendan@shadowwolvesproductions.com.au`
-- Method: send OTP via `POST /api/auth/request-code` then verify with `POST /api/auth/verify-code`
+- **Login flow (preferred)**: `POST /api/auth/login` with `{ email, password }`.
+  - If `password_hash` is null → returns 409 `{ code: "set_password_required" }`. Frontend then drops into the OTP-then-set-password flow.
+  - As of this iter, Brendan has NOT yet set a password. First sign-in uses the OTP flow:
+    1. `POST /api/auth/request-code { email }`
+    2. `POST /api/auth/verify-code { email, code }` — code from Postmark email or `db.login_codes`
+    3. After verify, frontend prompts for password → `POST /api/auth/set-password { password }`
 - Role: `admin`, founder tier active
 - Profile slug: `brendanbyrneofficial`
+- For automated testing of password endpoints, use `iter14-rtt@example.com` flow (see `tests/test_iteration14.py::test_otp_set_password_then_login_round_trip`).
 
 ## Email — Postmark (LIVE)
 - Server API token: configured in `/app/backend/.env` as `POSTMARK_API_KEY`
