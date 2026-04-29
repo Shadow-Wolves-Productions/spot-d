@@ -1,11 +1,15 @@
 /**
  * Founding Member badge — pill with electric-yellow background, dark text,
- * and a leading diamond glyph. Renders only when `tier === "founder"`.
+ * leading diamond glyph.
  *
- * Pass-through props for spacing/alignment (`className`).
+ * Renders when EITHER:
+ *   - `isFoundingMember` prop is truthy (preferred — set on the User record
+ *     so a user keeps the badge regardless of their billing tier)
+ *   - or legacy: `tier === "founder"` (old direct-from-subscription path)
  */
-export default function FoundingMemberBadge({ tier, className = "" }) {
-  if (tier !== "founder") return null;
+export default function FoundingMemberBadge({ tier, isFoundingMember, className = "" }) {
+  const show = !!isFoundingMember || tier === "founder";
+  if (!show) return null;
   return (
     <span
       className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold tracking-wide uppercase ${className}`}

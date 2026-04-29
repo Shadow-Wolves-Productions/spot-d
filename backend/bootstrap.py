@@ -28,6 +28,16 @@ async def seed_initial_data():
         }
         await db.users.insert_one(user.copy())
     user_id = user["id"]
+
+    # Brendan is always a Founding Member regardless of which billing tier his
+    # subscription sits at. The flag is also set on every user with an active
+    # `tier=founder` subscription via migrate_founding_member_flag() on boot.
+    if not user.get("is_founding_member"):
+        await db.users.update_one(
+            {"id": user_id},
+            {"$set": {"is_founding_member": True, "updated_date": now_iso()}},
+        )
+
     profile = await db.profiles.find_one({"user_id": user_id})
     if not profile:
         profile_id = new_id()
@@ -217,10 +227,31 @@ async def create_indexes():
     await db.verification_codes.create_index("user_id")
     await db.login_codes.create_index("email")
     await db.payment_transactions.create_index("session_id")
-    # view_events — TTL index auto-purges entries 1h after creation, which is
-    # exactly the rate-limit window for a viewer × target. Compound index
-    # speeds the "is there a fresh row already?" lookup.
+    # view_events — TTL index auto-purges entries 1h after creation
     await db.view_events.create_index("created_at", expireAfterSeconds=3600)
     await db.view_events.create_index([("kind", 1), ("target_id", 1), ("viewer_id", 1)])
+    # spotlight pins — quick lookup of active pins
+    await db.spotlight_picks.create_index([("expires_at", 1), ("position", 1)])
+
+
+async def migrate_founding_member_flag():
+    """Set User.is_founding_member=true for every user with an active
+    `tier=founder` subscription. Idempotent — safe to run on every boot.
+    """
+    founder_user_ids = []
+    async for s in db.subscriptions.find(
+        {"tier": "founder", "status": "active"}, {"_id": 0, "user_id": 1},
+    ):
+        if s.get("user_id"):
+            founder_user_ids.append(s["user_id"])
+    if not founder_user_ids:
+        return
+    res = await db.users.update_many(
+        {"id": {"$in": founder_user_ids}, "is_founding_member": {"$ne": True}},
+        {"$set": {"is_founding_member": True, "updated_date": now_iso()}},
+    )
+    if res.modified_count:
+        log.info("Marked %d users as founding members", res.modified_count)
+
 
 

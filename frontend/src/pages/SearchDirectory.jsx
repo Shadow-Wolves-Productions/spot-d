@@ -196,14 +196,17 @@ export default function SearchDirectory() {
 
     setProfiles(data);
 
-    // Look up active founder subscriptions for the visible profiles in one
-    // batch so the directory can render the Founding Member pill on each
-    // card without extra round-trips.
+    // Look up which profiles are founding members. Prefer the User flag
+    // (set by bootstrap migration + admin grants) and union with active
+    // founder-tier subscriptions for backwards compat.
     try {
+      const users = await base44.entities.User.filter({ is_founding_member: true }, undefined, 500);
+      const ids = new Set((users || []).map((u) => u.id));
       const subs = await base44.entities.Subscription.filter(
         { tier: "founder", status: "active" }, "-created_date", 200
       );
-      setFounderUserIds(new Set((subs || []).map((s) => s.user_id)));
+      (subs || []).forEach((s) => s.user_id && ids.add(s.user_id));
+      setFounderUserIds(ids);
     } catch { /* non-critical */ }
 
     // Apply tab split — Talent shows anyone with Actor anywhere; Crew shows
@@ -465,7 +468,7 @@ export default function SearchDirectory() {
                      onSave={handleSave}
                      isSaved={savedIds.has(profile.id)}
                      spotCount={spotCountMap[profile.id] || 0}
-                     subscription={founderUserIds.has(profile.user_id) ? { tier: "founder" } : null}
+                     isFoundingMember={founderUserIds.has(profile.user_id)}
                    />
                    {profile._distKm !== undefined && (
                      <div className="absolute top-3 left-3 px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold bg-primary text-primary-foreground z-10">

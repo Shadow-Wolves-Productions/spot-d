@@ -59,6 +59,7 @@ function MiniProfileCard({ profile }) {
 export default function HeroSection() {
   const [stats, setStats] = useState({ profile_count: 0, role_count: 0 });
   const [topProfiles, setTopProfiles] = useState([]);
+  const [spotlightKind, setSpotlightKind] = useState(null);  // "paid" | "admin" | "founder_fallback" | "auto"
   const [activeIdx, setActiveIdx] = useState(0);
 
   useEffect(() => {
@@ -68,10 +69,20 @@ export default function HeroSection() {
         setStats(data);
       } catch { /* silent — keep zeros */ }
       try {
-        const top = await base44.entities.Profile.list("-spot_score", 6);
-        // Prefer profiles with photos for the hero carousel
-        const sorted = [...top].sort((a, b) => (b.profile_photo ? 1 : 0) - (a.profile_photo ? 1 : 0));
-        setTopProfiles(sorted.slice(0, 3));
+        // Spotlight feed: paid Elite picks first, then admin pins, then
+        // founder fallbacks. Frontend just carousels whatever comes back.
+        const { data } = await base44.http.get("/api/spotlight/active");
+        const picks = data?.picks || [];
+        if (picks.length > 0) {
+          setTopProfiles(picks.slice(0, 4));
+          setSpotlightKind(picks[0]?._spotlight?.kind || null);
+        } else {
+          // Last-ditch fallback if spotlight returns nothing.
+          const top = await base44.entities.Profile.list("-spot_score", 6);
+          const sorted = [...top].sort((a, b) => (b.profile_photo ? 1 : 0) - (a.profile_photo ? 1 : 0));
+          setTopProfiles(sorted.slice(0, 3));
+          setSpotlightKind("auto");
+        }
       } catch { /* keep empty */ }
     };
     load();
@@ -85,6 +96,10 @@ export default function HeroSection() {
     }, 4000);
     return () => clearInterval(id);
   }, [topProfiles.length]);
+
+  // Label shown above the carousel — "Spot'd this month" for spotlight picks,
+  // softer copy for the algorithmic fallback.
+  const spotlightLabel = spotlightKind === "auto" ? "Top of the directory" : "Spot'd this month";
 
   const subhead = stats.profile_count
     ? `${stats.profile_count} verified cast and crew profiles. Casting calls. Direct contact. No middleman.`
@@ -164,6 +179,17 @@ export default function HeroSection() {
             className="hidden lg:block relative"
           >
             <div className="relative">
+              {/* "Spot'd this month" eyebrow above the carousel */}
+              <div className="mb-4 flex items-center gap-2" data-testid="hero-spotlight-label">
+                <span
+                  className="inline-block w-1.5 h-1.5 rounded-full"
+                  style={{ background: spotlightKind === "auto" ? "rgba(255,255,255,0.4)" : "#E6FF00" }}
+                />
+                <span className="text-[11px] uppercase tracking-[0.18em] font-semibold" style={{ color: spotlightKind === "auto" ? "rgba(255,255,255,0.5)" : "#E6FF00" }}>
+                  {spotlightLabel}
+                </span>
+              </div>
+
               {/* Subtle accent shape */}
               <div className="absolute -top-4 -right-4 w-40 h-56 border border-primary/10 rounded-lg pointer-events-none" />
 

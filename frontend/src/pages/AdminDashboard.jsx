@@ -3,7 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import {
   Shield, Users, Film, CheckCircle2, Crown, Search, RefreshCw, Award, Zap,
-  Building2, Mail, Server, BarChart3, FileText, EyeOff, Eye, Send,
+  Building2, Mail, Server, BarChart3, FileText, EyeOff, Eye, Send, Sparkles,
+  Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,13 +12,14 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 
 const TABS = [
-  { id: "profiles", label: "Profiles", icon: Film },
-  { id: "casting",  label: "Casting",  icon: Award },
-  { id: "imports",  label: "Imports",  icon: Building2 },
-  { id: "emails",   label: "Emails",   icon: Mail },
-  { id: "platform", label: "Platform", icon: Server },
-  { id: "stats",    label: "Stats",    icon: BarChart3 },
-  { id: "logs",     label: "Logs",     icon: FileText },
+  { id: "profiles",  label: "Profiles",  icon: Film },
+  { id: "casting",   label: "Casting",   icon: Award },
+  { id: "spotlight", label: "Spotlight", icon: Sparkles },
+  { id: "imports",   label: "Imports",   icon: Building2 },
+  { id: "emails",    label: "Emails",    icon: Mail },
+  { id: "platform",  label: "Platform",  icon: Server },
+  { id: "stats",     label: "Stats",     icon: BarChart3 },
+  { id: "logs",      label: "Logs",      icon: FileText },
 ];
 
 export default function AdminDashboard() {
@@ -339,6 +341,9 @@ export default function AdminDashboard() {
           </div>
         )}
 
+        {/* SPOTLIGHT — manual pin manager */}
+        {tab === "spotlight" && <SpotlightTab profiles={profiles} />}
+
         {/* IMPORTS */}
         {tab === "imports" && (
           <div data-testid="admin-imports-tab">
@@ -534,3 +539,143 @@ function FounderCapEditor({ current, onSaved }) {
     </div>
   );
 }
+
+
+function SpotlightTab({ profiles }) {
+  const [pins, setPins] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [search, setSearch] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const { data } = await base44.http.get("/api/admin/spotlight-pins");
+      setPins(data || []);
+    } catch (e) {
+      toast.error("Couldn't load pins");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+  useEffect(() => { load(); }, [load]);
+
+  const pin = async (profile) => {
+    setBusy(true);
+    try {
+      await base44.http.post("/api/admin/spotlight-pin", {
+        profile_id: profile.id,
+        // 30-day default — admin can clear early via the trash icon below.
+        expires_at: new Date(Date.now() + 30 * 24 * 3600 * 1000).toISOString(),
+        position: 0,
+      });
+      toast.success(`Pinned ${profile.full_name} to homepage spotlight`);
+      await load();
+    } catch (e) {
+      toast.error(e?.response?.data?.detail || "Couldn't pin profile");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const unpin = async (pinId) => {
+    setBusy(true);
+    try {
+      await base44.http.delete(`/api/admin/spotlight-pin/${pinId}`);
+      toast.success("Pin removed");
+      await load();
+    } catch (e) {
+      toast.error("Couldn't remove pin");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const term = search.toLowerCase().trim();
+  const candidates = (profiles || [])
+    .filter((p) => !p.is_minor_profile)
+    .filter((p) => !term || `${p.full_name || ""} ${p._user?.email || ""}`.toLowerCase().includes(term))
+    .slice(0, 12);
+
+  return (
+    <div data-testid="admin-spotlight-tab" className="space-y-6">
+      {/* Active pins */}
+      <div>
+        <h3 className="text-sm uppercase tracking-wider text-muted-foreground mb-3">Active spotlight pins</h3>
+        {loading ? (
+          <p className="text-sm text-muted-foreground">Loading…</p>
+        ) : pins.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            No pins yet. The homepage will fall back to founding members or the top-SpotScore profile until you pin someone.
+          </p>
+        ) : (
+          <div className="space-y-2">
+            {pins.map((p) => (
+              <div key={p.id} className="bg-card border border-border/60 rounded-xl p-3 flex items-center gap-3" data-testid={`pin-row-${p.id}`}>
+                <div className="w-10 h-10 rounded-full bg-secondary overflow-hidden flex-shrink-0">
+                  {p.profile?.profile_photo && (
+                    <img src={p.profile.profile_photo} alt="" className="w-full h-full object-cover" />
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-foreground truncate">{p.profile?.full_name || "(missing)"}</p>
+                  <p className="text-[11px] text-muted-foreground">
+                    {p.kind} · expires {p.expires_at ? new Date(p.expires_at).toLocaleDateString() : "never"}
+                  </p>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-border h-8"
+                  disabled={busy}
+                  onClick={() => unpin(p.id)}
+                  data-testid={`unpin-${p.id}`}
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Pick a profile to pin */}
+      <div>
+        <h3 className="text-sm uppercase tracking-wider text-muted-foreground mb-3">Pin a new profile</h3>
+        <div className="relative mb-3">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search profiles by name or email…"
+            className="pl-9 bg-secondary border-border"
+            data-testid="spotlight-search"
+          />
+        </div>
+        <div className="space-y-2">
+          {candidates.map((p) => (
+            <div key={p.id} className="bg-card border border-border/60 rounded-xl p-3 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-secondary overflow-hidden flex-shrink-0">
+                {p.profile_photo && <img src={p.profile_photo} alt="" className="w-full h-full object-cover" />}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-foreground truncate">{p.full_name}</p>
+                <p className="text-[11px] text-muted-foreground truncate">SpotScore {p.spot_score || 0} · {p.primary_role || "—"}</p>
+              </div>
+              <Button
+                size="sm"
+                disabled={busy}
+                onClick={() => pin(p)}
+                className="bg-primary text-primary-foreground h-8"
+                data-testid={`pin-${p.id}`}
+              >
+                <Sparkles className="w-3.5 h-3.5 mr-1" /> Pin (30 days)
+              </Button>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+

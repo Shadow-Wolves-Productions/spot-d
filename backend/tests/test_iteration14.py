@@ -159,7 +159,9 @@ def test_founding_member_badge_used_in_profile_components():
 
 def test_founding_member_badge_renders_only_for_founder_tier():
     src = Path("/app/frontend/src/components/FoundingMemberBadge.jsx").read_text()
-    assert 'tier !== "founder"' in src
+    # Renders if either the explicit isFoundingMember prop is true, or the
+    # legacy tier === "founder" check passes.
+    assert 'tier === "founder"' in src
     assert "Founding Member" in src
     assert "#E8FC6C" in src
 

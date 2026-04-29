@@ -22,7 +22,7 @@ const TIER_BADGE = {
   elite:   { label: "ELITE",   bg: "#E6FF00", color: "#0D0D0D" },
 };
 
-export default function ProfileCard({ profile, subscription, onSave, isSaved, index = 0, featured = false, spotCount }) {
+export default function ProfileCard({ profile, subscription, isFoundingMember, onSave, isSaved, index = 0, featured = false, spotCount }) {
   const availabilityStyle = profile.availability_status === "Available Now"
     ? { background: "#E6FF00", color: "#0D0D0D", label: "Available now" }
     : profile.availability_status === "Available Soon"
@@ -122,7 +122,7 @@ export default function ProfileCard({ profile, subscription, onSave, isSaved, in
 
           {/* Card footer */}
           <div className="p-3.5 space-y-2.5">
-            <FoundingMemberBadge tier={subscription?.tier} />
+            <FoundingMemberBadge tier={subscription?.tier} isFoundingMember={isFoundingMember} />
             <div className="flex items-center justify-between">
               {profile.city && (
                 <div className="flex items-center gap-1 text-xs" style={{ color: "#888" }}>

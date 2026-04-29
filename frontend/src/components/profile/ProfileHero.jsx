@@ -22,7 +22,7 @@ async function trackImdbClick(profile) {
   } catch (_) {}
 }
 
-export default function ProfileHero({ profile, subscription }) {
+export default function ProfileHero({ profile, subscription, isFoundingMember }) {
   return (
     <div className="relative pt-20">
       {/* Background */}
@@ -63,7 +63,7 @@ export default function ProfileHero({ profile, subscription }) {
               {profile.is_boosted && (
                 <Badge variant="outline" className="border-primary/20 text-primary/80 text-[10px]">Featured</Badge>
               )}
-              <FoundingMemberBadge tier={subscription?.tier} />
+              <FoundingMemberBadge tier={subscription?.tier} isFoundingMember={isFoundingMember} />
             </div>
 
             <h1 className="font-display text-3xl sm:text-4xl font-bold text-foreground">

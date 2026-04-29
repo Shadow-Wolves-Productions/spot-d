@@ -18,6 +18,7 @@ import { usePageMeta } from "@/lib/usePageMeta";
 export default function ProfilePage() {
   const [profile, setProfile] = useState(null);
   const [profileSubscription, setProfileSubscription] = useState(null);
+  const [profileOwner, setProfileOwner] = useState(null);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
   const [myProfile, setMyProfile] = useState(null);
@@ -96,7 +97,13 @@ export default function ProfilePage() {
         if (p.user_id) {
           const linked = await base44.entities.CompanyProfile.filter({ user_id: p.user_id }).catch(() => []);
           setLinkedCompanies(linked || []);
-          // Load this profile's active subscription (for the founding-member badge).
+          // Load this profile's owner User record so we can read the
+          // is_founding_member flag for the hero badge.
+          try {
+            const owner = await base44.entities.User.get(p.user_id);
+            setProfileOwner(owner || null);
+          } catch { /* non-critical */ }
+          // Load this profile's active subscription (for the tier badge).
           try {
             const subs = await base44.entities.Subscription.filter(
               { user_id: p.user_id, status: "active" }, "-created_date", 1
@@ -227,7 +234,7 @@ export default function ProfilePage() {
           myProfile={myProfile}
         />
       )}
-      <ProfileHero profile={profile} subscription={profileSubscription} />
+      <ProfileHero profile={profile} subscription={profileSubscription} isFoundingMember={!!profileOwner?.is_founding_member} />
 
       {/* Actions strip */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
