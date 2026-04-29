@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 
 export default function FeaturedProfiles() {
   const [profiles, setProfiles] = useState([]);
+  const [founderUserIds, setFounderUserIds] = useState(() => new Set());
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -14,6 +15,13 @@ export default function FeaturedProfiles() {
       const top = await base44.entities.Profile.list("-spot_score", 16);
       const visible = top.filter((p) => !p.is_minor_profile).slice(0, 8);
       setProfiles(visible);
+      // Look up active founder subs once for the visible list.
+      try {
+        const subs = await base44.entities.Subscription.filter(
+          { tier: "founder", status: "active" }, "-created_date", 200
+        );
+        setFounderUserIds(new Set((subs || []).map((s) => s.user_id)));
+      } catch { /* non-critical */ }
       setLoading(false);
     };
     load();
@@ -51,7 +59,13 @@ export default function FeaturedProfiles() {
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
           {profiles.map((profile, i) => (
-            <ProfileCard key={profile.id} profile={profile} index={i} featured={profile.is_boosted} subscription={null} />
+            <ProfileCard
+              key={profile.id}
+              profile={profile}
+              index={i}
+              featured={profile.is_boosted}
+              subscription={founderUserIds.has(profile.user_id) ? { tier: "founder" } : null}
+            />
           ))}
         </div>
 

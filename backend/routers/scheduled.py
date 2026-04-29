@@ -14,8 +14,8 @@ from pydantic import BaseModel, EmailStr, Field, ValidationError
 from core import (
     ADMIN_EMAIL, EMAIL_LOGO_URL, EMAIL_MOCK, IS_PROD, UPLOAD_ROOT,
     ENTITIES, PUBLIC_READ,
-    coll, compute_all_roles, current_user, db, decode_token, log,
-    make_token, new_id, now_iso, parse_value, require_user, scheduler,
+    coll, compute_all_roles, current_user, db, decode_token, email_logo_html,
+    log, make_token, new_id, now_iso, parse_value, require_user, scheduler,
     send_email, send_sms, serialize, slugify,
 )
 from models import ENTITY_MODELS
@@ -433,10 +433,10 @@ async def _process_founding_deadlines():
             html = f"""
 <div style="background:#0D0D0D;color:#E5E5E5;font-family:'DM Sans',Arial,sans-serif;padding:40px 24px;line-height:1.6;">
   <div style="max-width:560px;margin:0 auto;">
-    <img src="{EMAIL_LOGO_URL}" alt="Spot&#39;d" width="120" style="display:block;margin-bottom:32px;border:0;outline:none;" />
+    <div style="margin-bottom:32px;">{email_logo_html(40)}</div>
     <p style="margin:0 0 18px;color:#E5E5E5;">Hey {first},</p>
     <p style="margin:0 0 18px;color:#E5E5E5;">Just a heads up &mdash; your <strong style="color:#FFFFFF;">founding member spot</strong> on Spot&rsquo;d expires in <strong style="color:#FF5C35;">48 hours</strong>.</p>
-    <p style="margin:0 0 18px;color:#E5E5E5;">After that the spot goes to the public waitlist and your free 12 months of PRO access will be gone.</p>
+    <p style="margin:0 0 18px;color:#E5E5E5;">After that the spot goes to the public waitlist and your <strong style="color:#FFFFFF;">lifetime free PRO access</strong> will be gone forever.</p>
     <p style="margin:0 0 24px;color:#999;">Takes 2 minutes to claim:</p>
     <div style="text-align:center;margin:28px 0;">
       <a href="{PUBLIC_APP_URL}/login" style="display:inline-block;background:#E6FF00;color:#0D0D0D;text-decoration:none;font-weight:800;padding:16px 36px;border-radius:10px;font-family:'Sora',Arial,sans-serif;letter-spacing:0.04em;">CLAIM NOW &rarr;</a>
@@ -481,7 +481,7 @@ async def _process_founding_deadlines():
             html = f"""
 <div style="background:#0D0D0D;color:#E5E5E5;font-family:'DM Sans',Arial,sans-serif;padding:40px 24px;line-height:1.6;">
   <div style="max-width:560px;margin:0 auto;">
-    <img src="{EMAIL_LOGO_URL}" alt="Spot&#39;d" width="120" style="display:block;margin-bottom:32px;border:0;outline:none;" />
+    <div style="margin-bottom:32px;">{email_logo_html(40)}</div>
     <p style="margin:0 0 18px;color:#E5E5E5;">Hey {first},</p>
     <p style="margin:0 0 18px;color:#E5E5E5;">Your 7-day window to claim your founding member profile has passed. Your account is still active on our <strong style="color:#FFFFFF;">free plan</strong>.</p>
     <p style="margin:0 0 24px;color:#E5E5E5;">You can upgrade to PRO any time at <a href="{PUBLIC_APP_URL}/pricing" style="color:#E6FF00;text-decoration:none;font-weight:600;">getspotd.app/pricing</a>.</p>
@@ -539,7 +539,7 @@ async def claim_founder(request: Request):
     html = f"""
 <div style="background:#0D0D0D;color:#E5E5E5;font-family:'DM Sans',Arial,sans-serif;padding:40px 24px;line-height:1.6;">
   <div style="max-width:560px;margin:0 auto;">
-    <img src="{EMAIL_LOGO_URL}" alt="Spot&#39;d" width="120" style="display:block;margin-bottom:32px;border:0;outline:none;" />
+    <div style="margin-bottom:32px;">{email_logo_html(40)}</div>
     <p style="margin:0 0 18px;color:#E5E5E5;font-size:17px;">You&rsquo;re in.</p>
     <p style="margin:0 0 18px;color:#E5E5E5;">Your founding member profile is being set up. Sign in at <a href="{PUBLIC_APP_URL}/login" style="color:#E6FF00;text-decoration:none;font-weight:600;">getspotd.app/login</a> to get started.</p>
     <div style="text-align:center;margin:32px 0 24px;">

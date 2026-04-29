@@ -98,8 +98,27 @@ const auth = {
     const { data } = await http.post("/api/auth/request-code", { email });
     return data;
   },
+  forgotPassword: async (email) => {
+    const { data } = await http.post("/api/auth/forgot-password", { email });
+    return data;
+  },
   verifyCode: async (email, code) => {
     const { data } = await http.post("/api/auth/verify-code", { email, code });
+    if (data.token) tokenStore.set(data.token);
+    return data;
+  },
+  login: async (email, password) => {
+    // Throws 409 with { code: "set_password_required" } for legacy users.
+    const { data } = await http.post("/api/auth/login", { email, password });
+    if (data.token) tokenStore.set(data.token);
+    return data;
+  },
+  setPassword: async (password) => {
+    const { data } = await http.post("/api/auth/set-password", { password });
+    return data;
+  },
+  resetPassword: async (email, code, new_password) => {
+    const { data } = await http.post("/api/auth/reset-password", { email, code, new_password });
     if (data.token) tokenStore.set(data.token);
     return data;
   },

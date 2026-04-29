@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Link } from "react-router-dom";
-import { Crown, Eye, Bookmark, Clock, ChevronRight, Edit, Zap, Moon, Sun, Trash2, AlertTriangle, BarChart2, Building2 } from "lucide-react";
+import { Crown, Eye, Bookmark, Clock, ChevronRight, Edit, Zap, Moon, Sun, Trash2, AlertTriangle, BarChart2, Building2, Sparkles, ArrowRight } from "lucide-react";
 import RoleAlertsPanel from "../components/RoleAlertsPanel";
 import { useTheme } from "../lib/useTheme";
 import VerificationPanel from "../components/VerificationPanel";
@@ -411,6 +411,33 @@ export default function Dashboard() {
                 )}
               </div>
             )}
+
+            {/* Spot'd this month — homepage spotlight CTA */}
+            <div className="bg-card border border-border/60 rounded-xl p-6" data-testid="dashboard-spotlight-card">
+              <div className="flex items-center gap-2 mb-3">
+                <Sparkles className="w-4 h-4 text-primary" />
+                <h3 className="font-display text-sm font-semibold text-foreground uppercase tracking-wider">Spot'd this month</h3>
+              </div>
+              {subscription?.tier === "elite" ? (
+                <p className="text-sm text-muted-foreground leading-relaxed" data-testid="spotlight-elite-msg">
+                  Your profile is in the homepage rotation —
+                  <span className="text-primary font-semibold"> you'll appear in the public Spotlight this month.</span>
+                </p>
+              ) : (
+                <>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    Get featured on the homepage Spotlight to put your work in front of every visitor.
+                  </p>
+                  <Link
+                    to="/pricing"
+                    className="inline-flex items-center gap-1.5 mt-3 text-sm font-semibold text-primary hover:underline"
+                    data-testid="spotlight-upgrade-cta"
+                  >
+                    Upgrade to Elite <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                </>
+              )}
+            </div>
 
             {/* Appearance */}
             <div className="bg-card border border-border/60 rounded-xl p-6">

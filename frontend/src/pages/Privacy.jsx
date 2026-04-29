@@ -59,7 +59,7 @@ export default function Privacy() {
 
         <section>
           <h2 className="text-lg font-semibold text-foreground mb-2">Contact</h2>
-          <p>Privacy questions: <a className="underline hover:text-foreground" href="mailto:Brendan@ShadowWolvesProductions.com.au">Brendan@ShadowWolvesProductions.com.au</a>.</p>
+          <p>Privacy questions: <a className="underline hover:text-foreground" href="mailto:hello@getspotd.app">hello@getspotd.app</a>.</p>
         </section>
 
         <p className="text-xs"><Link to="/terms" className="underline hover:text-foreground">Terms of Service</Link></p>

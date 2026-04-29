@@ -2,6 +2,7 @@ import { MapPin, Crown, CheckCircle, Film, Clock, Briefcase, ExternalLink } from
 import { base44 } from "@/api/base44Client";
 import { Badge } from "@/components/ui/badge";
 import SpotScoreBadge from "../SpotScoreBadge";
+import FoundingMemberBadge from "../FoundingMemberBadge";
 import { ensureAbsoluteUrl } from "@/lib/url";
 
 const AVAILABILITY_STYLES = {
@@ -21,7 +22,7 @@ async function trackImdbClick(profile) {
   } catch (_) {}
 }
 
-export default function ProfileHero({ profile }) {
+export default function ProfileHero({ profile, subscription }) {
   return (
     <div className="relative pt-20">
       {/* Background */}
@@ -62,6 +63,7 @@ export default function ProfileHero({ profile }) {
               {profile.is_boosted && (
                 <Badge variant="outline" className="border-primary/20 text-primary/80 text-[10px]">Featured</Badge>
               )}
+              <FoundingMemberBadge tier={subscription?.tier} />
             </div>
 
             <h1 className="font-display text-3xl sm:text-4xl font-bold text-foreground">

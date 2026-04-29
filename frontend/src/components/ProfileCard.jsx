@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { MapPin, Crown, CheckCircle, Film, Bookmark, Zap } from "lucide-react";
 import { motion } from "framer-motion";
 import { PercentileBadge } from "./SpotScoreBreakdown";
+import FoundingMemberBadge from "./FoundingMemberBadge";
 import { ensureAbsoluteUrl } from "@/lib/url";
 
 // Score dot colour based on score value
@@ -121,6 +122,7 @@ export default function ProfileCard({ profile, subscription, onSave, isSaved, in
 
           {/* Card footer */}
           <div className="p-3.5 space-y-2.5">
+            <FoundingMemberBadge tier={subscription?.tier} />
             <div className="flex items-center justify-between">
               {profile.city && (
                 <div className="flex items-center gap-1 text-xs" style={{ color: "#888" }}>
