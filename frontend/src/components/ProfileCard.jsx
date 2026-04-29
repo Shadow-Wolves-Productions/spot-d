@@ -24,7 +24,7 @@ const TIER_BADGE = {
 
 export default function ProfileCard({ profile, subscription, isFoundingMember, onSave, isSaved, index = 0, featured = false, spotCount }) {
   const availabilityStyle = profile.availability_status === "Available Now"
-    ? { background: "#E6FF00", color: "#0D0D0D", label: "Available now" }
+    ? { background: "#22C55E", color: "#0D0D0D", label: "Available now" }
     : profile.availability_status === "Available Soon"
     ? { background: "#FF5C35", color: "#fff", label: "Available soon" }
     : { background: "#2A2A2A", color: "#888", label: "Unavailable" };
