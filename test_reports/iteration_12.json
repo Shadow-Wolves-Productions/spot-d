@@ -1,0 +1,31 @@
+{
+  "summary": "Iter12 (Profile Poster Download + Phase-2 Router Split). server.py is now 132 lines (well under 200-line target). All 9 router modules mounted via include_router. Backend pytest 37/37 PASS in 8.08s (14 iter11 + 23 new iter12 covering entities/admin/scheduled/webhooks/public/og endpoints). Frontend live test confirmed: on Brendan's OWN profile (/u/brendanbyrneofficial) data-testid='download-my-poster-btn' renders, clicking it opens data-testid='profile-poster-dialog' containing a 1080x1920 poster preview with profile photo, name='Brendan', role='Actor', location='Sydney, NSW', SpotScore 50/100 badge, IMDb VERIFIED hint, QR code SVG linking to /u/brendanbyrneofficial, 'Find me on getspotd.app' footer, plus data-testid='profile-poster-download' (Download PNG) + data-testid='profile-poster-share' (Share) buttons. On a DIFFERENT user's profile (/u/aash-myers) the button is correctly absent (component never mounts — owner-gated at ProfilePage.jsx:258 by myProfile?.id === profile?.id). All deliverables verified working.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration12.py",
+    "/app/backend/tests/test_iteration11.py",
+    "/app/test_reports/pytest/iteration12.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "server.py 132 lines — clean thin app factory. CORS middleware, force-https + HSTS gated on IS_PROD, static mount, 9 routers via for-loop include, startup wires APScheduler with 6 cron jobs.",
+    "routers/scheduled.py uses lazy cross-router imports inside _lazy() helper wrappers (get_founder_cap, _invalidate_public_stats_cache, _require_admin, _send_welcome_internal, recalculate_spot_score) — pragmatic solution to circular-import risk after split. Async coroutines preserved correctly.",
+    "routers/casting.py imports _record_view + _viewer_id_for from routers.profiles — implicit cross-router dep. Carry-forward from iter11: lift these helpers into core.py (or routers/_view_helpers.py).",
+    "routers/scheduled.py is 646 lines, routers/admin.py 505, routers/public.py 469 — under 700 threshold but admin & public are approaching it; consider further splitting public.py into og_images.py + waitlist.py if it grows.",
+    "routers/__init__.py is just 16 lines exposing each router — fine.",
+    "ProfilePosterCard.jsx renders with html2canvas QR + Web Share API on mobile, PNG download fallback on desktop — confirmed working via Playwright (download + share buttons visible, dialog innerHTML 19017 chars, SVG QR present, name + score visible)."
+  ],
+  "updated_files": ["/app/backend/tests/test_iteration12.py"],
+  "success_rate": {"backend": "100% (37/37 pytest)", "frontend": "100% (owner-only Profile poster verified on /u/brendanbyrneofficial AND correctly absent on /u/aash-myers)"},
+  "test_credentials": "Admin OTP flow: POST /api/auth/request-code with brendan@shadowwolvesproductions.com.au, dev_code returned in response when EMAIL_MOCK_MODE off it falls back to db.login_codes lookup. JWT injected as localStorage.spotd_token for FE owner-test.",
+  "seed_data_creation": "Created+deleted 1 ephemeral CastingCall (TEST_iter12_rel_*) during pytest. View_events cleared for 1 profile + 1 casting call before rate-limit assertions. login_codes cleared for brendan + ratelimit_test_* fake email. db unchanged after run.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Phase-2 router split complete. server.py is now a 132-line thin app factory; 2611 lines moved into routers/{entities,webhooks,admin,scheduled,public}.py + bootstrap.py. Test fixtures: token via OTP flow (clear db.login_codes for brendan first, then request-code, dev_code is in response or fall back to db.login_codes sort by created_at desc). For FE owner-test, inject JWT via localStorage.setItem('spotd_token', token) BEFORE navigating to /u/{slug} — the key is 'spotd_token' (see /app/frontend/src/api/base44Client.js:12). NOTE: the slug 'indie-film-casting' in the review request is the preview-URL subdomain, not a profile slug — for og/profile use 'brendanbyrneofficial' or any of {tara-ponsford, sofia-poli, etc}. test_iteration8 has a stale founder_cap=500 expectation (cap is 100 since iter9) — pre-existing, not a regression.",
+  "rca of the issue": "N/A — no functional bugs. Two deliverables verified: (1) Profile Poster Download is owner-only via parent gate (ProfilePage.jsx:258 myProfile?.id === profile?.id), component never mounts on other profiles — confirmed in Playwright. Dialog renders 1080x1920 vertical card with photo, name, role, location, SpotScore badge, verified tick, IMDb hint, QR code SVG, getspotd.app footer, Download + Share buttons. (2) Phase-2 Router split — server.py 132 lines (target ≤200), 9 routers mounted, all 22 endpoints in the request list return correct status codes."
+}

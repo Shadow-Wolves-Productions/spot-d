@@ -103,6 +103,33 @@ def coll(entity: str):
     return db[ENTITIES[entity]]
 
 
+def compute_all_roles(profile: dict) -> list:
+    """Union of primary_role + secondary_roles, deduped, preserving order."""
+    seen = []
+    for r in [profile.get("primary_role")] + (profile.get("secondary_roles") or []):
+        if r and r not in seen:
+            seen.append(r)
+    return seen
+
+
+def parse_value(v: str) -> Any:
+    """Coerce a query-string value to bool/int/float/None where possible."""
+    if v is None:
+        return None
+    if v == "true":
+        return True
+    if v == "false":
+        return False
+    if v == "null":
+        return None
+    try:
+        if v.isdigit():
+            return int(v)
+        return float(v) if "." in v else v
+    except (ValueError, AttributeError):
+        return v
+
+
 # --------------------------------------------------------------------------- #
 # Generic helpers
 # --------------------------------------------------------------------------- #
