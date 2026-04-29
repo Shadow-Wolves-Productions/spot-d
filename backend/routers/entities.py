@@ -24,6 +24,26 @@ router = APIRouter()
 
 # Generic entity CRUD
 # --------------------------------------------------------------------------- #
+def is_casting_call_closed(call: dict) -> bool:
+    """A casting call is considered closed if the owner manually flipped
+    ``is_active`` to False, or the deadline has passed (UTC)."""
+    if not call:
+        return True
+    if call.get("is_active") is False:
+        return True
+    deadline = call.get("deadline")
+    if deadline:
+        try:
+            d = datetime.fromisoformat(deadline.replace("Z", "+00:00"))
+            if d.tzinfo is None:
+                d = d.replace(tzinfo=timezone.utc)
+            if d < datetime.now(timezone.utc):
+                return True
+        except (ValueError, AttributeError):
+            pass
+    return False
+
+
 async def _on_casting_application_created(application: dict):
     """Side effects for new applications:
        - increment application_count
@@ -154,6 +174,12 @@ async def list_entity(entity: str, request: Request):
     # own profile via /entities/Profile/{id}.
     if entity == "Profile":
         items = [p for p in items if not p.get("is_hidden")]
+    elif entity == "CastingCall":
+        # Annotate every casting call with an authoritative ``is_closed`` flag
+        # (deadline-past or owner-ended), so the frontend doesn't have to
+        # re-derive it.
+        for c in items:
+            c["is_closed"] = is_casting_call_closed(c)
     return items
 
 
@@ -195,6 +221,14 @@ async def create_entity(entity: str, request: Request):
 
     # ----- Pre-insert ownership / self-action guards ------------------------ #
     if entity == "CastingApplication":
+        # Block applications to closed / past-deadline calls.
+        call_id = doc.get("casting_call_id")
+        if call_id:
+            target_call = await db.casting_calls.find_one({"id": call_id}, {"_id": 0})
+            if not target_call:
+                raise HTTPException(404, "Casting call not found.")
+            if is_casting_call_closed(target_call):
+                raise HTTPException(409, "This casting call is closed and is no longer accepting applications.")
         # Block duplicate applications by the same user to the same call.
         existing = await db.casting_applications.find_one({
             "casting_call_id": doc.get("casting_call_id"),

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useParams } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Check, Plus, Upload } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -68,12 +68,14 @@ function newRole(category) {
 
 export default function CreateCastingCall() {
   const navigate = useNavigate();
+  const { id: editId } = useParams();
+  const isEditMode = !!editId;
   const [step, setStep] = useState(1);
   const [saving, setSaving] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [companies, setCompanies] = useState([]);
   const [postAs, setPostAs] = useState("personal"); // "personal" | <company.id>
-
+  const [loadingExisting, setLoadingExisting] = useState(isEditMode);
   const [form, setForm] = useState({
     // Phase 1
     company_name: "",
@@ -109,10 +111,42 @@ export default function CreateCastingCall() {
         const me = await base44.auth.me();
         const myCompanies = await base44.entities.CompanyProfile.filter({ user_id: me.id });
         setCompanies(myCompanies || []);
+
+        // Edit mode: load the existing call and prefill the form.
+        if (isEditMode) {
+          try {
+            const existing = await base44.entities.CastingCall.get(editId);
+            if (!existing) {
+              toast.error("Casting call not found");
+              navigate("/casting");
+              return;
+            }
+            if (existing.creator_user_id !== me.id && me.role !== "admin") {
+              toast.error("You can only edit your own casting calls");
+              navigate("/casting");
+              return;
+            }
+            setForm((f) => ({
+              ...f,
+              ...Object.fromEntries(Object.entries(existing).filter(([k]) => k in f)),
+              deadline: existing.deadline ? existing.deadline.slice(0, 10) : f.deadline,
+              roles: existing.roles || [],
+            }));
+            // Restore "post as" company if applicable
+            if (existing.posted_as === "company" && existing.posted_as_company_id) {
+              setPostAs(existing.posted_as_company_id);
+            }
+          } catch (e) {
+            toast.error("Failed to load casting call");
+            navigate("/casting");
+          } finally {
+            setLoadingExisting(false);
+          }
+        }
       } catch { /* signed out */ }
     };
     init();
-  }, []);
+  }, [editId, isEditMode, navigate]);
 
   // When user picks a company, prefill company_name + logo from that company.
   const onPostAsChange = (val) => {
@@ -214,32 +248,48 @@ export default function CreateCastingCall() {
       }
     }
 
-    await base44.entities.CastingCall.create({
-      ...form,
-      ...attribution,
-      roles_needed,
-      creator_user_id: me.id,
-      creator_profile_id: creatorProfileId,
-      deadline,
-      view_count: 0,
-      application_count: 0,
-      is_active: true,
-    });
-    toast.success("Casting call posted!");
-    navigate("/casting");
+    await (isEditMode
+      ? base44.entities.CastingCall.update(editId, {
+          ...form,
+          ...attribution,
+          roles_needed,
+          deadline,
+        })
+      : base44.entities.CastingCall.create({
+          ...form,
+          ...attribution,
+          roles_needed,
+          creator_user_id: me.id,
+          creator_profile_id: creatorProfileId,
+          deadline,
+          view_count: 0,
+          application_count: 0,
+          is_active: true,
+        }));
+    toast.success(isEditMode ? "Casting call updated!" : "Casting call posted!");
+    navigate(isEditMode ? `/casting/${editId}` : "/casting");
     setSaving(false);
   };
 
   return (
     <div className="pt-24 pb-20 px-4">
       <div className="max-w-2xl mx-auto">
-        <Link to="/casting" className="flex items-center gap-2 text-muted-foreground hover:text-foreground text-sm mb-8 transition-colors">
-          <ArrowLeft className="w-4 h-4" /> Back to Casting Calls
+        <Link to={isEditMode ? `/casting/${editId}` : "/casting"} className="flex items-center gap-2 text-muted-foreground hover:text-foreground text-sm mb-8 transition-colors">
+          <ArrowLeft className="w-4 h-4" /> {isEditMode ? "Back to casting call" : "Back to Casting Calls"}
         </Link>
 
-        <h1 className="font-display text-3xl font-bold text-foreground mb-1">Post a Casting Call</h1>
-        <p className="text-muted-foreground text-sm mb-10">Find the perfect cast & crew for your project.</p>
+        <h1 className="font-display text-3xl font-bold text-foreground mb-1">
+          {isEditMode ? "Edit Casting Call" : "Post a Casting Call"}
+        </h1>
+        <p className="text-muted-foreground text-sm mb-10">
+          {isEditMode ? "Update project details, roles or apply settings." : "Find the perfect cast & crew for your project."}
+        </p>
 
+        {loadingExisting ? (
+          <div className="flex items-center justify-center py-20">
+            <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : (<>
         <StepIndicator step={step} />
 
         {/* Phase 1 — Company */}
@@ -583,11 +633,12 @@ export default function CreateCastingCall() {
               {saving ? (
                 <div className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
               ) : (
-                "Post Casting Call"
+                isEditMode ? "Save changes" : "Post Casting Call"
               )}
             </Button>
           )}
         </div>
+        </>)}
       </div>
     </div>
   );

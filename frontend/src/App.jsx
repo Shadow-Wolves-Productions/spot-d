@@ -50,6 +50,7 @@ const AuthenticatedApp = () => {
         <Route path="/contact" element={<ContactFAQ />} />
         <Route path="/casting" element={<CastingCalls />} />
         <Route path="/casting/new" element={<CreateCastingCall />} />
+        <Route path="/casting/:id/edit" element={<CreateCastingCall />} />
         <Route path="/casting/applications" element={<CastingApplicationsKanban />} />
         <Route path="/casting/:id" element={<CastingCallDetail />} />
         <Route path="/admin" element={<AdminDashboard />} />

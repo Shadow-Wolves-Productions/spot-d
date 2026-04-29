@@ -192,7 +192,7 @@ async def auto_claim_dismiss(request: Request):
 async def public_settings():
     cap = await get_founder_cap()
     return {
-        "founder_remaining": max(0, cap - await db.subscriptions.count_documents({"tier": "founder", "status": "active"})),
+        "founder_remaining": max(0, cap - await db.users.count_documents({"is_founding_member": True})),
         "founder_cap": cap,
         "email_mock": EMAIL_MOCK,
         "sms_mock": SMS_MOCK,
@@ -225,7 +225,9 @@ async def public_stats():
     distinct_roles = await db.profiles.distinct("primary_role", profile_filter)
     distinct_roles = [r for r in distinct_roles if r]
     cap = await get_founder_cap()
-    founder_count = await db.subscriptions.count_documents({"tier": "founder", "status": "active"})
+    # Founder count is derived from User.is_founding_member (set on import +
+    # any user with an active founder subscription is auto-flagged on boot).
+    founder_count = await db.users.count_documents({"is_founding_member": True})
     payload = {
         "profile_count": await db.profiles.count_documents(profile_filter),
         "role_count": len(distinct_roles),

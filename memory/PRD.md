@@ -73,6 +73,33 @@ Foundation migration, OTP auth, Stripe checkout, Postmark, bulk import, SpotScor
 - **HSTS middleware** — `Strict-Transport-Security` gated on `ENV=production`.
 - **7 Pydantic body models** with URL auto-https + slug normalisers. Relative paths preserved. 422 on validation failure.
 
+### Iter 18 (Feb 2026 — go-live housekeeping: casting CRUD + founder claim flow + cleanup) — TESTED ✓ (5 new pytest)
+
+**1. Casting Call edit / end / reopen / delete**
+- New route `/casting/:id/edit` reuses `CreateCastingCall.jsx` in edit mode (loads existing call, pre-fills the 4-step wizard, calls `update` instead of `create`, redirects back to detail page on save).
+- `CastingCallDetail.jsx` adds owner-only controls (`Edit`, `End` ↔ `Reopen`, `Delete`) plus a full-width red **Casting call closed** banner whenever `is_closed` is true. The Apply CTA is replaced with a disabled `Applications closed` pill for non-owners.
+- `CastingCalls.jsx` adds primary status tabs **Open / Closed-Past / All** with live counts. Each card now shows a `CLOSED` pill and (for owners) inline `Edit / End / Reopen / Delete` quick-action buttons. Empty state for the Closed tab is its own message.
+- Default browse experience = Open only (closed/past calls are hidden until the user pivots).
+
+**2. Server-side enforcement of closed state**
+- New `is_casting_call_closed(call)` helper in `routers/entities.py` — true if `is_active === false` OR `deadline` (UTC) is in the past.
+- Every casting call returned by `/api/entities/CastingCall[?...]` now carries an authoritative `is_closed` boolean (computed server-side; frontend doesn't have to re-derive it).
+- New 409 guard on `POST /api/entities/CastingApplication` — applications to closed/past calls are rejected with `"This casting call is closed and is no longer accepting applications."`. Sits before the duplicate-application 409.
+
+**3. Founder count fixed**
+- Source-of-truth for "founding member" status migrated from `subscriptions.tier=founder` → `User.is_founding_member`.
+- `/api/public-stats.founder_count` and `/api/public-settings.founder_remaining` both count `users.is_founding_member: true`.
+- `auth.verify-code` now atomically flips `is_founding_member: true` (with `founding_claimed_at` timestamp) the first time an imported user verifies their email — and invalidates the public-stats cache so the homepage counter updates within seconds. Imported-but-not-yet-claimed members are NOT counted (the spot is reserved for them but they haven't claimed).
+- Bulk-import no longer auto-flags users; the badge appears as people claim.
+
+**4. Cleanup (one-shot)**
+- Deleted 25 test users (`@example.com`, `test_*`, `iter*`, `lockout_*`, `ratelimit_*`, etc.) plus their cascaded profiles, subscriptions, applications, login codes, login attempts.
+- Deleted 2 test casting calls (`TEST_iter10_*`, `Checklist Dup-App Test`).
+- Deleted 42 test email-log entries.
+- Reverted `is_founding_member` flag on the 59 imported-but-unverified users (they keep their reserved import slot but aren't counted as claimed founders until verify-code).
+
+State after cleanup: 58 users · 58 profiles · 1 real casting call (Thunk) · 1 founder claimed (Brendan) / 99 spots remaining.
+
 ### Iter 17 (Feb 2026 — go-live: bulk welcome resend + lens placeholder + bug fixes) — TESTED ✓ (6 new pytest)
 
 **1. Bulk welcome email resend (Admin)**
