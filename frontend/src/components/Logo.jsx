@@ -16,8 +16,8 @@ export default function Logo({
   ...rest
 }) {
   const src = variant === "light"
-    ? "/brand/light-transparent.png"
-    : "/brand/dark-transparent.png";
+    ? "/brand/light-transparent.png?v=2"
+    : "/brand/dark-transparent.png?v=2";
   return (
     <img
       src={src}
