@@ -188,6 +188,31 @@ export default function AdminDashboard() {
     }
   };
 
+  // Manual founding-member flag — for users who claimed outside the
+  // verify-code flow (e.g. external sign-ups, post-cap exceptions).
+  const [flagInput, setFlagInput] = useState("");
+  const [flagBusy, setFlagBusy] = useState(false);
+  const flagFoundingMember = async (claimed) => {
+    const v = flagInput.trim();
+    if (!v) {
+      toast.error("Enter an email or profile slug");
+      return;
+    }
+    setFlagBusy(true);
+    try {
+      const body = v.includes("@") ? { email: v, claimed } : { profile_slug: v, claimed };
+      const { data } = await base44.http.post("/api/admin/flag-founding-member", body);
+      const u = data.user || {};
+      toast.success(`${claimed ? "Flagged" : "Unflagged"} ${u.full_name || u.email} as founding member`);
+      setFlagInput("");
+      loadCore();
+    } catch (e) {
+      toast.error(e?.response?.data?.detail || "Flag failed");
+    } finally {
+      setFlagBusy(false);
+    }
+  };
+
   const lc = (s) => (s || "").toLowerCase();
   const filteredUsers = users.filter((u) => lc(u.full_name).includes(lc(search)) || lc(u.email).includes(lc(search)));
   const filteredProfiles = profiles.filter((p) =>
@@ -379,6 +404,42 @@ export default function AdminDashboard() {
                 <Send className="w-3.5 h-3.5 mr-1" />
                 {resendingWelcomes ? "Queuing…" : `Send ${imports.unclaimed} pending welcome${imports.unclaimed === 1 ? "" : "s"}`}
               </Button>
+            </div>
+
+            {/* Manual founding-member flag */}
+            <div className="bg-card border border-border/60 rounded-xl p-4 mb-4" data-testid="manual-founding-flag-card">
+              <p className="text-[10px] uppercase tracking-wider font-mono text-muted-foreground mb-2">Manual founding-member flag</p>
+              <p className="text-xs text-muted-foreground mb-3">
+                Use this for users who claimed their spot outside the email-verification flow (e.g. external sign-ups, post-cap exceptions). Enter an email or profile slug.
+              </p>
+              <div className="flex gap-2">
+                <Input
+                  value={flagInput}
+                  onChange={(e) => setFlagInput(e.target.value)}
+                  placeholder="email@example.com or profile-slug"
+                  className="bg-secondary border-border flex-1 text-sm"
+                  data-testid="manual-founding-flag-input"
+                />
+                <Button
+                  size="sm"
+                  onClick={() => flagFoundingMember(true)}
+                  disabled={flagBusy || !flagInput.trim()}
+                  className="bg-primary text-primary-foreground"
+                  data-testid="manual-founding-flag-claim-btn"
+                >
+                  Flag as founder
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => flagFoundingMember(false)}
+                  disabled={flagBusy || !flagInput.trim()}
+                  className="border-destructive/40 text-destructive hover:bg-destructive/10"
+                  data-testid="manual-founding-flag-unclaim-btn"
+                >
+                  Unflag
+                </Button>
+              </div>
             </div>
             <div className="space-y-2">
               {filteredImports.map((p) => (

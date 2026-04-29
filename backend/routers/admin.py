@@ -564,3 +564,59 @@ async def admin_list_waitlist(request: Request):
     await _require_admin(request)
     items = await db.waitlist.find({}, {"_id": 0}).sort("created_date", -1).to_list(length=1000)
     return {"total": len(items), "items": items}
+
+
+# --------------------------------------------------------------------------- #
+# Manual founding-member flag (admin) — for users who claimed their spot
+# outside the normal verify-code flow (e.g. signed up via Stripe or got
+# imported into a different DB during go-live).
+# --------------------------------------------------------------------------- #
+class FlagFoundingMemberBody(BaseModel):
+    user_id: Optional[str] = None
+    email: Optional[EmailStr] = None
+    profile_slug: Optional[str] = None
+    claimed: bool = True
+
+
+@router.post("/api/admin/flag-founding-member")
+async def admin_flag_founding_member(body: FlagFoundingMemberBody, request: Request):
+    actor = await _require_admin(request)
+    if not (body.user_id or body.email or body.profile_slug):
+        raise HTTPException(400, "Provide user_id, email, or profile_slug.")
+
+    user = None
+    if body.user_id:
+        user = await db.users.find_one({"id": body.user_id}, {"_id": 0})
+    if not user and body.email:
+        user = await db.users.find_one({"email": body.email.lower().strip()}, {"_id": 0})
+    if not user and body.profile_slug:
+        profile = await db.profiles.find_one({"profile_slug": body.profile_slug}, {"_id": 0, "user_id": 1})
+        if profile:
+            user = await db.users.find_one({"id": profile["user_id"]}, {"_id": 0})
+    if not user:
+        raise HTTPException(404, "User not found.")
+
+    update_set = {"updated_date": now_iso()}
+    update_unset = {}
+    if body.claimed:
+        update_set["is_founding_member"] = True
+        update_set["email_verified"] = True
+        update_set.setdefault("founding_claimed_at", now_iso())
+    else:
+        update_unset["is_founding_member"] = ""
+        update_unset["founding_claimed_at"] = ""
+
+    update_doc = {"$set": update_set}
+    if update_unset:
+        update_doc["$unset"] = update_unset
+    await db.users.update_one({"id": user["id"]}, update_doc)
+
+    _invalidate_public_stats_cache()
+    await _log_admin_action(
+        actor["id"],
+        "founding_member.flag",
+        user["id"],
+        {"claimed": body.claimed, "email": user.get("email")},
+    )
+    fresh = await db.users.find_one({"id": user["id"]}, {"_id": 0, "id": 1, "email": 1, "full_name": 1, "is_founding_member": 1, "founding_claimed_at": 1})
+    return {"ok": True, "user": fresh}
