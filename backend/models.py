@@ -81,6 +81,7 @@ class ProfileCreate(_LooseBase):
     city: Optional[str] = None
     profile_slug: Optional[str] = None
     profile_photo: Optional[str] = None
+    additional_photos: Optional[List[str]] = None
     imdb_link: Optional[str] = None
     website: Optional[str] = None
     showreel_link: Optional[str] = None
@@ -108,6 +109,7 @@ class ProfileUpdate(_LooseBase):
     city: Optional[str] = None
     profile_slug: Optional[str] = None
     profile_photo: Optional[str] = None
+    additional_photos: Optional[List[str]] = None
     imdb_link: Optional[str] = None
     website: Optional[str] = None
     showreel_link: Optional[str] = None

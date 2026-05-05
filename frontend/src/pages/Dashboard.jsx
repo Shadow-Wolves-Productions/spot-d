@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { Link } from "react-router-dom";
 import { Crown, Eye, Bookmark, Clock, ChevronRight, Edit, Zap, Moon, Sun, Trash2, AlertTriangle, BarChart2, Building2, Sparkles, ArrowRight } from "lucide-react";
+import { usePullToRefresh } from "../hooks/usePullToRefresh";
 import RoleAlertsPanel from "../components/RoleAlertsPanel";
 import { useTheme } from "../lib/useTheme";
 import VerificationPanel from "../components/VerificationPanel";
@@ -35,53 +36,56 @@ export default function Dashboard() {
   const [deleting, setDeleting] = useState(false);
   const { theme, toggleTheme } = useTheme();
 
-  useEffect(() => {
-    const load = async () => {
-      const me = await base44.auth.me();
-      setUser(me);
+  // Wrap dashboard load so it can be re-invoked by pull-to-refresh.
+  const loadDashboard = useCallback(async () => {
+    const me = await base44.auth.me();
+    setUser(me);
 
-      const profiles = await base44.entities.Profile.filter({ user_id: me.id });
-      if (profiles.length > 0) {
-        const p = profiles[0];
-        setProfile(p);
+    const profiles = await base44.entities.Profile.filter({ user_id: me.id });
+    if (profiles.length > 0) {
+      const p = profiles[0];
+      setProfile(p);
 
-        const spots = await base44.entities.Spot.filter({ spotted_profile_id: p.id });
-        setSpotsCount(spots.length);
+      const spots = await base44.entities.Spot.filter({ spotted_profile_id: p.id });
+      setSpotsCount(spots.length);
 
-        const savedBy = await base44.entities.SavedProfile.filter({ profile_id: p.id });
-        setSavedByCount(savedBy.length);
+      const savedBy = await base44.entities.SavedProfile.filter({ profile_id: p.id });
+      setSavedByCount(savedBy.length);
 
-        const revealedBy = await base44.entities.ContactReveal.filter({ profile_id: p.id });
-        setRevealedByCount(revealedBy.length);
-      }
+      const revealedBy = await base44.entities.ContactReveal.filter({ profile_id: p.id });
+      setRevealedByCount(revealedBy.length);
+    }
 
-      const subs = await base44.entities.Subscription.filter({ user_id: me.id, status: "active" });
-      if (subs.length > 0) setSubscription(subs[0]);
+    const subs = await base44.entities.Subscription.filter({ user_id: me.id, status: "active" });
+    if (subs.length > 0) setSubscription(subs[0]);
 
-      const monthKey = new Date().toISOString().slice(0, 7);
-      const reveals = await base44.entities.ContactReveal.filter({ viewer_id: me.id, month_key: monthKey });
-      setRevealCount(reveals.length);
+    const monthKey = new Date().toISOString().slice(0, 7);
+    const reveals = await base44.entities.ContactReveal.filter({ viewer_id: me.id, month_key: monthKey });
+    setRevealCount(reveals.length);
 
-      const saved = await base44.entities.SavedProfile.filter({ user_id: me.id });
-      setSavedProfiles(saved);
+    const saved = await base44.entities.SavedProfile.filter({ user_id: me.id });
+    setSavedProfiles(saved);
 
-      // Load any company profiles owned by this user
-      const myCompanies = await base44.entities.CompanyProfile.filter({ user_id: me.id });
-      setCompanies(myCompanies);
+    // Load any company profiles owned by this user
+    const myCompanies = await base44.entities.CompanyProfile.filter({ user_id: me.id });
+    setCompanies(myCompanies);
 
-      if (saved.length > 0) {
-        const detailPromises = saved.map(async (s) => {
-          const p = await base44.entities.Profile.filter({ id: s.profile_id });
-          return p[0];
-        });
-        const details = (await Promise.all(detailPromises)).filter(Boolean);
-        setSavedProfileDetails(details);
-      }
+    if (saved.length > 0) {
+      const detailPromises = saved.map(async (s) => {
+        const p = await base44.entities.Profile.filter({ id: s.profile_id });
+        return p[0];
+      });
+      const details = (await Promise.all(detailPromises)).filter(Boolean);
+      setSavedProfileDetails(details);
+    } else {
+      setSavedProfileDetails([]);
+    }
 
-      setLoading(false);
-    };
-    load();
+    setLoading(false);
   }, []);
+
+  useEffect(() => { loadDashboard(); }, [loadDashboard]);
+  const { pullY, refreshing } = usePullToRefresh(loadDashboard);
 
   if (loading) {
     return (
@@ -95,12 +99,24 @@ export default function Dashboard() {
 
   return (
     <div className="pt-24 pb-20 px-4">
+      {/* Pull-to-refresh indicator */}
+      {(pullY > 0 || refreshing) && (
+        <div
+          className="fixed top-16 left-1/2 -translate-x-1/2 z-50 flex items-center justify-center w-9 h-9 bg-card border border-border rounded-full shadow-md"
+          style={{ transform: `translateX(-50%) translateY(${Math.min(pullY, 56)}px)` }}
+          data-testid="dashboard-pull-indicator"
+        >
+          <div className={`w-4 h-4 border-2 border-primary border-t-transparent rounded-full ${refreshing ? 'animate-spin' : ''}`}
+            style={{ transform: refreshing ? undefined : `rotate(${(pullY / 56) * 360}deg)` }}
+          />
+        </div>
+      )}
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-5">
           <div>
-            <h1 className="font-display text-3xl font-bold text-foreground">Dashboard</h1>
-            <p className="text-muted-foreground text-sm mt-1">Welcome back, {user?.full_name} 👋</p>
+            <h1 className="font-display text-2xl font-bold text-foreground">Dashboard</h1>
+            <p className="text-muted-foreground text-xs mt-1">Welcome back, {user?.full_name} 👋</p>
           </div>
           <div className="flex gap-3">
             {profile ? (
@@ -187,23 +203,23 @@ export default function Dashboard() {
         )}
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 mb-4 sm:mb-5">
           {/* SpotScore */}
-          <div className="bg-card border border-border/60 rounded-xl p-5 flex items-center gap-4">
+          <div className="bg-card border border-border/60 rounded-xl p-3 flex items-center gap-3">
             <SpotScoreBadge score={profile?.spot_score || 0} size="md" />
             <div className="flex-1 min-w-0">
-              <p className="text-xs uppercase tracking-[0.08em] font-mono text-muted-foreground">SpotScore</p>
-              <p className="font-display text-xl font-bold text-foreground">{profile?.spot_score || 0}<span className="text-xs font-normal text-muted-foreground ml-1">/100</span></p>
+              <p className="text-[10px] uppercase tracking-[0.08em] font-mono text-muted-foreground">SpotScore</p>
+              <p className="font-display text-lg font-bold text-foreground">{profile?.spot_score || 0}<span className="text-[10px] font-normal text-muted-foreground ml-1">/100</span></p>
               {(profile?.spot_percentile || 0) >= 75 && (
-                <div className="mt-1"><PercentileBadge percentile={profile.spot_percentile} /></div>
+                <div className="mt-0.5"><PercentileBadge percentile={profile.spot_percentile} /></div>
               )}
               {profile && (
-                <div className="mt-2">
+                <div className="mt-1.5">
                   <ShareSpotScoreCard
                     profile={profile}
                     trigger={
-                      <button data-testid="dashboard-share-spotscore" className="text-[11px] uppercase tracking-[0.08em] font-mono text-primary hover:text-primary/80 underline-offset-2 hover:underline">
-                        Share my SpotScore →
+                      <button data-testid="dashboard-share-spotscore" className="text-[10px] uppercase tracking-[0.08em] font-mono text-primary hover:text-primary/80 underline-offset-2 hover:underline">
+                        Share →
                       </button>
                     }
                   />
@@ -213,47 +229,47 @@ export default function Dashboard() {
           </div>
 
           {/* Reveals */}
-          <div className="bg-card border border-border/60 rounded-xl p-5">
-            <div className="flex items-center gap-2 mb-2">
-              <Eye className="w-4 h-4 text-primary" />
-              <p className="text-xs uppercase tracking-wider text-muted-foreground">Contact Reveals</p>
+          <div className="bg-card border border-border/60 rounded-xl p-3">
+            <div className="flex items-center gap-1.5 mb-1">
+              <Eye className="w-3.5 h-3.5 text-primary" />
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Reveals</p>
             </div>
-            <p className="font-display text-xl font-bold text-foreground">{revealCount}</p>
-            <p className="text-xs text-muted-foreground mt-1">
-              {subscription?.contact_reveal_limit === -1 ? "Unlimited" : `${(subscription?.contact_reveal_limit || 5) - revealCount} remaining this month`}
+            <p className="font-display text-lg font-bold text-foreground">{revealCount}</p>
+            <p className="text-[10px] text-muted-foreground mt-0.5">
+              {subscription?.contact_reveal_limit === -1 ? "Unlimited" : `${(subscription?.contact_reveal_limit || 5) - revealCount} left`}
             </p>
           </div>
 
           {/* Saved */}
-          <div className="bg-card border border-border/60 rounded-xl p-5">
-            <div className="flex items-center gap-2 mb-2">
-              <Bookmark className="w-4 h-4 text-primary" />
-              <p className="text-xs uppercase tracking-wider text-muted-foreground">Saved Profiles</p>
+          <div className="bg-card border border-border/60 rounded-xl p-3">
+            <div className="flex items-center gap-1.5 mb-1">
+              <Bookmark className="w-3.5 h-3.5 text-primary" />
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Saved</p>
             </div>
-            <p className="font-display text-xl font-bold text-foreground">{savedProfiles.length}</p>
+            <p className="font-display text-lg font-bold text-foreground">{savedProfiles.length}</p>
           </div>
 
           {/* Spots */}
-          <div className="bg-card border border-border/60 rounded-xl p-5">
-            <div className="flex items-center gap-2 mb-2">
-              <Zap className="w-4 h-4 text-primary" />
-              <p className="text-xs uppercase tracking-wider text-muted-foreground">Your Spots</p>
+          <div className="bg-card border border-border/60 rounded-xl p-3">
+            <div className="flex items-center gap-1.5 mb-1">
+              <Zap className="w-3.5 h-3.5 text-primary" />
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Your Spots</p>
             </div>
-            <p className="font-display text-xl font-bold text-foreground">{spotsCount}</p>
-            <p className="text-xs text-muted-foreground mt-1">times spotted by others</p>
+            <p className="font-display text-lg font-bold text-foreground">{spotsCount}</p>
+            <p className="text-[10px] text-muted-foreground mt-0.5">times spotted</p>
           </div>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-6">
+        <div className="grid lg:grid-cols-3 gap-3">
           {/* Main column */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-3">
             {/* Spot Requests */}
             <SpotRequestsPanel user={user} profile={profile} />
 
             {/* SpotScore Breakdown */}
             {profile && (
-              <div className="bg-card border border-border/60 rounded-xl p-6">
-                <h3 className="font-display text-sm font-semibold text-foreground uppercase tracking-wider mb-4">
+              <div className="bg-card border border-border/60 rounded-xl p-4">
+                <h3 className="font-display text-sm font-semibold text-foreground uppercase tracking-wider mb-3">
                   Your SpotScore
                 </h3>
                 <SpotScoreBreakdown

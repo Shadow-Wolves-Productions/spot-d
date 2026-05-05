@@ -531,7 +531,19 @@ export default function CreateProfile() {
               </div>
               <div>
                 <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">Years of Experience</Label>
-                <Input type="number" value={form.years_of_experience} onChange={(e) => update("years_of_experience", Number(e.target.value))} className="bg-secondary border-border" />
+                <Input
+                  type="number"
+                  min="0"
+                  inputMode="numeric"
+                  value={form.years_of_experience === 0 || form.years_of_experience === undefined ? "" : form.years_of_experience}
+                  placeholder="0"
+                  onChange={(e) => {
+                    const raw = e.target.value;
+                    update("years_of_experience", raw === "" ? 0 : Number(raw));
+                  }}
+                  className="bg-secondary border-border"
+                  data-testid="years-of-experience-input"
+                />
               </div>
             </div>
             <div className="grid sm:grid-cols-2 gap-4">
@@ -741,38 +753,31 @@ export default function CreateProfile() {
                 {/* Email */}
                 <div>
                   <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">Email</Label>
-                  <div className="flex gap-2 items-center">
+                  <div className="flex gap-2 items-center flex-wrap">
                     <Input
                       value={form.email}
                       onChange={(e) => { update("email", e.target.value); if (form.email_verified) update("email_verified", false); }}
-                      className="bg-secondary border-border flex-1"
+                      className="bg-secondary border-border flex-1 min-w-[200px]"
                     />
                     {form.email_verified ? (
                       <span className="flex items-center gap-1 text-xs text-green-500 whitespace-nowrap font-medium">
                         <Check className="w-3.5 h-3.5" /> Verified
                       </span>
                     ) : (
-                      <InlineVerificationButton type="email" form={form} onVerified={() => update("email_verified", true)} />
+                      <InlineVerificationButton form={form} onVerified={() => update("email_verified", true)} />
                     )}
                   </div>
                 </div>
-                {/* Phone */}
+                {/* Phone — no verification, just a contact field */}
                 <div>
                   <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">Phone</Label>
-                  <div className="flex gap-2 items-center">
-                    <Input
-                      value={form.phone}
-                      onChange={(e) => { update("phone", e.target.value); if (form.phone_verified) update("phone_verified", false); }}
-                      className="bg-secondary border-border flex-1"
-                    />
-                    {form.phone_verified ? (
-                      <span className="flex items-center gap-1 text-xs text-green-500 whitespace-nowrap font-medium">
-                        <Check className="w-3.5 h-3.5" /> Verified
-                      </span>
-                    ) : (
-                      <InlineVerificationButton type="phone" form={form} onVerified={() => update("phone_verified", true)} />
-                    )}
-                  </div>
+                  <Input
+                    value={form.phone}
+                    onChange={(e) => update("phone", e.target.value)}
+                    className="bg-secondary border-border"
+                    data-testid="phone-input"
+                    placeholder="+1 555 555 5555"
+                  />
                 </div>
               </div>
             </div>

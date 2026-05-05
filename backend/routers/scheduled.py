@@ -112,15 +112,8 @@ async def fn_send_verification(request: Request):
     if code_type == "email":
         html = f"<p>Your Spot'd verification code is:</p><h2 style='letter-spacing:6px;font-size:32px;'>{code}</h2><p>Valid 10 minutes.</p>"
         await send_email(user["email"], "Spot'd — Your Verification Code", html)
-    else:
-        phone = body.get("phone") or ""
-        if not phone:
-            raise HTTPException(400, "Phone required")
-        await send_sms(phone, f"Your Spot'd verification code is: {code}. Valid for 10 minutes.")
     out = {"success": True}
     if EMAIL_MOCK and code_type == "email":
-        out["dev_code"] = code
-    if SMS_MOCK and code_type == "phone":
         out["dev_code"] = code
     return out
 
@@ -148,9 +141,10 @@ async def fn_verify_code(request: Request):
 
     profile = await db.profiles.find_one({"user_id": user["id"]}, {"_id": 0})
     if profile:
-        update = {"email_verified": True} if code_type == "email" else {"phone_verified": True}
-        await db.profiles.update_one({"id": profile["id"]}, {"$set": update})
+        await db.profiles.update_one({"id": profile["id"]}, {"$set": {"email_verified": True}})
         await recalculate_spot_score(profile["id"])
+    # Also stamp User.email_verified — auth.me() reads from there.
+    await db.users.update_one({"id": user["id"]}, {"$set": {"email_verified": True}})
     return {"success": True}
 
 
