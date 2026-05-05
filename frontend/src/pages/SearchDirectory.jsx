@@ -293,22 +293,22 @@ export default function SearchDirectory() {
           />
         </div>
       )}
-      {/* Hero Search Strip */}
-      <div className="relative py-12 sm:py-16 px-4 overflow-hidden">
+      {/* Hero Search Strip — slim variant */}
+      <div className="relative py-5 sm:py-7 px-4 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-background to-background" />
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-primary/5 blur-[120px] rounded-full" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[300px] bg-primary/5 blur-[120px] rounded-full" />
 
         <div className="relative max-w-4xl mx-auto text-center">
-          <h1 className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground" style={{ letterSpacing: "-1px" }}>
-            Find cast & crew
+          <h1 className="font-display text-xl sm:text-2xl font-bold text-foreground" style={{ letterSpacing: "-0.4px" }}>
+            Find cast &amp; crew
           </h1>
-          <p className="text-muted-foreground mt-3 text-sm sm:text-base">
+          <p className="text-muted-foreground mt-1 text-xs sm:text-sm">
             Search by role, location, experience, and availability.
           </p>
 
-          <div className="mt-8 rounded-2xl p-4 sm:p-6 max-w-3xl mx-auto border border-border bg-card">
+          <div className="mt-4 rounded-xl p-3 sm:p-4 max-w-3xl mx-auto border border-border/60 bg-card">
             {/* Directory tabs */}
-            <div className="flex items-center gap-1 p-1 rounded-full bg-secondary border border-border mb-4 mx-auto w-fit" data-testid="directory-tabs">
+            <div className="flex items-center gap-1 p-0.5 rounded-full bg-secondary border border-border mb-3 mx-auto w-fit" data-testid="directory-tabs">
               {[
                 { id: "talent", label: "Talent" },
                 { id: "crew", label: "Crew" },
@@ -318,7 +318,7 @@ export default function SearchDirectory() {
                   key={t.id}
                   data-testid={`tab-${t.id}`}
                   onClick={() => setTab(t.id)}
-                  className={`px-4 sm:px-6 py-1.5 text-xs sm:text-sm font-semibold rounded-full transition-colors ${
+                  className={`px-3 sm:px-4 py-1 text-xs font-semibold rounded-full transition-colors ${
                     tab === t.id
                       ? "bg-primary text-primary-foreground"
                       : "text-muted-foreground hover:text-foreground"
@@ -329,24 +329,24 @@ export default function SearchDirectory() {
               ))}
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex flex-col sm:flex-row gap-2">
               <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
                 <Input
                   placeholder="Search by name, role, or location..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 bg-secondary/50 border-border/50 h-11"
+                  className="pl-9 bg-secondary/50 border-border/50 h-9 text-sm"
                 />
               </div>
-              <Button className="h-11 px-6 font-semibold rounded-full bg-primary text-primary-foreground hover:bg-primary/90">
-                <Search className="w-4 h-4 mr-2" />
+              <Button className="h-9 px-4 text-xs font-semibold rounded-full bg-primary text-primary-foreground hover:bg-primary/90">
+                <Search className="w-3.5 h-3.5 mr-1.5" />
                 Search
               </Button>
             </div>
 
             {/* Quick toggles */}
-            <div className="flex flex-wrap items-center gap-2 mt-4">
+            <div className="flex flex-wrap items-center gap-1.5 mt-3">
               {[
                 { key: "availableNow", label: "Available Now" },
                 { key: "proOnly", label: "PRO Only" },
@@ -385,13 +385,13 @@ export default function SearchDirectory() {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
-        <div className="flex gap-8">
+      <div className="max-w-7xl mx-auto px-3 sm:px-5 lg:px-6 pb-12">
+        <div className="flex gap-5">
           <SearchFilters filters={filters} onChange={setFilters} isProUser={myProfile?.is_pro} proximity={proximity} onProximityChange={setProximity} />
 
           <div className="flex-1 min-w-0">
             {/* Results header */}
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-3">
                 <span className="text-sm text-muted-foreground">
                   {loading ? "Searching..." : (tab === "companies" ? `${companies.length} companies found` : `${profiles.length} profiles found`)}
@@ -459,7 +459,7 @@ export default function SearchDirectory() {
             ) : viewMode === "map" ? (
               <MapView profiles={profiles} center={proximity} />
             ) : (
-              <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+              <div className="grid grid-cols-2 xs:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2.5 sm:gap-3" data-testid="directory-profile-grid">
                 {profiles.map((profile, i) => (
                   <div key={profile.id} className="relative group">
                    <ProfileCard

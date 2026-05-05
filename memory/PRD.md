@@ -73,6 +73,45 @@ Foundation migration, OTP auth, Stripe checkout, Postmark, bulk import, SpotScor
 - **HSTS middleware** — `Strict-Transport-Security` gated on `ENV=production`.
 - **7 Pydantic body models** with URL auto-https + slug normalisers. Relative paths preserved. 422 on validation failure.
 
+### Iter 19 (Feb 2026 — UI compaction + GridFS uploads + phone removal) — TESTED ✓ (4 new pytest, 15 cumulative)
+
+**1. Photo persistence (URGENT FIX) — local disk → MongoDB GridFS**
+- Rewrote `routers/uploads.py` to use `AsyncIOMotorGridFSBucket(bucket_name="uploads")`. Every upload (profile photo / headshot / company-logo / company-cover) now persists in MongoDB and survives container redeploys (the previous local-disk approach lost every photo on every Emergent rebuild → that's why uploaded photos broke "after a day or two").
+- New URL shape: `/api/uploads/file/{ObjectId}` — served by a streaming GET endpoint with `Cache-Control: public, max-age=31536000, immutable`.
+- Legacy `/api/static/uploads/...` path still mounted from `server.py` for backwards-compat.
+- 5MB cap, JPEG/PNG/WEBP only, file-type-by-MIME validated (unchanged from before).
+
+**2. Profile carousel (multi-photo)**
+- New optional field `Profile.additional_photos: List[str]` (Pydantic + persistence). `ProfileCard.jsx` shows a swipe carousel of `[profile_photo, ...additional_photos]` inside the headshot frame — chevron arrows fade in on hover, dots indicate position. Single-photo profiles render unchanged.
+
+**3. ProfileCard redesign — 5-col grid, full names, preferred-name italics**
+- Card aspect ratio went from `3/4` → `4/5` (more portrait-like).
+- Body text shrunk by ~30% (font sizes, paddings, badge sizes all dropped a tier).
+- Bottom overlay now shows **full legal name** (line 1) and the preferred name in italics + smart quotes (line 2) only when preferred ≠ first name token (e.g. "Brendan Byrne" / *"Brent"*).
+- Directory grid: `grid-cols-1 xs:2 sm:2 lg:3` → `grid-cols-2 sm:3 md:4 lg:5`. Same change applied to `ProfilePage` "similar profiles" + landing `FeaturedProfiles`.
+- New `compact` prop on `FoundingMemberBadge` for the smaller card.
+
+**4. SearchDirectory hero compaction**
+- Hero padding: `py-12 sm:py-16` → `py-5 sm:py-7`.
+- H1 size: `text-3xl/4xl/5xl` → `text-xl/2xl`.
+- Search input height + button: `h-11 px-6` → `h-9 px-4`.
+- Quick-toggle gaps tightened. Main results container `gap-8` → `gap-5`, header margin `mb-6` → `mb-3`.
+
+**5. Dashboard compaction + pull-to-refresh**
+- Stats cards: padding `p-5` → `p-3`, gaps `gap-4` → `gap-3`, font sizes shrunk ~20%, text labels shortened (e.g. "Contact Reveals" → "Reveals", "remaining this month" → "left").
+- Section spacing: header `mb-8` → `mb-5`, grid gap `gap-6` → `gap-3`, panel padding `p-6` → `p-4`.
+- Wrapped data load in `useCallback` and wired into `usePullToRefresh` — pull-down on mobile now refreshes the whole dashboard (test-id `dashboard-pull-indicator`).
+
+**6. Years-of-experience input fix**
+- `value` now resolves to empty string when the underlying number is 0/undefined, so users can clear the leading zero and type two-digit values cleanly. Test-id `years-of-experience-input`.
+
+**7. Phone verification — completely removed**
+- Frontend: `phone_verified` references purged from `ProfileCard`, `ProfileHero`, `CreateProfile`. Phone is now a plain contact field with no verify button.
+- `InlineVerificationButton` rewritten to be email-only (no `type` prop). Code-entry row uses `flex-wrap basis-full` so the 6-digit input + Confirm button always have room — fixes the "can't enter code" bug the user reported.
+- Backend: `/api/functions/sendVerificationCode` returns 400 for any `type ≠ "email"`; `verifyCode` only writes `email_verified` and now also stamps `User.email_verified` (previously only the Profile got the flag, which is why some auth.me() responses didn't see verification).
+
+State after iter 19: 58 users · 58 profiles · 1 casting call · 1 founder claimed.
+
 ### Iter 18 (Feb 2026 — go-live housekeeping: casting CRUD + founder claim flow + cleanup) — TESTED ✓ (5 new pytest)
 
 **1. Casting Call edit / end / reopen / delete**

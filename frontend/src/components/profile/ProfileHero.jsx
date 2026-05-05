@@ -129,7 +129,7 @@ export default function ProfileHero({ profile, subscription, isFoundingMember })
             )}
 
             {/* Unified verification badge */}
-            {(profile.email_verified || profile.phone_verified || profile.imdb_verified || profile.union_verified) && (
+            {(profile.email_verified || profile.imdb_verified) && (
               <div className="flex items-center gap-1.5 mt-4">
                 <CheckCircle className="w-4 h-4 text-primary" />
                 <span className="text-sm font-semibold text-primary">Verified</span>

@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import { MapPin, Crown, CheckCircle, Film, Bookmark, Zap } from "lucide-react";
+import { MapPin, Crown, CheckCircle, Film, Bookmark, Zap, ChevronLeft, ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { PercentileBadge } from "./SpotScoreBreakdown";
 import FoundingMemberBadge from "./FoundingMemberBadge";
@@ -10,8 +11,8 @@ function ScoreDot({ score }) {
   const color = score >= 80 ? "#E6FF00" : score >= 55 ? "#FF5C35" : "#888";
   return (
     <div className="flex items-center gap-1" title={`SpotScore: ${score}`}>
-      <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: color }} />
-      <span className="font-display font-bold text-sm" style={{ color }}>{score}</span>
+      <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: color }} />
+      <span className="font-display font-bold text-[11px]" style={{ color }}>{score}</span>
     </div>
   );
 }
@@ -22,7 +23,48 @@ const TIER_BADGE = {
   elite:   { label: "ELITE",   bg: "#E6FF00", color: "#0D0D0D" },
 };
 
+// Resolve any photo URL — includes legacy /api/static/uploads/... support.
+function resolvePhoto(p) {
+  if (!p) return null;
+  if (p.startsWith("/api/static/")) return p;
+  if (p.startsWith("/static/")) return `/api${p}`;
+  return p;
+}
+
+/**
+ * ProfileCard — compact directory card.
+ *
+ * Shows Full Name (line 1) and a Preferred-name annotation in italics + quotes
+ * on line 2 only when the preferred name differs from the legal first name
+ * (e.g. "Brendan Byrne" / "Brent"). Hosts a swipe carousel of profile_photo +
+ * additional_photos (max 5 visible) inside the headshot frame; arrows fade
+ * in on hover, dots indicate position.
+ */
 export default function ProfileCard({ profile, subscription, isFoundingMember, onSave, isSaved, index = 0, featured = false, spotCount }) {
+  // Build the photo carousel — primary photo first, then any additional photos.
+  const photos = [];
+  if (profile.profile_photo) photos.push(profile.profile_photo);
+  if (Array.isArray(profile.additional_photos)) {
+    for (const p of profile.additional_photos) {
+      if (p && !photos.includes(p)) photos.push(p);
+    }
+  }
+  const hasCarousel = photos.length > 1;
+  const [photoIdx, setPhotoIdx] = useState(0);
+  const currentPhoto = photos[photoIdx];
+
+  const advance = (e, delta) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setPhotoIdx((i) => (i + delta + photos.length) % photos.length);
+  };
+
+  // Preferred-name annotation logic — only show if preferred ≠ first token
+  // of full name. Handles whitespace + case-insensitive comparison.
+  const firstName = (profile.full_name || "").trim().split(/\s+/)[0] || "";
+  const preferred = (profile.preferred_name || "").trim();
+  const showPreferred = preferred && preferred.toLowerCase() !== firstName.toLowerCase();
+
   const availabilityStyle = profile.availability_status === "Available Now"
     ? { background: "#22C55E", color: "#0D0D0D", label: "Available now" }
     : profile.availability_status === "Available Soon"
@@ -33,23 +75,25 @@ export default function ProfileCard({ profile, subscription, isFoundingMember, o
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 16 }}
+      initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.04, duration: 0.4 }}
+      transition={{ delay: Math.min(index * 0.025, 0.4), duration: 0.35 }}
       data-testid={`profile-card-${profile.profile_slug || profile.id}`}
     >
       <Link to={`/profile/${profile.profile_slug || profile.id}`} className="block group">
-        <div className="overflow-hidden rounded-lg border border-border transition-all duration-200 group-hover:border-primary/30" style={{ background: "#161616" }}>
-          {/* Poster image */}
-          <div className="relative aspect-[3/4] overflow-hidden" style={{ background: "#1A1A1A" }}>
-            {profile.profile_photo ? (
+        <div className="overflow-hidden rounded-md border border-border/60 transition-all duration-200 group-hover:border-primary/30" style={{ background: "#161616" }}>
+          {/* Headshot frame — 4:5 ratio, more like a portrait card */}
+          <div className="relative aspect-[4/5] overflow-hidden" style={{ background: "#1A1A1A" }}>
+            {currentPhoto ? (
               <img
-                src={profile.profile_photo?.startsWith("/api/static/") || profile.profile_photo?.startsWith("/static/") ? `/api${profile.profile_photo.startsWith("/static/") ? profile.profile_photo : profile.profile_photo.replace(/^\/api/, "")}` : profile.profile_photo}
+                key={currentPhoto}
+                src={resolvePhoto(currentPhoto)}
                 alt={profile.full_name}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                loading="lazy"
+                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                onError={(e) => { e.currentTarget.style.display = "none"; }}
               />
             ) : (
-              // Branded placeholder — Spot'd lens-only mark, centred on dark bg.
               <div
                 className="w-full h-full flex items-center justify-center select-none"
                 data-testid="profile-card-placeholder"
@@ -65,120 +109,138 @@ export default function ProfileCard({ profile, subscription, isFoundingMember, o
               </div>
             )}
 
-            {/* Gradient overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
+            {/* Gradient overlay for legibility of name + role */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/15 to-transparent pointer-events-none" />
 
-            {/* Top badges */}
-            <div className="absolute top-3 left-3 right-3 flex items-start justify-between">
-              <div className="flex gap-1.5 flex-wrap">
+            {/* Carousel arrows — only when 2+ photos */}
+            {hasCarousel && (
+              <>
+                <button
+                  onClick={(e) => advance(e, -1)}
+                  aria-label="Previous photo"
+                  data-testid="profile-card-photo-prev"
+                  className="absolute top-1/2 -translate-y-1/2 left-1.5 w-6 h-6 rounded-full bg-black/55 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={(e) => advance(e, 1)}
+                  aria-label="Next photo"
+                  data-testid="profile-card-photo-next"
+                  className="absolute top-1/2 -translate-y-1/2 right-1.5 w-6 h-6 rounded-full bg-black/55 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </button>
+                {/* Dots */}
+                <div className="absolute bottom-[58px] left-1/2 -translate-x-1/2 flex gap-1">
+                  {photos.map((_, i) => (
+                    <span
+                      key={i}
+                      className="w-1 h-1 rounded-full transition-all"
+                      style={{ background: i === photoIdx ? "#fff" : "rgba(255,255,255,0.35)" }}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
+
+            {/* Top badges — tier + featured + minor */}
+            <div className="absolute top-2 left-2 right-2 flex items-start justify-between gap-1 pointer-events-none">
+              <div className="flex gap-1 flex-wrap">
                 {featured && (
-                  <span className="px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em] rounded bg-primary text-primary-foreground">
+                  <span className="px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-[0.06em] rounded bg-primary text-primary-foreground">
                     Featured
                   </span>
                 )}
                 {tierBadge && (
-                  <span className="px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em] rounded flex items-center gap-1" style={{ background: tierBadge.bg, color: tierBadge.color }}>
-                    <Crown className="w-2.5 h-2.5" /> {tierBadge.label}
+                  <span className="px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-[0.06em] rounded flex items-center gap-0.5" style={{ background: tierBadge.bg, color: tierBadge.color }}>
+                    <Crown className="w-2 h-2" /> {tierBadge.label}
                   </span>
                 )}
                 {profile.is_minor_profile && (
-                  <span data-testid="minor-badge" className="px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em] rounded bg-amber-500/90 text-black" title="Performer under 18">
+                  <span data-testid="minor-badge" className="px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-[0.06em] rounded bg-amber-500/90 text-black">
                     Minor
                   </span>
                 )}
               </div>
-              {/* SpotScore dot in top-right of headshot */}
               {profile.spot_score > 0 && (
-                <div className="px-1.5 py-0.5 rounded-md flex items-center gap-1" style={{ background: "rgba(0,0,0,0.65)" }}>
+                <div className="px-1.5 py-0.5 rounded flex items-center" style={{ background: "rgba(0,0,0,0.65)" }}>
                   <ScoreDot score={profile.spot_score} />
                 </div>
               )}
             </div>
 
-            {/* Hover CTA */}
-            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-              <span className="px-4 py-2 rounded-full text-xs font-semibold bg-primary text-primary-foreground">
-                Spot this person
-              </span>
-            </div>
-
-            {/* Bottom name + role */}
-            <div className="absolute bottom-0 left-0 right-0 p-4">
-              <h3 className="font-display text-base font-semibold text-white leading-tight" style={{ letterSpacing: "-0.3px" }}>
-                {profile.preferred_name || profile.full_name}
+            {/* Bottom name + role overlay */}
+            <div className="absolute bottom-0 left-0 right-0 p-2.5">
+              <h3 className="font-display text-[13px] font-semibold text-white leading-tight tracking-tight" data-testid="profile-card-name">
+                {profile.full_name || preferred}
               </h3>
-              <p className="text-[10px] uppercase tracking-[0.08em] text-white/50 mt-0.5">
+              {showPreferred && (
+                <p className="text-[10px] text-white/70 italic mt-0.5 leading-tight" data-testid="profile-card-preferred">
+                  &ldquo;{preferred}&rdquo;
+                </p>
+              )}
+              <p className="text-[9px] uppercase tracking-[0.08em] text-white/55 mt-1 truncate">
                 {profile._displayRole || profile.primary_role}
-                {profile._otherRoles && profile._otherRoles.length > 0 && (
-                  <span className="text-white/35 normal-case tracking-normal"> · Also: {profile._otherRoles.slice(0, 2).join(", ")}{profile._otherRoles.length > 2 ? "…" : ""}</span>
-                )}
               </p>
             </div>
           </div>
 
-          {/* Card footer */}
-          <div className="p-3.5 space-y-2.5">
-            <FoundingMemberBadge tier={subscription?.tier} isFoundingMember={isFoundingMember} />
-            <div className="flex items-center justify-between">
-              {profile.city && (
-                <div className="flex items-center gap-1 text-xs" style={{ color: "#888" }}>
-                  <MapPin className="w-3 h-3" />
-                  <span>{profile.city}{profile.state ? `, ${profile.state}` : ""}</span>
+          {/* Compact footer — city, availability pill, save */}
+          <div className="px-2.5 py-2 space-y-1.5">
+            <FoundingMemberBadge tier={subscription?.tier} isFoundingMember={isFoundingMember} compact />
+            <div className="flex items-center justify-between gap-2">
+              {profile.city ? (
+                <div className="flex items-center gap-1 text-[10px] truncate" style={{ color: "#888" }}>
+                  <MapPin className="w-2.5 h-2.5 flex-shrink-0" />
+                  <span className="truncate">{profile.city}{profile.state ? `, ${profile.state}` : ""}</span>
                 </div>
+              ) : (
+                <span />
               )}
-              {profile.experience_level && (
-                <span className="text-[10px] uppercase tracking-[0.08em]" style={{ color: "#888" }}>{profile.experience_level}</span>
-              )}
-            </div>
-
-            <div className="flex items-center justify-between">
               {profile.availability_status && (
-                <span className="text-[9px] uppercase tracking-[0.08em] font-semibold px-2 py-0.5 rounded-full"
+                <span className="text-[8px] uppercase tracking-[0.05em] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap"
                   style={{ background: availabilityStyle.background, color: availabilityStyle.color }}>
                   {availabilityStyle.label}
                 </span>
               )}
-              <div className="flex items-center gap-1.5">
-                {spotCount > 0 && (
-                  <div className="flex items-center gap-1 px-1.5 py-0.5 rounded" style={{ background: "rgba(255,92,53,0.15)" }} title={`${spotCount} spot${spotCount !== 1 ? "s" : ""}`}>
-                    <Zap className="w-2.5 h-2.5" style={{ color: "#FF5C35" }} />
-                    <span className="text-[10px] font-bold" style={{ color: "#FF5C35" }}>{spotCount}</span>
-                  </div>
-                )}
-                {profile.spot_percentile >= 75 && (
-                  <PercentileBadge percentile={profile.spot_percentile} />
-                )}
-              </div>
             </div>
 
-            {/* Bottom row: bookmark + verified + imdb */}
-            <div className="flex items-center justify-between pt-0.5">
-              <div className="flex items-center gap-2">
-                {(profile.email_verified || profile.phone_verified || profile.imdb_verified || profile.union_verified) && (
-                  <div className="flex items-center gap-1">
-                    <CheckCircle className="w-3 h-3 text-primary" />
-                    <span className="text-[9px] font-bold uppercase tracking-[0.06em] text-primary">Verified</span>
-                  </div>
+            <div className="flex items-center justify-between pt-0.5 gap-1">
+              <div className="flex items-center gap-1.5">
+                {(profile.email_verified || profile.imdb_verified) && (
+                  <CheckCircle className="w-3 h-3 text-primary" title="Verified" />
                 )}
                 {profile.imdb_link && (
                   <span
                     role="link"
                     onClick={(e) => { e.stopPropagation(); e.preventDefault(); window.open(ensureAbsoluteUrl(profile.imdb_link), "_blank", "noopener,noreferrer"); }}
-                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[9px] font-bold hover:opacity-80 transition-opacity cursor-pointer"
+                    className="inline-flex items-center gap-0.5 px-1 py-0.5 rounded text-[8px] font-bold hover:opacity-80 cursor-pointer"
                     style={{ background: "#F5C518", color: "#0D0D0D" }}
                     title="View on IMDb"
                   >
-                    <Film className="w-2.5 h-2.5" /> IMDb
+                    <Film className="w-2 h-2" /> IMDb
                   </span>
+                )}
+                {spotCount > 0 && (
+                  <div className="flex items-center gap-0.5 px-1 py-0.5 rounded" style={{ background: "rgba(255,92,53,0.15)" }} title={`${spotCount} spot${spotCount !== 1 ? "s" : ""}`}>
+                    <Zap className="w-2 h-2" style={{ color: "#FF5C35" }} />
+                    <span className="text-[9px] font-bold" style={{ color: "#FF5C35" }}>{spotCount}</span>
+                  </div>
+                )}
+                {profile.spot_percentile >= 75 && (
+                  <PercentileBadge percentile={profile.spot_percentile} compact />
                 )}
               </div>
               {onSave && !profile._isOwnProfile && (
                 <button
                   onClick={(e) => { e.preventDefault(); e.stopPropagation(); onSave(profile.id); }}
-                  className="w-6 h-6 rounded-full flex items-center justify-center transition-colors"
+                  className="w-5 h-5 rounded-full flex items-center justify-center transition-colors flex-shrink-0"
                   style={{ background: "rgba(255,255,255,0.08)" }}
+                  data-testid="profile-card-save-btn"
+                  aria-label={isSaved ? "Unsave" : "Save"}
                 >
-                  <Bookmark className={`w-3 h-3 ${isSaved ? "fill-primary text-primary" : "text-muted-foreground"}`} />
+                  <Bookmark className={`w-2.5 h-2.5 ${isSaved ? "fill-primary text-primary" : "text-muted-foreground"}`} />
                 </button>
               )}
             </div>

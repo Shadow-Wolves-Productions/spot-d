@@ -407,7 +407,7 @@ export default function ProfilePage() {
         {similarProfiles.length > 0 && (
           <section className="mt-16">
             <h2 className="font-display text-xl font-semibold text-foreground mb-6">Similar Profiles</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2.5 sm:gap-3">
               {similarProfiles.map((p, i) => (
                 <ProfileCard key={p.id} profile={p} index={i} />
               ))}

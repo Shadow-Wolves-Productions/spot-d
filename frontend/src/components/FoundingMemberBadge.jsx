@@ -7,18 +7,18 @@
  *     so a user keeps the badge regardless of their billing tier)
  *   - or legacy: `tier === "founder"` (old direct-from-subscription path)
  */
-export default function FoundingMemberBadge({ tier, isFoundingMember, className = "" }) {
+export default function FoundingMemberBadge({ tier, isFoundingMember, className = "", compact = false }) {
   const show = !!isFoundingMember || tier === "founder";
   if (!show) return null;
   return (
     <span
-      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold tracking-wide uppercase ${className}`}
+      className={`inline-flex items-center gap-1 ${compact ? "px-1.5 py-0 text-[8px]" : "px-2 py-0.5 text-[10px]"} rounded-full font-semibold tracking-wide uppercase ${className}`}
       style={{ backgroundColor: "#38BDF8", color: "#0D0D0D" }}
       data-testid="founding-member-badge"
       title="Founding Member — locked in lifetime free PRO"
     >
-      <span aria-hidden="true" style={{ fontSize: 10, lineHeight: 1 }}>◆</span>
-      Founding Member
+      <span aria-hidden="true" style={{ fontSize: compact ? 8 : 10, lineHeight: 1 }}>◆</span>
+      {compact ? "Founder" : "Founding Member"}
     </span>
   );
 }
