@@ -5,7 +5,7 @@ import os
 import re
 import secrets
 from datetime import datetime, timezone, timedelta
-from typing import Any, Optional
+from typing import Any, List, Optional
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Request, Response
 from fastapi.responses import JSONResponse, Response as FastAPIResponse
@@ -564,6 +564,159 @@ async def admin_list_waitlist(request: Request):
     await _require_admin(request)
     items = await db.waitlist.find({}, {"_id": 0}).sort("created_date", -1).to_list(length=1000)
     return {"total": len(items), "items": items}
+
+
+# --------------------------------------------------------------------------- #
+# Admin broadcast email — compose + send arbitrary HTML emails to one of
+# several pre-defined audiences (or a free-form recipient list).
+#
+# Supported audiences:
+#   - "all_users"          → every user with an email
+#   - "founders"           → users where is_founding_member: true
+#   - "verified"           → users where email_verified: true
+#   - "imported_pending"   → imported users who haven't claimed yet
+#   - "custom"             → free-form list of email addresses
+#
+# Server-side audience resolution keeps PII off the wire and lets us scale to
+# 10k+ users without dumping the user list into the admin UI.
+# --------------------------------------------------------------------------- #
+class AdminBroadcastBody(BaseModel):
+    audience: str = Field(..., pattern=r"^(all_users|founders|verified|imported_pending|custom)$")
+    subject: str = Field(..., min_length=1, max_length=300)
+    html: str = Field(..., min_length=1)
+    custom_emails: Optional[List[str]] = None
+    from_name: Optional[str] = "Spot'd"
+    dry_run: Optional[bool] = False
+
+
+async def _resolve_audience(audience: str, custom_emails: Optional[List[str]]) -> List[dict]:
+    """Resolve an audience key to a list of `{email, full_name}` dicts.
+    Always de-dupes on lowercase email and skips empty addresses."""
+    seen: set[str] = set()
+    out: List[dict] = []
+
+    def _add(email: Optional[str], full_name: Optional[str]):
+        if not email:
+            return
+        e = email.lower().strip()
+        if not e or e in seen:
+            return
+        seen.add(e)
+        out.append({"email": e, "full_name": full_name or ""})
+
+    if audience == "custom":
+        for e in (custom_emails or []):
+            _add(e, None)
+        return out
+
+    query: dict = {}
+    if audience == "founders":
+        query = {"is_founding_member": True}
+    elif audience == "verified":
+        query = {"email_verified": True}
+    elif audience == "imported_pending":
+        # Anyone with a profile flagged with import_source whose user hasn't verified.
+        pending = await db.profiles.find(
+            {"import_source": {"$exists": True, "$ne": None}},
+            {"_id": 0, "user_id": 1},
+        ).to_list(length=10_000)
+        ids = [p["user_id"] for p in pending if p.get("user_id")]
+        query = {"id": {"$in": ids}, "email_verified": {"$ne": True}}
+
+    cursor = db.users.find(query, {"_id": 0, "email": 1, "full_name": 1})
+    async for u in cursor:
+        _add(u.get("email"), u.get("full_name"))
+    return out
+
+
+@router.post("/api/admin/broadcast-email")
+async def admin_broadcast_email(
+    body: AdminBroadcastBody,
+    background: BackgroundTasks,
+    request: Request,
+):
+    actor = await _require_admin(request)
+    recipients = await _resolve_audience(body.audience, body.custom_emails)
+
+    if not recipients:
+        raise HTTPException(400, "No recipients matched the selected audience.")
+    if len(recipients) > 5_000:
+        raise HTTPException(400, f"Audience too large ({len(recipients)} > 5,000). Refine your filter.")
+
+    # Wrap HTML with the standard email shell — logo, basic styling, footer —
+    # so admin authoring stays focused on body content.
+    def _wrap(html_body: str, name: str) -> str:
+        first = (name or "there").split()[0] if name else "there"
+        return f"""
+<!doctype html>
+<html><body style="margin:0;padding:0;background:#f7f7f7;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;color:#0D0D0D;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;padding:24px;">
+    <tr><td>{email_logo_html()}</td></tr>
+    <tr><td style="padding:24px 0;background:#fff;border-radius:12px;">
+      <div style="padding:0 24px;">
+        <p style="margin:0 0 16px 0;color:#666;font-size:14px;">Hi {first},</p>
+        {html_body}
+        <p style="margin:32px 0 0;color:#999;font-size:12px;">— The Spot'd team</p>
+      </div>
+    </td></tr>
+    <tr><td style="padding:16px 8px;color:#999;font-size:11px;text-align:center;">
+      You received this because you have a Spot'd account. <a href="{PUBLIC_APP_URL}/preferences" style="color:#777;">Email preferences</a>.
+    </td></tr>
+  </table>
+</body></html>
+"""
+
+    queued = []
+    for r in recipients:
+        queued.append({"email": r["email"], "full_name": r["full_name"]})
+        if not body.dry_run:
+            wrapped = _wrap(body.html, r["full_name"])
+            background.add_task(send_email, r["email"], body.subject, wrapped, body.from_name or "Spot'd")
+
+    await _log_admin_action(
+        actor["id"],
+        "email.broadcast",
+        body.audience,
+        {
+            "subject": body.subject,
+            "audience": body.audience,
+            "count": len(queued),
+            "dry_run": bool(body.dry_run),
+        },
+    )
+
+    return {
+        "ok": True,
+        "audience": body.audience,
+        "count": len(queued),
+        "dry_run": bool(body.dry_run),
+        # Return a small sample so the admin UI can show "Will send to X, Y, +N more"
+        "sample": [r["email"] for r in queued[:8]],
+    }
+
+
+@router.get("/api/admin/audience-counts")
+async def admin_audience_counts(request: Request):
+    """Return a count of recipients matching each predefined audience.
+
+    Admin UI uses this to show live numbers next to each audience radio
+    option (e.g. "Founders (4)").
+    """
+    await _require_admin(request)
+    counts = {}
+    counts["all_users"] = await db.users.count_documents({"email": {"$exists": True, "$ne": None}})
+    counts["founders"] = await db.users.count_documents({"is_founding_member": True})
+    counts["verified"] = await db.users.count_documents({"email_verified": True})
+    pending = await db.profiles.find(
+        {"import_source": {"$exists": True, "$ne": None}},
+        {"_id": 0, "user_id": 1},
+    ).to_list(length=10_000)
+    pending_ids = [p["user_id"] for p in pending if p.get("user_id")]
+    counts["imported_pending"] = await db.users.count_documents({
+        "id": {"$in": pending_ids},
+        "email_verified": {"$ne": True},
+    }) if pending_ids else 0
+    return counts
 
 
 # --------------------------------------------------------------------------- #

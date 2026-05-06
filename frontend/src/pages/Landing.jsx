@@ -1,5 +1,4 @@
 import HeroSection from "../components/landing/HeroSection";
-import HowItWorks from "../components/landing/HowItWorks";
 import FeaturedProfiles from "../components/landing/FeaturedProfiles";
 import PricingPreview from "../components/landing/PricingPreview";
 import CastingCallsPreview from "../components/landing/CastingCallsPreview";
@@ -56,8 +55,6 @@ export default function Landing() {
           </div>
         </div>
       </section>
-
-      <HowItWorks />
 
       <CastingCallsPreview />
 

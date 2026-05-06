@@ -73,6 +73,36 @@ Foundation migration, OTP auth, Stripe checkout, Postmark, bulk import, SpotScor
 - **HSTS middleware** — `Strict-Transport-Security` gated on `ENV=production`.
 - **7 Pydantic body models** with URL auto-https + slug normalisers. Relative paths preserved. 422 on validation failure.
 
+### Iter 20 (Feb 2026 — admin email composer + UX polish + spotlight dedup) — TESTED ✓ (6 new pytest, 21 cumulative)
+
+**1. Admin Email Composer (NEW)**
+- Backend: `POST /api/admin/broadcast-email { audience, subject, html, custom_emails?, dry_run }` and `GET /api/admin/audience-counts`. Audiences: `all_users | founders | verified | imported_pending | custom`. 5,000-recipient hard cap, FastAPI `BackgroundTasks` for non-blocking Postmark fan-out, every send wrapped in branded shell (logo, greeting, footer with preferences link). All sends logged to `email_log` (status: sent/failed/exception/mocked).
+- Frontend: New `EmailComposer.jsx` component (Emails tab) with: 5 audience radio buttons + live counts, 3 quick-start templates (Update / Weekly digest / Photo re-upload nudge), HTML textarea ↔ Preview toggle, Custom recipient list parser (comma/semicolon/newline), Dry-run + Send buttons, confirm-before-send dialog.
+
+**2. Hero compaction round 2**
+- `SearchDirectory` hero went from a centered 4xl/5xl block with gradient to a slim **full-width single-line bar** matching the page width. Removed the dark padding strip above. Removed the 4 quick toggles (`Available Now`, `PRO Only`, `IMDb Linked`, `Verified`) — they live in the left filter sidebar already, so the hero only carries Tabs + Search + (Talent-only) `Minors shown/hidden` toggle.
+- Default `includeMinors` flipped from **false → true** so under-18 performers (e.g. Lewis Claassen-Loud) are visible by default. Toggle label flipped to clarify state ("Minors shown" / "Minors hidden").
+
+**3. Profile card icon polish**
+- Bottom-of-photo "FOUNDER" pill replaced with a tiny **blue diamond glyph** (`◆`, 16px, `#38BDF8`) in the top-left, with `title="Founding Member"` for hover tooltip.
+- "Available now" pill replaced with a **green checkmark circle** (`Check` icon, 16px, `#22C55E`) in the top-left next to the diamond, with `title="Available now"`.
+- The percentile badge ("Top 5%" / "Top 10%" etc.) moved from the footer to the **bottom-right of the headshot frame**, opposite the name. New `compact` prop on `PercentileBadge` makes it the same micro-size as the role text.
+- Footer simplified — no more Founder/Available pill; just city, experience level, IMDb, spot count, save button.
+
+**4. Admin nav cleanup**
+- Removed **Platform** tab and **Logs** tab (their stats were duplicated in Stats; founder-cap editor wasn't being touched).
+- Removed standalone **Imports** tab.
+- Moved the "Manual founding-member flag" card to the **Profiles** tab (top of the list).
+- Admin nav now: Profiles · Casting · Spotlight · Emails · Stats (was 8 tabs, now 5).
+
+**5. Spotlight pin dedup**
+- The "Pin a new profile" search list now filters out profiles whose IDs are already in the active-pins list. Previously, a pinned profile would appear in BOTH sections with another "Pin" button — now they only appear in the "Active spotlight pins" section.
+
+**6. Landing page**
+- Removed the redundant `<HowItWorks />` section (info already covered above it). Landing flow is now: Hero → Featured Profiles → CastingCalls → Pricing → Founding Section.
+
+State: 58 users (preview) · 3 founders claimed (preview) · 1 casting call · admin nav 5 tabs.
+
 ### Iter 19 (Feb 2026 — UI compaction + GridFS uploads + phone removal) — TESTED ✓ (4 new pytest, 15 cumulative)
 
 **1. Photo persistence (URGENT FIX) — local disk → MongoDB GridFS**

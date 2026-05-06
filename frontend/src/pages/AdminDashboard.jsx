@@ -10,16 +10,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import EmailComposer from "../components/admin/EmailComposer";
 
 const TABS = [
   { id: "profiles",  label: "Profiles",  icon: Film },
   { id: "casting",   label: "Casting",   icon: Award },
   { id: "spotlight", label: "Spotlight", icon: Sparkles },
-  { id: "imports",   label: "Imports",   icon: Building2 },
   { id: "emails",    label: "Emails",    icon: Mail },
-  { id: "platform",  label: "Platform",  icon: Server },
   { id: "stats",     label: "Stats",     icon: BarChart3 },
-  { id: "logs",      label: "Logs",      icon: FileText },
 ];
 
 export default function AdminDashboard() {
@@ -241,7 +239,7 @@ export default function AdminDashboard() {
               <Shield className="w-5 h-5 text-primary" />
               <h1 className="font-display text-2xl sm:text-3xl font-bold text-foreground">Admin Dashboard</h1>
             </div>
-            <p className="text-muted-foreground text-sm">7-tab admin · profiles · casting · imports · emails · platform · stats · logs</p>
+            <p className="text-muted-foreground text-sm">5-tab admin · profiles · casting · spotlight · emails · stats</p>
           </div>
           <Button variant="outline" size="sm" className="border-border" onClick={loadCore} data-testid="admin-refresh-btn">
             <RefreshCw className="w-4 h-4 mr-1" /> Refresh
@@ -280,6 +278,42 @@ export default function AdminDashboard() {
         {/* PROFILES (merged with Users — Make Admin lives here too) */}
         {tab === "profiles" && (
           <div className="space-y-2" data-testid="admin-profiles-tab">
+            {/* Manual founding-member flag — relocated here from the now-removed Imports tab */}
+            <div className="bg-card border border-border/60 rounded-xl p-4 mb-4" data-testid="manual-founding-flag-card">
+              <p className="text-[10px] uppercase tracking-wider font-mono text-muted-foreground mb-2">Manual founding-member flag</p>
+              <p className="text-xs text-muted-foreground mb-3">
+                Use this for users who claimed their spot outside the email-verification flow (e.g. external sign-ups, post-cap exceptions). Enter an email or profile slug.
+              </p>
+              <div className="flex gap-2 flex-wrap">
+                <Input
+                  value={flagInput}
+                  onChange={(e) => setFlagInput(e.target.value)}
+                  placeholder="email@example.com or profile-slug"
+                  className="bg-secondary border-border flex-1 min-w-[200px] text-sm"
+                  data-testid="manual-founding-flag-input"
+                />
+                <Button
+                  size="sm"
+                  onClick={() => flagFoundingMember(true)}
+                  disabled={flagBusy || !flagInput.trim()}
+                  className="bg-primary text-primary-foreground"
+                  data-testid="manual-founding-flag-claim-btn"
+                >
+                  Flag as founder
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => flagFoundingMember(false)}
+                  disabled={flagBusy || !flagInput.trim()}
+                  className="border-destructive/40 text-destructive hover:bg-destructive/10"
+                  data-testid="manual-founding-flag-unclaim-btn"
+                >
+                  Unflag
+                </Button>
+              </div>
+            </div>
+
             {filteredProfiles.map((p) => (
               <div key={p.id} className="bg-card border border-border/60 rounded-xl p-4">
                 <div className="flex flex-col sm:flex-row sm:items-center gap-3">
@@ -383,88 +417,14 @@ export default function AdminDashboard() {
         {/* SPOTLIGHT — manual pin manager */}
         {tab === "spotlight" && <SpotlightTab profiles={profiles} />}
 
-        {/* IMPORTS */}
-        {tab === "imports" && (
-          <div data-testid="admin-imports-tab">
-            <div className="grid grid-cols-3 gap-3 mb-4">
-              <div className="bg-card border border-border rounded-xl p-4"><p className="text-[10px] uppercase tracking-wider font-mono text-muted-foreground">Total</p><p className="font-display text-2xl font-bold">{imports.total}</p></div>
-              <div className="bg-card border border-border rounded-xl p-4"><p className="text-[10px] uppercase tracking-wider font-mono text-muted-foreground">Claimed</p><p className="font-display text-2xl font-bold text-green-400">{imports.claimed}</p></div>
-              <div className="bg-card border border-border rounded-xl p-4"><p className="text-[10px] uppercase tracking-wider font-mono text-muted-foreground">Unclaimed</p><p className="font-display text-2xl font-bold text-amber-400">{imports.unclaimed}</p></div>
-            </div>
-            <div className="flex justify-end mb-3">
-              <Button
-                size="sm"
-                variant="outline"
-                className="border-primary/40 text-primary hover:bg-primary/10"
-                onClick={sendPendingWelcomes}
-                disabled={resendingWelcomes || imports.unclaimed === 0}
-                data-testid="admin-send-pending-welcomes-btn"
-                title={imports.unclaimed === 0 ? "No pending welcomes" : `Send to ${imports.unclaimed} unclaimed`}
-              >
-                <Send className="w-3.5 h-3.5 mr-1" />
-                {resendingWelcomes ? "Queuing…" : `Send ${imports.unclaimed} pending welcome${imports.unclaimed === 1 ? "" : "s"}`}
-              </Button>
-            </div>
-
-            {/* Manual founding-member flag */}
-            <div className="bg-card border border-border/60 rounded-xl p-4 mb-4" data-testid="manual-founding-flag-card">
-              <p className="text-[10px] uppercase tracking-wider font-mono text-muted-foreground mb-2">Manual founding-member flag</p>
-              <p className="text-xs text-muted-foreground mb-3">
-                Use this for users who claimed their spot outside the email-verification flow (e.g. external sign-ups, post-cap exceptions). Enter an email or profile slug.
-              </p>
-              <div className="flex gap-2">
-                <Input
-                  value={flagInput}
-                  onChange={(e) => setFlagInput(e.target.value)}
-                  placeholder="email@example.com or profile-slug"
-                  className="bg-secondary border-border flex-1 text-sm"
-                  data-testid="manual-founding-flag-input"
-                />
-                <Button
-                  size="sm"
-                  onClick={() => flagFoundingMember(true)}
-                  disabled={flagBusy || !flagInput.trim()}
-                  className="bg-primary text-primary-foreground"
-                  data-testid="manual-founding-flag-claim-btn"
-                >
-                  Flag as founder
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => flagFoundingMember(false)}
-                  disabled={flagBusy || !flagInput.trim()}
-                  className="border-destructive/40 text-destructive hover:bg-destructive/10"
-                  data-testid="manual-founding-flag-unclaim-btn"
-                >
-                  Unflag
-                </Button>
-              </div>
-            </div>
-            <div className="space-y-2">
-              {filteredImports.map((p) => (
-                <div key={p.id} className="bg-card border border-border/60 rounded-xl p-3 flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-secondary overflow-hidden flex-shrink-0">
-                    {p.profile_photo && <img src={p.profile_photo} alt="" className="w-full h-full object-cover" />}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-foreground truncate">{p.full_name}</p>
-                    <p className="text-[11px] text-muted-foreground truncate">{p.email}</p>
-                  </div>
-                  <Badge className={`text-[10px] ${(p.welcome_email_sent || p.auto_claim_dismissed) ? "bg-green-500/15 text-green-400 border-0" : "bg-amber-500/15 text-amber-400 border-0"}`}>
-                    {(p.welcome_email_sent || p.auto_claim_dismissed) ? "Claimed" : "Pending"}
-                  </Badge>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
         {/* EMAILS */}
         {tab === "emails" && (
-          <div className="space-y-2" data-testid="admin-emails-tab">
-            <div className="flex justify-end">
-              <Button size="sm" variant="outline" className="border-primary/30 text-primary" onClick={sendNudges} disabled={sendingNudges} data-testid="admin-send-nudges-btn">
+          <div className="space-y-4" data-testid="admin-emails-tab">
+            <EmailComposer onSent={loadEmails} />
+
+            <div className="flex items-center justify-between mt-6 mb-2">
+              <h3 className="text-[11px] uppercase tracking-wider font-mono text-muted-foreground">Recent email log</h3>
+              <Button size="sm" variant="outline" className="border-primary/30 text-primary h-8" onClick={sendNudges} disabled={sendingNudges} data-testid="admin-send-nudges-btn">
                 <Send className="w-3.5 h-3.5 mr-1" /> {sendingNudges ? "Sending…" : "Run completion nudges now"}
               </Button>
             </div>
@@ -476,66 +436,9 @@ export default function AdminDashboard() {
                   <p className="text-sm font-medium text-foreground truncate">{e.subject || e.to || "Email"}</p>
                   <span className="text-[10px] uppercase tracking-[0.06em] font-mono text-muted-foreground">{e.created_date ? new Date(e.created_date).toLocaleString() : ""}</span>
                 </div>
-                <p className="text-xs text-muted-foreground mt-1 truncate">→ {e.to}</p>
+                <p className="text-xs text-muted-foreground mt-1 truncate">→ {e.to} {e.status ? `· ${e.status}` : ""}</p>
               </div>
             ))}
-          </div>
-        )}
-
-        {/* PLATFORM */}
-        {tab === "platform" && platform && (
-          <div className="space-y-6" data-testid="admin-platform-tab">
-            {/* Editable settings */}
-            <div className="bg-card border border-border/60 rounded-xl p-5">
-              <p className="text-[11px] uppercase tracking-wider font-mono text-muted-foreground mb-3">Settings</p>
-              <FounderCapEditor
-                current={platform.settings?.founder_cap ?? 100}
-                onSaved={() => loadPlatform()}
-              />
-            </div>
-
-            {/* Launch checklist */}
-            {platform.checklist && (
-              <div className="bg-card border border-border/60 rounded-xl p-5" data-testid="admin-launch-checklist">
-                <p className="text-[11px] uppercase tracking-wider font-mono text-muted-foreground mb-3">Launch checklist</p>
-                <ul className="space-y-2">
-                  {platform.checklist.map((item) => (
-                    <li key={item.key} className="flex items-center justify-between gap-3 py-2 border-b border-border/40 last:border-0" data-testid={`launch-checklist-${item.key}`}>
-                      <span className="flex items-center gap-2 text-sm">
-                        {item.ok ? (
-                          <span className="text-green-400">✓</span>
-                        ) : (
-                          <span className="text-destructive">✗</span>
-                        )}
-                        <span className="text-foreground">{item.label}</span>
-                      </span>
-                      <span className={`text-xs font-mono ${item.ok ? "text-green-400" : "text-amber-400"}`}>{item.value}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {/* Platform stats grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-              {[
-                { label: "ENV", value: platform.env },
-                { label: "Email mock", value: platform.email_mock ? "ON" : "OFF" },
-                { label: "SMS mock", value: platform.sms_mock ? "ON" : "OFF" },
-                { label: "Founders", value: platform.founder_count },
-                { label: "Users", value: platform.user_count },
-                { label: "Profiles", value: platform.profile_count },
-                { label: "Casting calls", value: platform.casting_calls },
-                { label: "Applications", value: platform.applications },
-                { label: "Endorsements", value: platform.endorsements },
-                { label: "Notifications", value: platform.notifications },
-              ].map((s) => (
-                <div key={s.label} className="bg-card border border-border/60 rounded-xl p-5">
-                  <p className="text-[10px] uppercase tracking-wider font-mono text-muted-foreground">{s.label}</p>
-                  <p className="font-display text-2xl font-bold text-foreground mt-1">{String(s.value)}</p>
-                </div>
-              ))}
-            </div>
           </div>
         )}
 
@@ -561,74 +464,10 @@ export default function AdminDashboard() {
             ))}
           </div>
         )}
-
-        {/* LOGS */}
-        {tab === "logs" && (
-          <div className="space-y-2" data-testid="admin-logs-tab">
-            {logs.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-8 text-center">No admin actions logged yet.</p>
-            ) : logs.map((l) => (
-              <div key={l.id} className="bg-card border border-border/60 rounded-xl p-3">
-                <div className="flex items-center justify-between gap-3 flex-wrap">
-                  <p className="text-sm text-foreground"><strong className="font-mono text-primary text-xs uppercase tracking-wider">{l.action}</strong> · target {l.target || "—"}</p>
-                  <span className="text-[10px] uppercase tracking-[0.06em] font-mono text-muted-foreground">{new Date(l.created_date).toLocaleString()}</span>
-                </div>
-                {l.meta && Object.keys(l.meta).length > 0 && (
-                  <pre className="mt-1 text-[10px] font-mono text-muted-foreground overflow-x-auto">{JSON.stringify(l.meta, null, 2)}</pre>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
       </div>
     </div>
   );
 }
-
-function FounderCapEditor({ current, onSaved }) {
-  const [val, setVal] = useState(current);
-  const [saving, setSaving] = useState(false);
-
-  // Keep local state in sync if parent reloads
-  useEffect(() => { setVal(current); }, [current]);
-
-  const save = async () => {
-    const n = parseInt(val, 10);
-    if (!Number.isFinite(n) || n < 1) {
-      toast.error("Cap must be a positive integer");
-      return;
-    }
-    setSaving(true);
-    try {
-      await base44.http.put("/api/admin/platform-settings", { founder_cap: n });
-      toast.success(`Founder cap updated to ${n}`, { duration: 4000 });
-      onSaved?.();
-    } catch (e) {
-      toast.error(e?.response?.data?.detail || "Save failed");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return (
-    <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-      <label className="text-sm text-foreground">Founding member cap:</label>
-      <Input
-        type="number"
-        min="1"
-        value={val}
-        onChange={(e) => setVal(e.target.value)}
-        className="w-24 bg-secondary border-border h-9"
-        data-testid="founder-cap-input"
-      />
-      <Button size="sm" onClick={save} disabled={saving} className="bg-primary text-primary-foreground" data-testid="founder-cap-save">
-        {saving ? "Saving…" : "Save"}
-      </Button>
-      <span className="text-xs text-muted-foreground">All founder counters update within 5 minutes (cache-aware).</span>
-    </div>
-  );
-}
-
 
 function SpotlightTab({ profiles }) {
   const [pins, setPins] = useState([]);
@@ -681,8 +520,13 @@ function SpotlightTab({ profiles }) {
   };
 
   const term = search.toLowerCase().trim();
+  // Build a set of already-pinned profile IDs so they don't appear in the
+  // "Pin a new profile" picker — fixes the duplicate-row issue where pinned
+  // profiles would still show with another "Pin" button.
+  const pinnedIds = new Set(pins.map((p) => p.profile_id || p.profile?.id || p.target_id).filter(Boolean));
   const candidates = (profiles || [])
     .filter((p) => !p.is_minor_profile)
+    .filter((p) => !pinnedIds.has(p.id))
     .filter((p) => !term || `${p.full_name || ""} ${p._user?.email || ""}`.toLowerCase().includes(term))
     .slice(0, 12);
 
