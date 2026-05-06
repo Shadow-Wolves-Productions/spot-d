@@ -720,6 +720,132 @@ async def admin_audience_counts(request: Request):
 
 
 # --------------------------------------------------------------------------- #
+# Test-data sweep — admin-triggered cleanup of accidentally-leaked test
+# fixtures (test_*, ratelimit_*, lockout_*, *@example.com, Iter##_*) plus
+# their cascaded profiles, applications, login codes, login attempts and
+# email-log entries. Safe to call repeatedly. Always returns a dry-run
+# preview by default so the admin can verify before nuking anything.
+# --------------------------------------------------------------------------- #
+TEST_EMAIL_PATTERN = (
+    r"(@example\.com$|^test_|^iter\d+|^lockout_|^ratelimit_|^rl-|^pytest|"
+    r"^reg_|^uitest_|^testage|^testminor|^alias-test|^checklist-other-user|"
+    r"^wrong-attempts-otp|^smoke-)"
+)
+TEST_PROJECT_PATTERN = (
+    r"^(test|iter\d*|sample|fixture|smoke|qa|checklist )"
+)
+
+
+class CleanupBody(BaseModel):
+    dry_run: Optional[bool] = True
+    # Allow admin to override the patterns if a future test uses a different prefix.
+    extra_email_patterns: Optional[List[str]] = None
+    extra_project_patterns: Optional[List[str]] = None
+
+
+@router.post("/api/admin/cleanup-test-data")
+async def admin_cleanup_test_data(body: CleanupBody, request: Request):
+    actor = await _require_admin(request)
+
+    email_patterns = [TEST_EMAIL_PATTERN]
+    if body.extra_email_patterns:
+        email_patterns.extend(body.extra_email_patterns)
+    project_patterns = [TEST_PROJECT_PATTERN]
+    if body.extra_project_patterns:
+        project_patterns.extend(body.extra_project_patterns)
+
+    email_query = {"$regex": "|".join(f"({p})" for p in email_patterns), "$options": "i"}
+    project_query = {"$regex": "|".join(f"({p})" for p in project_patterns), "$options": "i"}
+
+    # Discover test users
+    test_users = await db.users.find(
+        {"email": email_query},
+        {"_id": 0, "id": 1, "email": 1, "full_name": 1, "role": 1},
+    ).to_list(length=10_000)
+    # Never wipe an admin in case a real admin's email accidentally matches a regex.
+    test_users = [u for u in test_users if u.get("role") != "admin"]
+    user_ids = [u["id"] for u in test_users]
+    user_emails = [u["email"] for u in test_users]
+
+    # Discover test casting calls (by title prefix OR by belonging to a test user)
+    or_clauses = [{"project_title": project_query}, {"contact_email": email_query}]
+    if user_ids:
+        or_clauses.append({"creator_user_id": {"$in": user_ids}})
+    test_calls = await db.casting_calls.find(
+        {"$or": or_clauses},
+        {"_id": 0, "id": 1, "project_title": 1, "creator_user_id": 1},
+    ).to_list(length=2_000)
+    call_ids = [c["id"] for c in test_calls]
+
+    # Test email log entries (anything sent to a test email address)
+    test_email_log_count = await db.email_log.count_documents({"to": email_query}) if user_emails else 0
+
+    summary = {
+        "users": {"count": len(test_users), "sample": [u["email"] for u in test_users[:8]]},
+        "casting_calls": {"count": len(test_calls), "sample": [c.get("project_title") for c in test_calls[:8]]},
+        "email_log": {"count": test_email_log_count},
+        "dry_run": bool(body.dry_run),
+    }
+
+    if body.dry_run:
+        return {"ok": True, **summary}
+
+    # ----- Actual delete cascade ----------------------------------------- #
+    deleted = {"users": 0, "casting_calls": 0, "casting_applications": 0, "email_log": 0}
+
+    if user_ids:
+        # Cascade through every collection that may reference these users.
+        for collection_name, fk in [
+            ("profiles", "user_id"),
+            ("subscriptions", "user_id"),
+            ("casting_calls", "creator_user_id"),
+            ("casting_applications", "applicant_user_id"),
+            ("spots", "requester_user_id"),
+            ("spots", "target_user_id"),
+            ("notifications", "user_id"),
+            ("saved_profiles", "user_id"),
+            ("contact_reveals", "viewer_id"),
+            ("contact_reveals", "revealer_user_id"),
+            ("role_alerts", "user_id"),
+            ("admin_logs", "actor_id"),
+        ]:
+            try:
+                await db[collection_name].delete_many({fk: {"$in": user_ids}})
+            except Exception as e:
+                log.warning("cleanup-test-data: skipped %s.%s — %s", collection_name, fk, e)
+
+        # By-email collections (login codes, attempts) — different shape.
+        if user_emails:
+            for col in ("login_codes", "login_attempts", "verification_codes"):
+                try:
+                    await db[col].delete_many({"email": {"$in": user_emails}})
+                except Exception:
+                    pass
+
+        # Wipe the users themselves
+        r = await db.users.delete_many({"id": {"$in": user_ids}})
+        deleted["users"] = r.deleted_count
+
+    if call_ids:
+        await db.casting_applications.delete_many({"casting_call_id": {"$in": call_ids}})
+        r = await db.casting_calls.delete_many({"id": {"$in": call_ids}})
+        deleted["casting_calls"] = r.deleted_count
+
+    if test_email_log_count:
+        r = await db.email_log.delete_many({"to": email_query})
+        deleted["email_log"] = r.deleted_count
+
+    await _log_admin_action(
+        actor["id"],
+        "cleanup.test_data",
+        "system",
+        deleted,
+    )
+
+    return {"ok": True, "deleted": deleted, **summary}
+
+
+# --------------------------------------------------------------------------- #
 # Manual founding-member flag (admin) — for users who claimed their spot
 # outside the normal verify-code flow (e.g. signed up via Stripe or got
 # imported into a different DB during go-live).

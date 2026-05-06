@@ -73,6 +73,25 @@ Foundation migration, OTP auth, Stripe checkout, Postmark, bulk import, SpotScor
 - **HSTS middleware** — `Strict-Transport-Security` gated on `ENV=production`.
 - **7 Pydantic body models** with URL auto-https + slug normalisers. Relative paths preserved. 422 on validation failure.
 
+### Iter 21 (Feb 2026 — admin Profiles redesign + cleanup endpoint) — TESTED ✓ (4 new pytest, 25 cumulative)
+
+**1. Admin Profiles redesign — cinematic command-table layout (NEW)**
+- New `ProfileCommandTable.jsx` component replaces the chunky stacked cards. Each row: `[avatar | name + role + email | status pills | grouped action buttons]`. Background `#131418`, borders `rgba(255,255,255,0.06)`, no glow.
+- **Filter pills:** All Users · Pending Verification · Reported · Hidden · PRO · Cast · Crew (with live counts).
+- **Search + Sort:** name/email/role/slug/city · Recently Joined / SpotScore / Reports / Name.
+- **Status pills:** Verified · PRO/Founder/Elite · Boosted · Hidden · IMDb · Minor · Reports — color-coded green/yellow/orange/red/blue per the spec.
+- **Action hierarchy:** Verify (success), Hide (warn), PRO/Boost (primary when active), Admin (tertiary). No more equally-weighted neon outlined buttons.
+- **Slideout inspector:** Click any row → 480px right-side panel slides in with full status grid, 8-button quick-action grid, bio, profile meta, links, subscription, profile id. ESC + click-backdrop both close. Body scroll locked while open.
+- All actions route through a single `handleProfileAction(action, profile)` handler so the table + slideout + legacy code paths stay consistent.
+
+**2. Test-data cleanup endpoint (NEW)**
+- `POST /api/admin/cleanup-test-data { dry_run, extra_email_patterns?, extra_project_patterns? }` — finds users matching `@example.com`, `test_*`, `iter*`, `lockout_*`, `ratelimit_*`, `pytest*`, `smoke-*`, etc., and casting calls matching `test`, `iter`, `sample`, `fixture`, `smoke`, `qa`, `Checklist `. Cascades through every user-related collection (profiles, subscriptions, casting calls, applications, spots, notifications, saved profiles, contact reveals, role alerts, admin logs, login codes/attempts, email_log).
+- **Admins are protected** — any user with `role=admin` is excluded even if their email matches a regex (test enforces this).
+- New `CleanupTestDataCard` on the **Stats** tab — Preview button shows count + samples, Delete button cascades after confirm. The same endpoint can be hit directly via API for one-off cleanups.
+- **Ran on preview today:** removed 21 + 7 leftover test users + 12 test casting calls. State now: 58 users · 58 profiles · 1 casting call · 3 founders.
+
+**Tests:** `test_iteration20.py` covers dry-run-doesn't-delete, real-run-deletes, admin-protected, auth-required (4/4 PASS).
+
 ### Iter 20 (Feb 2026 — admin email composer + UX polish + spotlight dedup) — TESTED ✓ (6 new pytest, 21 cumulative)
 
 **1. Admin Email Composer (NEW)**
