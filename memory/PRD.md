@@ -73,6 +73,34 @@ Foundation migration, OTP auth, Stripe checkout, Postmark, bulk import, SpotScor
 - **HSTS middleware** — `Strict-Transport-Security` gated on `ENV=production`.
 - **7 Pydantic body models** with URL auto-https + slug normalisers. Relative paths preserved. 422 on validation failure.
 
+### Iter 22 (Feb 2026 — unified email template) — TESTED ✓ (6 new pytest, 31 cumulative)
+
+**Single canonical Spot'd email template** — every email (founding-member welcome, broadcasts from the admin composer, future transactionals) now renders through the same brand template that the original CineConnect→Spot'd onboarding used. No more per-email design drift.
+
+**1. Backend — `email_template.py` (NEW)**
+- `render_email({ greeting, intro, sections[{ eyebrow, paragraphs, list, highlight }], cta, post_cta, signoff, footer_email })` returns a fully styled HTML document.
+- Brand identity baked in: `#0D0D0D` dark canvas · `#E5E5E5` body text · `#E6FF00` neon-yellow eyebrows + CTA · `#FF5C35` signal-orange accents · custom Spot'd wordmark · `#1F1F1F` divider rules · highlight-box panel for callouts · CTA pill · sign-off + footer/unsubscribe.
+- Eyebrows are HTML-escaped (xss-safe). Paragraphs allow inline HTML (`<strong>`, `<a>`, etc.) by design — admin can drop links and emphasis without learning markup.
+- Convenience helper `render_simple_announcement()` for one-paragraph cases.
+
+**2. Welcome email refactor**
+- `_send_welcome_internal` (admin.py) now builds its `html` via `render_email(...)` instead of the inline 100-line f-string. Identical output, but every future tweak now propagates to all emails automatically.
+
+**3. Admin broadcast endpoints — accept structured payload**
+- `POST /api/admin/broadcast-email` now accepts EITHER a `template` object (preferred) OR raw `html` (legacy back-compat). When `template` is provided the server runs it through `render_email()`.
+- `{first_name}` placeholder in the greeting is replaced per-recipient using the user's full_name.
+- New `POST /api/admin/preview-broadcast` returns the exact HTML that would be sent — admin UI calls this so the preview is byte-for-byte accurate.
+
+**4. EmailComposer — fully rebuilt as a structured form**
+- Replaced the raw HTML textarea with a structured form: `Greeting · Opening paragraphs · Sections (collapsible cards with eyebrow/color/paragraphs/list/highlight) · CTA label + url · Post-CTA caption`.
+- 5 starter templates wired up to fill the form (Blank · Update/Announcement · Weekly Digest · Photo re-upload · Founder reminder). Switching template is a single click.
+- Live preview renders inside an `<iframe srcDoc>` using the actual server-rendered HTML — admin sees pixel-accurate output.
+- Add/remove sections, reorder eyebrow color (yellow / orange / blue / green), and inline HTML still allowed in paragraph fields for power users.
+
+**Net effect:** the admin opens Emails → picks an audience → clicks "Update / Announcement" → tweaks 2 sentences and the CTA → hits Send. Result is an email that's visually identical to the founding-member welcome — same wordmark, same eyebrow style, same yellow CTA pill.
+
+State after iter 22: 58 users · 58 profiles · 1 casting call · 3 founders.
+
 ### Iter 21 (Feb 2026 — admin Profiles redesign + cleanup endpoint) — TESTED ✓ (4 new pytest, 25 cumulative)
 
 **1. Admin Profiles redesign — cinematic command-table layout (NEW)**
