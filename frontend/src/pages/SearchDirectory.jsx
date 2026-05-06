@@ -51,7 +51,7 @@ export default function SearchDirectory() {
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState("grid"); // "grid" | "map"
   const [proximity, setProximity] = useState(null); // { lat, lon, radius, display }
-  const [includeMinors, setIncludeMinors] = useState(false);
+  const [includeMinors, setIncludeMinors] = useState(true);
 
   useEffect(() => {
     const init = async () => {
@@ -293,22 +293,12 @@ export default function SearchDirectory() {
           />
         </div>
       )}
-      {/* Hero Search Strip — slim variant */}
-      <div className="relative py-5 sm:py-7 px-4 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-background to-background" />
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[300px] bg-primary/5 blur-[120px] rounded-full" />
-
-        <div className="relative max-w-4xl mx-auto text-center">
-          <h1 className="font-display text-xl sm:text-2xl font-bold text-foreground" style={{ letterSpacing: "-0.4px" }}>
-            Find cast &amp; crew
-          </h1>
-          <p className="text-muted-foreground mt-1 text-xs sm:text-sm">
-            Search by role, location, experience, and availability.
-          </p>
-
-          <div className="mt-4 rounded-xl p-3 sm:p-4 max-w-3xl mx-auto border border-border/60 bg-card">
-            {/* Directory tabs */}
-            <div className="flex items-center gap-1 p-0.5 rounded-full bg-secondary border border-border mb-3 mx-auto w-fit" data-testid="directory-tabs">
+      {/* Hero Search Strip — slim, page-width, no top dark strip */}
+      <div className="relative px-3 sm:px-5 lg:px-6 pt-3 pb-4 max-w-7xl mx-auto">
+        <div className="rounded-xl p-2.5 sm:p-3 border border-border/60 bg-card">
+          {/* Directory tabs + search input on one line */}
+          <div className="flex flex-col md:flex-row items-stretch md:items-center gap-2">
+            <div className="flex items-center gap-1 p-0.5 rounded-full bg-secondary border border-border w-fit" data-testid="directory-tabs">
               {[
                 { id: "talent", label: "Talent" },
                 { id: "crew", label: "Crew" },
@@ -329,57 +319,30 @@ export default function SearchDirectory() {
               ))}
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-2">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-                <Input
-                  placeholder="Search by name, role, or location..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 bg-secondary/50 border-border/50 h-9 text-sm"
-                />
-              </div>
-              <Button className="h-9 px-4 text-xs font-semibold rounded-full bg-primary text-primary-foreground hover:bg-primary/90">
-                <Search className="w-3.5 h-3.5 mr-1.5" />
-                Search
-              </Button>
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+              <Input
+                placeholder="Search by name, role, or location…"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 bg-secondary/50 border-border/50 h-9 text-sm"
+              />
             </div>
 
-            {/* Quick toggles */}
-            <div className="flex flex-wrap items-center gap-1.5 mt-3">
-              {[
-                { key: "availableNow", label: "Available Now" },
-                { key: "proOnly", label: "PRO Only" },
-                { key: "imdbLinked", label: "IMDb Linked" },
-                { key: "verifiedOnly", label: "Verified" },
-              ].map((toggle) => (
-                <button
-                  key={toggle.key}
-                  onClick={() => setFilters((f) => ({ ...f, [toggle.key]: !f[toggle.key] }))}
-                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                    filters[toggle.key]
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-secondary/50 text-muted-foreground hover:text-foreground hover:bg-secondary"
-                  }`}
-                >
-                  {toggle.label}
-                </button>
-              ))}
-              {tab === "talent" && (
-                <button
-                  data-testid="toggle-include-minors"
-                  onClick={() => setIncludeMinors((v) => !v)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                    includeMinors
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-secondary/50 text-muted-foreground hover:text-foreground hover:bg-secondary"
-                  }`}
-                  title="Show minor (under-18) performers in the directory"
-                >
-                  Include minor performers
-                </button>
-              )}
-            </div>
+            {tab === "talent" && (
+              <button
+                data-testid="toggle-include-minors"
+                onClick={() => setIncludeMinors((v) => !v)}
+                className={`px-3 h-9 rounded-full text-[11px] font-medium transition-all whitespace-nowrap ${
+                  includeMinors
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-secondary/50 text-muted-foreground hover:text-foreground hover:bg-secondary"
+                }`}
+                title="Toggle visibility of under-18 performers"
+              >
+                {includeMinors ? "Minors shown" : "Minors hidden"}
+              </button>
+            )}
           </div>
         </div>
       </div>

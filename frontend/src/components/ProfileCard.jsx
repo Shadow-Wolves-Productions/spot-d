@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { MapPin, Crown, CheckCircle, Film, Bookmark, Zap, ChevronLeft, ChevronRight } from "lucide-react";
+import { MapPin, Crown, CheckCircle, Film, Bookmark, Zap, ChevronLeft, ChevronRight, Check } from "lucide-react";
 import { motion } from "framer-motion";
 import { PercentileBadge } from "./SpotScoreBreakdown";
 import FoundingMemberBadge from "./FoundingMemberBadge";
@@ -72,6 +72,10 @@ export default function ProfileCard({ profile, subscription, isFoundingMember, o
     : { background: "#2A2A2A", color: "#888", label: "Unavailable" };
 
   const tierBadge = subscription ? TIER_BADGE[subscription.tier] : null;
+  // Show the founding-member glyph when the user is flagged. Used in place of
+  // the chunky "FOUNDER" pill so the headshot stays clean at small sizes.
+  const showFounderGlyph = !!isFoundingMember || subscription?.tier === "founder";
+  const isAvailableNow = profile.availability_status === "Available Now";
 
   return (
     <motion.div
@@ -144,15 +148,39 @@ export default function ProfileCard({ profile, subscription, isFoundingMember, o
               </>
             )}
 
-            {/* Top badges — tier + featured + minor */}
-            <div className="absolute top-2 left-2 right-2 flex items-start justify-between gap-1 pointer-events-none">
-              <div className="flex gap-1 flex-wrap">
+            {/* Top-left status icons — founder + available */}
+            <div className="absolute top-1.5 left-1.5 flex items-center gap-1 pointer-events-none">
+              {showFounderGlyph && (
+                <span
+                  data-testid="founder-diamond"
+                  className="w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold leading-none"
+                  style={{ background: "#38BDF8", color: "#0D0D0D" }}
+                  title="Founding Member"
+                >
+                  ◆
+                </span>
+              )}
+              {isAvailableNow && (
+                <span
+                  data-testid="available-tick"
+                  className="w-4 h-4 rounded-full flex items-center justify-center"
+                  style={{ background: "#22C55E", color: "#0D0D0D" }}
+                  title="Available now"
+                >
+                  <Check className="w-2.5 h-2.5 stroke-[3]" />
+                </span>
+              )}
+            </div>
+
+            {/* Top-right: tier (if not founder) + featured + minor + score */}
+            <div className="absolute top-1.5 right-1.5 flex items-start gap-1 pointer-events-none">
+              <div className="flex gap-1 flex-wrap items-center">
                 {featured && (
                   <span className="px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-[0.06em] rounded bg-primary text-primary-foreground">
                     Featured
                   </span>
                 )}
-                {tierBadge && (
+                {tierBadge && tierBadge.label !== "FOUNDER" && (
                   <span className="px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-[0.06em] rounded flex items-center gap-0.5" style={{ background: tierBadge.bg, color: tierBadge.color }}>
                     <Crown className="w-2 h-2" /> {tierBadge.label}
                   </span>
@@ -162,16 +190,23 @@ export default function ProfileCard({ profile, subscription, isFoundingMember, o
                     Minor
                   </span>
                 )}
+                {profile.spot_score > 0 && (
+                  <div className="px-1.5 py-0.5 rounded flex items-center" style={{ background: "rgba(0,0,0,0.65)" }}>
+                    <ScoreDot score={profile.spot_score} />
+                  </div>
+                )}
               </div>
-              {profile.spot_score > 0 && (
-                <div className="px-1.5 py-0.5 rounded flex items-center" style={{ background: "rgba(0,0,0,0.65)" }}>
-                  <ScoreDot score={profile.spot_score} />
-                </div>
-              )}
             </div>
 
+            {/* Bottom-right percentile (top-N%) — opposite the name/role */}
+            {profile.spot_percentile >= 75 && (
+              <div className="absolute bottom-1.5 right-1.5 pointer-events-none">
+                <PercentileBadge percentile={profile.spot_percentile} compact />
+              </div>
+            )}
+
             {/* Bottom name + role overlay */}
-            <div className="absolute bottom-0 left-0 right-0 p-2.5">
+            <div className="absolute bottom-0 left-0 right-12 p-2.5">
               <h3 className="font-display text-[13px] font-semibold text-white leading-tight tracking-tight" data-testid="profile-card-name">
                 {profile.full_name || preferred}
               </h3>
@@ -186,9 +221,8 @@ export default function ProfileCard({ profile, subscription, isFoundingMember, o
             </div>
           </div>
 
-          {/* Compact footer — city, availability pill, save */}
+          {/* Compact footer — city, save */}
           <div className="px-2.5 py-2 space-y-1.5">
-            <FoundingMemberBadge tier={subscription?.tier} isFoundingMember={isFoundingMember} compact />
             <div className="flex items-center justify-between gap-2">
               {profile.city ? (
                 <div className="flex items-center gap-1 text-[10px] truncate" style={{ color: "#888" }}>
@@ -198,11 +232,8 @@ export default function ProfileCard({ profile, subscription, isFoundingMember, o
               ) : (
                 <span />
               )}
-              {profile.availability_status && (
-                <span className="text-[8px] uppercase tracking-[0.05em] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap"
-                  style={{ background: availabilityStyle.background, color: availabilityStyle.color }}>
-                  {availabilityStyle.label}
-                </span>
+              {profile.experience_level && (
+                <span className="text-[8px] uppercase tracking-[0.05em] text-muted-foreground whitespace-nowrap">{profile.experience_level}</span>
               )}
             </div>
 
@@ -227,9 +258,6 @@ export default function ProfileCard({ profile, subscription, isFoundingMember, o
                     <Zap className="w-2 h-2" style={{ color: "#FF5C35" }} />
                     <span className="text-[9px] font-bold" style={{ color: "#FF5C35" }}>{spotCount}</span>
                   </div>
-                )}
-                {profile.spot_percentile >= 75 && (
-                  <PercentileBadge percentile={profile.spot_percentile} compact />
                 )}
               </div>
               {onSave && !profile._isOwnProfile && (

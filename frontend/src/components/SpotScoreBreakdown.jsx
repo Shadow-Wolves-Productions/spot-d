@@ -9,12 +9,12 @@ const PERCENTILE_BADGE = (percentile) => {
   return null;
 };
 
-export function PercentileBadge({ percentile }) {
+export function PercentileBadge({ percentile, compact = false }) {
   const badge = PERCENTILE_BADGE(percentile);
   if (!badge) return null;
   return (
     <span
-      className="inline-flex items-center px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-[0.08em]"
+      className={`inline-flex items-center rounded font-bold uppercase tracking-[0.06em] ${compact ? "px-1.5 py-0 text-[8px]" : "px-2 py-0.5 text-[9px] tracking-[0.08em]"}`}
       style={{ background: badge.bg, color: badge.color, border: `1px solid ${badge.border}` }}
     >
       {badge.label}
