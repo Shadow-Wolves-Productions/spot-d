@@ -199,99 +199,80 @@ async def _send_welcome_internal(user_id: str, profile_id: str, tier: str = "pro
     deadline_iso = deadline.isoformat()
     login_url = f"{PUBLIC_APP_URL}/login"
 
-    html = f"""
-<div style="background:#0D0D0D;color:#E5E5E5;font-family:'DM Sans','Helvetica Neue',Arial,sans-serif;padding:40px 16px;line-height:1.6;">
-  <div style="max-width:600px;margin:0 auto;">
-
-    <!-- Wordmark -->
-    <div style="margin-bottom:32px;">{email_logo_html(40)}</div>
-
-    <!-- Personal opener -->
-    <p style="margin:0 0 18px;font-size:16px;color:#E5E5E5;">Hey {first},</p>
-    <p style="margin:0 0 18px;font-size:16px;color:#E5E5E5;">It&rsquo;s Brendan from Shadow Wolves Productions.</p>
-    <p style="margin:0 0 18px;font-size:16px;color:#E5E5E5;">You might remember filling in our <strong style="color:#FFFFFF;">CineConnect</strong> form a little while back &mdash; our cast and crew database for upcoming productions. Well, that idea grew into something much bigger.</p>
-    <p style="margin:0 0 28px;font-size:18px;color:#FFFFFF;font-weight:600;">CineConnect has evolved into Spot&rsquo;d.</p>
-
-    <hr style="border:none;border-top:1px solid #1F1F1F;margin:32px 0;" />
-
-    <!-- What is Spot'd -->
-    <p style="margin:0 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:0.15em;color:#E6FF00;font-weight:700;">What is Spot&rsquo;d?</p>
-    <p style="margin:0 0 16px;color:#E5E5E5;">Spot&rsquo;d is an indie film directory built specifically for people like you &mdash; cast, crew, and production companies all in one place. Think of it as the indie film industry&rsquo;s own professional network, without the noise.</p>
-    <p style="margin:0 0 16px;color:#999;">Here&rsquo;s what it does:</p>
-
-    <div style="margin:20px 0;">
-      <p style="margin:0 0 6px;color:#FFFFFF;font-weight:600;">🎬 One profile, three presences</p>
-      <p style="margin:0 0 18px;color:#B8B8B8;font-size:15px;">Show up as Talent, Crew, or a Company &mdash; or all three under the one login.</p>
-
-      <p style="margin:0 0 6px;color:#FFFFFF;font-weight:600;">⭐ SpotScore</p>
-      <p style="margin:0 0 18px;color:#B8B8B8;font-size:15px;">A credibility rating out of 100, built from verifications, peer Spots, credits and activity. The higher your score, the higher you rank in search. Reputation, quantified.</p>
-
-      <p style="margin:0 0 6px;color:#FFFFFF;font-weight:600;">📋 Casting calls</p>
-      <p style="margin:0 0 18px;color:#B8B8B8;font-size:15px;">Producers post real casting calls. Set a Role Alert and get notified the moment something matches &mdash; no more trawling Facebook groups.</p>
-
-      <p style="margin:0 0 6px;color:#FFFFFF;font-weight:600;">🤝 Spot them</p>
-      <p style="margin:0 0 18px;color:#B8B8B8;font-size:15px;">Peer endorsements with teeth. You request a Spot from someone you&rsquo;ve worked with; they confirm it, and it goes on your profile. If they won&rsquo;t confirm, it doesn&rsquo;t count.</p>
-
-      <p style="margin:0 0 6px;color:#FFFFFF;font-weight:600;">📞 Direct contact</p>
-      <p style="margin:0 0 18px;color:#B8B8B8;font-size:15px;">No internal messaging, no middleman. When a producer wants you, they reveal your contact directly. You get notified. Done.</p>
-    </div>
-
-    <hr style="border:none;border-top:1px solid #1F1F1F;margin:32px 0;" />
-
-    <!-- Your profile -->
-    <p style="margin:0 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:0.15em;color:#E6FF00;font-weight:700;">Your profile is ready</p>
-    <p style="margin:0 0 16px;color:#E5E5E5;">Based on your CineConnect form, I&rsquo;ve already built the foundation of your Spot&rsquo;d profile. Your name, role, location and details are in there waiting for you.</p>
-    <p style="margin:0 0 12px;color:#E5E5E5;">But it needs you to bring it to life.</p>
-    <p style="margin:0 0 8px;color:#999;">When you claim your profile, make sure to:</p>
-    <ul style="margin:0 0 20px 18px;padding:0;color:#B8B8B8;">
-      <li style="margin:6px 0;">Add a headshot or profile photo</li>
-      <li style="margin:6px 0;">Link your IMDb profile (if you have one)</li>
-      <li style="margin:6px 0;">Add your showreel or portfolio</li>
-      <li style="margin:6px 0;">Fill in any missing credits or skills</li>
-      <li style="margin:6px 0;">Verify your email (boosts your SpotScore immediately)</li>
-    </ul>
-
-    <hr style="border:none;border-top:1px solid #1F1F1F;margin:32px 0;" />
-
-    <!-- Founding member -->
-    <p style="margin:0 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:0.15em;color:#FF5C35;font-weight:700;">Founding member &mdash; your spot is waiting</p>
-    <p style="margin:0 0 16px;color:#E5E5E5;">Because you were one of the first to put your hand up with CineConnect, you&rsquo;re getting first access to Spot&rsquo;d as a <strong style="color:#FFFFFF;">Founding Member</strong>.</p>
-    <p style="margin:0 0 12px;color:#999;">What that means:</p>
-    <div style="background:#131313;border:1px solid #2A2A2A;border-radius:12px;padding:20px 24px;margin:16px 0 20px;">
-      <p style="margin:0 0 8px;color:#E5E5E5;">⚡ <strong style="color:#FFFFFF;">Lifetime free PRO access</strong> &mdash; on us, forever</p>
-      <p style="margin:0 0 8px;color:#E5E5E5;">⚡ No credit card. No catch.</p>
-      <p style="margin:0 0 8px;color:#E5E5E5;">⚡ Priority placement in search</p>
-      <p style="margin:0 0 8px;color:#E5E5E5;">⚡ Unlimited contact reveals</p>
-      <p style="margin:0 0 8px;color:#E5E5E5;">⚡ Full portfolio uploads</p>
-      <p style="margin:0;color:#E5E5E5;">⚡ Founding member badge on your profile</p>
-    </div>
-    <p style="margin:0 0 16px;color:#999;font-size:14px;">After launch, PRO is <strong style="color:#FFFFFF;">$9.99/month</strong> or <strong style="color:#FFFFFF;">$79/year</strong>. As a founding member, your PRO access is free for life.</p>
-    <p style="margin:0 0 16px;color:#E5E5E5;">But here&rsquo;s the thing &mdash; there are only <strong style="color:#FFFFFF;">100 founding member spots total</strong>.</p>
-    <p style="margin:0 0 28px;color:#FF5C35;font-weight:700;font-size:17px;">You have 7 days to claim yours.</p>
-    <p style="margin:0 0 32px;color:#999;font-size:14px;">After that, unclaimed spots go to the public waitlist and your profile reverts to a free account.</p>
-
-    <!-- CTA -->
-    <div style="text-align:center;margin:32px 0;">
-      <a href="{login_url}" style="display:inline-block;background:#E6FF00;color:#0D0D0D;text-decoration:none;font-weight:800;padding:18px 40px;border-radius:10px;font-family:'Sora',Arial,sans-serif;font-size:15px;letter-spacing:0.04em;">CLAIM YOUR FOUNDING SPOT &rarr;</a>
-    </div>
-
-    <p style="margin:24px 0 8px;color:#999;font-size:14px;text-align:center;">Enter this email address at sign-in and we&rsquo;ll send you a code &mdash; no password needed.</p>
-    <p style="margin:0 0 32px;color:#999;font-size:14px;text-align:center;">Your profile will be waiting for you.</p>
-
-    <hr style="border:none;border-top:1px solid #1F1F1F;margin:32px 0;" />
-
-    <p style="margin:0 0 12px;color:#E5E5E5;">Can&rsquo;t wait to see you in the directory.</p>
-    <p style="margin:0 0 4px;color:#FFFFFF;font-weight:600;">Brendan Byrne</p>
-    <p style="margin:0 0 2px;color:#888;font-size:14px;">Founder &mdash; Spot&rsquo;d</p>
-    <p style="margin:0 0 2px;color:#888;font-size:14px;">Shadow Wolves Productions</p>
-    <p style="margin:0;color:#888;font-size:14px;"><a href="{PUBLIC_APP_URL}" style="color:#888;text-decoration:none;">getspotd.app</a></p>
-
-    <!-- Footer -->
-    <p style="margin:48px 0 8px;color:#555;font-size:11px;line-height:1.6;">You&rsquo;re receiving this because you submitted your details via the CineConnect crew database form run by Shadow Wolves Productions. If you&rsquo;d prefer not to receive emails from Spot&rsquo;d, <a href="{PUBLIC_APP_URL}/unsubscribe?e={user['email']}" style="color:#777;">unsubscribe here</a>.</p>
-    <p style="margin:0;color:#555;font-size:11px;">getspotd.app &middot; Shadow Wolves Productions</p>
-  </div>
-</div>
-"""
+    from email_template import render_email
+    html = render_email(
+        greeting=f"Hey {first},",
+        intro=[
+            "It&rsquo;s Brendan from Shadow Wolves Productions.",
+            "You might remember filling in our <strong style=\"color:#FFFFFF;\">CineConnect</strong> form a little while back &mdash; our cast and crew database for upcoming productions. Well, that idea grew into something much bigger.",
+            "<span style=\"font-size:18px;color:#FFFFFF;font-weight:600;\">CineConnect has evolved into Spot&rsquo;d.</span>",
+        ],
+        sections=[
+            {
+                "eyebrow": "What is Spot'd?",
+                "paragraphs": [
+                    "Spot&rsquo;d is an indie film directory built specifically for people like you &mdash; cast, crew, and production companies all in one place. Think of it as the indie film industry&rsquo;s own professional network, without the noise.",
+                    "<span style=\"color:#999;\">Here&rsquo;s what it does:</span>",
+                    "<strong style=\"color:#FFFFFF;\">🎬 One profile, three presences</strong><br><span style=\"color:#B8B8B8;font-size:15px;\">Show up as Talent, Crew, or a Company &mdash; or all three under the one login.</span>",
+                    "<strong style=\"color:#FFFFFF;\">⭐ SpotScore</strong><br><span style=\"color:#B8B8B8;font-size:15px;\">A credibility rating out of 100 built from verifications, peer Spots, credits and activity. The higher your score, the higher you rank in search.</span>",
+                    "<strong style=\"color:#FFFFFF;\">📋 Casting calls</strong><br><span style=\"color:#B8B8B8;font-size:15px;\">Producers post real casting calls. Set a Role Alert and get notified the moment something matches.</span>",
+                    "<strong style=\"color:#FFFFFF;\">🤝 Spot them</strong><br><span style=\"color:#B8B8B8;font-size:15px;\">Peer endorsements with teeth. Request a Spot from someone you&rsquo;ve worked with; they confirm it, and it goes on your profile.</span>",
+                    "<strong style=\"color:#FFFFFF;\">📞 Direct contact</strong><br><span style=\"color:#B8B8B8;font-size:15px;\">No internal messaging, no middleman. When a producer wants you, they reveal your contact directly.</span>",
+                ],
+            },
+            {
+                "eyebrow": "Your profile is ready",
+                "paragraphs": [
+                    "Based on your CineConnect form, I&rsquo;ve already built the foundation of your Spot&rsquo;d profile. Your name, role, location and details are in there waiting for you.",
+                    "But it needs you to bring it to life.",
+                    "<span style=\"color:#999;\">When you claim your profile, make sure to:</span>",
+                ],
+                "list": [
+                    "Add a headshot or profile photo",
+                    "Link your IMDb profile (if you have one)",
+                    "Add your showreel or portfolio",
+                    "Fill in any missing credits or skills",
+                    "Verify your email (boosts your SpotScore immediately)",
+                ],
+            },
+            {
+                "eyebrow": "Founding member — your spot is waiting",
+                "eyebrow_color": "#FF5C35",
+                "paragraphs": [
+                    "Because you were one of the first to put your hand up with CineConnect, you&rsquo;re getting first access to Spot&rsquo;d as a <strong style=\"color:#FFFFFF;\">Founding Member</strong>.",
+                    "<span style=\"color:#999;\">What that means:</span>",
+                ],
+                "highlight": [
+                    "⚡ <strong style=\"color:#FFFFFF;\">Lifetime free PRO access</strong> &mdash; on us, forever",
+                    "⚡ No credit card. No catch.",
+                    "⚡ Priority placement in search",
+                    "⚡ Unlimited contact reveals",
+                    "⚡ Full portfolio uploads",
+                    "⚡ Founding member badge on your profile",
+                ],
+            },
+            {
+                "paragraphs": [
+                    "<span style=\"color:#999;font-size:14px;\">After launch, PRO is <strong style=\"color:#FFFFFF;\">$9.99/month</strong> or <strong style=\"color:#FFFFFF;\">$79/year</strong>. As a founding member, your PRO access is free for life.</span>",
+                    "But here&rsquo;s the thing &mdash; there are only <strong style=\"color:#FFFFFF;\">100 founding member spots total</strong>.",
+                    "<span style=\"color:#FF5C35;font-weight:700;font-size:17px;\">You have 7 days to claim yours.</span>",
+                    "<span style=\"color:#999;font-size:14px;\">After that, unclaimed spots go to the public waitlist and your profile reverts to a free account.</span>",
+                ],
+            },
+        ],
+        cta={"label": "CLAIM YOUR FOUNDING SPOT →", "url": login_url},
+        post_cta="Enter this email address at sign-in and we&rsquo;ll send you a code &mdash; no password needed. Your profile will be waiting for you.",
+        signoff={
+            "intro": "Can&rsquo;t wait to see you in the directory.",
+            "name": "Brendan Byrne",
+            "title": "Founder — Spot'd",
+            "company": "Shadow Wolves Productions",
+            "link_label": "getspotd.app",
+            "link_url": PUBLIC_APP_URL,
+        },
+        footer_email=user["email"],
+        unsubscribe_url_base=f"{PUBLIC_APP_URL}/unsubscribe",
+    )
     delivered = await send_email(
         user["email"],
         "CineConnect just became something bigger 🎬",
@@ -583,7 +564,13 @@ async def admin_list_waitlist(request: Request):
 class AdminBroadcastBody(BaseModel):
     audience: str = Field(..., pattern=r"^(all_users|founders|verified|imported_pending|custom)$")
     subject: str = Field(..., min_length=1, max_length=300)
-    html: str = Field(..., min_length=1)
+    # The composer can either:
+    #   1. Send a structured payload — `template` — which the server renders
+    #      using the canonical Spot'd email template (recommended).
+    #   2. Send raw `html` (back-compat). The server still wraps it with the
+    #      Spot'd brand shell so styling stays on-brand.
+    template: Optional[dict] = None
+    html: Optional[str] = None
     custom_emails: Optional[List[str]] = None
     from_name: Optional[str] = "Spot'd"
     dry_run: Optional[bool] = False
@@ -636,6 +623,9 @@ async def admin_broadcast_email(
     request: Request,
 ):
     actor = await _require_admin(request)
+    if not body.template and not body.html:
+        raise HTTPException(400, "Either `template` or `html` is required.")
+
     recipients = await _resolve_audience(body.audience, body.custom_emails)
 
     if not recipients:
@@ -643,35 +633,45 @@ async def admin_broadcast_email(
     if len(recipients) > 5_000:
         raise HTTPException(400, f"Audience too large ({len(recipients)} > 5,000). Refine your filter.")
 
-    # Wrap HTML with the standard email shell — logo, basic styling, footer —
-    # so admin authoring stays focused on body content.
-    def _wrap(html_body: str, name: str) -> str:
+    from email_template import render_email
+
+    def _build(name: str, email: str) -> str:
+        """Build the email HTML for a single recipient. The structured
+        ``template`` payload supports first-name personalization in the
+        greeting via the ``{first_name}`` placeholder."""
         first = (name or "there").split()[0] if name else "there"
-        return f"""
-<!doctype html>
-<html><body style="margin:0;padding:0;background:#f7f7f7;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;color:#0D0D0D;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;padding:24px;">
-    <tr><td>{email_logo_html()}</td></tr>
-    <tr><td style="padding:24px 0;background:#fff;border-radius:12px;">
-      <div style="padding:0 24px;">
-        <p style="margin:0 0 16px 0;color:#666;font-size:14px;">Hi {first},</p>
-        {html_body}
-        <p style="margin:32px 0 0;color:#999;font-size:12px;">— The Spot'd team</p>
-      </div>
-    </td></tr>
-    <tr><td style="padding:16px 8px;color:#999;font-size:11px;text-align:center;">
-      You received this because you have a Spot'd account. <a href="{PUBLIC_APP_URL}/preferences" style="color:#777;">Email preferences</a>.
-    </td></tr>
-  </table>
-</body></html>
-"""
+        if body.template:
+            tpl = dict(body.template)
+            greeting = (tpl.get("greeting") or f"Hey {first},").replace("{first_name}", first)
+            return render_email(
+                greeting=greeting,
+                intro=tpl.get("intro"),
+                sections=tpl.get("sections"),
+                cta=tpl.get("cta"),
+                post_cta=tpl.get("post_cta"),
+                signoff=tpl.get("signoff") or {
+                    "name": "Brendan Byrne",
+                    "title": "Founder — Spot'd",
+                    "company": "Shadow Wolves Productions",
+                    "link_label": "getspotd.app",
+                    "link_url": "https://getspotd.app/",
+                },
+                footer_email=email,
+            )
+        # Raw-HTML path — drop into a single-section payload so the brand
+        # shell still wraps it.
+        return render_email(
+            greeting=f"Hey {first},",
+            sections=[{"paragraphs": [body.html]}],
+            footer_email=email,
+        )
 
     queued = []
     for r in recipients:
         queued.append({"email": r["email"], "full_name": r["full_name"]})
         if not body.dry_run:
-            wrapped = _wrap(body.html, r["full_name"])
-            background.add_task(send_email, r["email"], body.subject, wrapped, body.from_name or "Spot'd")
+            html_body = _build(r["full_name"], r["email"])
+            background.add_task(send_email, r["email"], body.subject, html_body, body.from_name or "Spot'd")
 
     await _log_admin_action(
         actor["id"],
@@ -682,6 +682,7 @@ async def admin_broadcast_email(
             "audience": body.audience,
             "count": len(queued),
             "dry_run": bool(body.dry_run),
+            "kind": "template" if body.template else "html",
         },
     )
 
@@ -690,9 +691,44 @@ async def admin_broadcast_email(
         "audience": body.audience,
         "count": len(queued),
         "dry_run": bool(body.dry_run),
-        # Return a small sample so the admin UI can show "Will send to X, Y, +N more"
         "sample": [r["email"] for r in queued[:8]],
     }
+
+
+@router.post("/api/admin/preview-broadcast")
+async def admin_preview_broadcast(body: AdminBroadcastBody, request: Request):
+    """Render exactly what would be sent (without dispatching) so the admin UI
+    can show a faithful preview using the SAME renderer as the actual send."""
+    await _require_admin(request)
+    if not body.template and not body.html:
+        raise HTTPException(400, "Either `template` or `html` is required.")
+    from email_template import render_email
+    actor_email = "you@example.com"
+    if body.template:
+        tpl = dict(body.template)
+        greeting = (tpl.get("greeting") or "Hey {first_name},").replace("{first_name}", "there")
+        rendered = render_email(
+            greeting=greeting,
+            intro=tpl.get("intro"),
+            sections=tpl.get("sections"),
+            cta=tpl.get("cta"),
+            post_cta=tpl.get("post_cta"),
+            signoff=tpl.get("signoff") or {
+                "name": "Brendan Byrne",
+                "title": "Founder — Spot'd",
+                "company": "Shadow Wolves Productions",
+                "link_label": "getspotd.app",
+                "link_url": "https://getspotd.app/",
+            },
+            footer_email=actor_email,
+        )
+    else:
+        rendered = render_email(
+            greeting="Hey there,",
+            sections=[{"paragraphs": [body.html]}],
+            footer_email=actor_email,
+        )
+    return {"html": rendered, "subject": body.subject}
 
 
 @router.get("/api/admin/audience-counts")
