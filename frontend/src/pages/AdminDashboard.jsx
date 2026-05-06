@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import EmailComposer from "../components/admin/EmailComposer";
+import ProfileCommandTable from "../components/admin/ProfileCommandTable";
 
 const TABS = [
   { id: "profiles",  label: "Profiles",  icon: Film },
@@ -213,11 +214,44 @@ export default function AdminDashboard() {
 
   const lc = (s) => (s || "").toLowerCase();
   const filteredUsers = users.filter((u) => lc(u.full_name).includes(lc(search)) || lc(u.email).includes(lc(search)));
-  const filteredProfiles = profiles.filter((p) =>
-    lc(p.full_name).includes(lc(search)) ||
-    lc(p.primary_role).includes(lc(search)) ||
-    lc(p._user?.email).includes(lc(search))
-  );
+
+  // Unified action handler used by ProfileCommandTable + slideout inspector.
+  // Each case mirrors an existing per-action function so behaviour stays
+  // consistent with the legacy buttons during the redesign rollout.
+  const handleProfileAction = async (action, p) => {
+    try {
+      switch (action) {
+        case "verify":
+          return manualVerify(p.id, "email_verified");
+        case "hide":
+          return toggleHidden(p);
+        case "boost":
+          return toggleBoost(p);
+        case "pro":
+          return togglePro(p);
+        case "admin":
+          if (!p._user) return;
+          return setAdminRole(p._user.id, p._user.role !== "admin");
+        case "founder": {
+          const claim = !p._user?.is_founding_member;
+          await base44.http.post("/api/admin/flag-founding-member", { email: p._user?.email, claimed: claim });
+          toast.success(`${claim ? "Flagged" : "Unflagged"} ${p.full_name} as founder`);
+          loadCore();
+          return;
+        }
+        case "resend_welcome": {
+          await base44.http.post("/api/admin/send-pending-welcomes", {});
+          toast.success("Welcome email queued");
+          return;
+        }
+        default:
+          toast.error(`Unknown action: ${action}`);
+      }
+    } catch (e) {
+      toast.error(e?.response?.data?.detail || `Action ${action} failed`);
+    }
+  };
+
   const filteredCasting = castingCalls.filter((c) => lc(c.project_title).includes(lc(search)) || lc(c.creator_email).includes(lc(search)));
   const filteredImports = imports.items.filter((p) => lc(p.full_name).includes(lc(search)) || lc(p.email).includes(lc(search)));
 
@@ -314,73 +348,11 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            {filteredProfiles.map((p) => (
-              <div key={p.id} className="bg-card border border-border/60 rounded-xl p-4">
-                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                    {p.profile_photo && (
-                      <img src={p.profile_photo} alt="" className="w-9 h-9 rounded-full object-cover border border-border flex-shrink-0" />
-                    )}
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-medium text-foreground text-sm">{p.full_name}</span>
-                        <span className="text-xs text-muted-foreground">{p.primary_role}</span>
-                        {p._user?.role === "admin" && <Badge className="text-[10px] bg-primary/15 text-primary border-0">Admin</Badge>}
-                        {p.is_minor_profile && <Badge className="text-[10px] bg-amber-500/20 text-amber-400 border-0">Minor</Badge>}
-                        {p.is_hidden && <Badge className="text-[10px] bg-destructive/20 text-destructive border-0">Hidden</Badge>}
-                        {p.is_boosted && <Badge className="text-[10px] bg-yellow-500/20 text-yellow-400 border-0">Boosted</Badge>}
-                        <span className="text-[10px] text-muted-foreground">SpotScore {p.spot_score || 0}</span>
-                      </div>
-                      {/* User email — kept here so the merged Users+Profiles tab is still searchable by email */}
-                      {p._user?.email && (
-                        <p className="text-[11px] text-muted-foreground/80 mt-0.5 truncate font-mono">{p._user.email}</p>
-                      )}
-                      <div className="flex gap-2 mt-1 flex-wrap">
-                        {[
-                          { label: "Email", val: p.email_verified, field: "email_verified" },
-                          { label: "Union", val: p.union_verified, field: "union_verified" },
-                          { label: "IMDb",  val: p.imdb_verified,  field: "imdb_verified"  },
-                        ].map((v) => (
-                          <span key={v.label} className={`text-[10px] ${v.val ? "text-green-400" : "text-muted-foreground/40"}`}>{v.val ? "✓" : "○"} {v.label}</span>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex gap-2 flex-wrap">
-                    {p._user && p._user.id !== user.id && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className={`text-xs h-7 ${p._user.role === "admin" ? "border-destructive/40 text-destructive" : "border-primary/30 text-primary"}`}
-                        onClick={() => setAdminRole(p._user.id, p._user.role !== "admin")}
-                        data-testid={`admin-toggle-role-${p._user.id}`}
-                      >
-                        <Crown className="w-3 h-3 mr-1" />
-                        {p._user.role === "admin" ? "Remove Admin" : "Make Admin"}
-                      </Button>
-                    )}
-                    {!p.email_verified && (
-                      <Button size="sm" variant="outline" className="text-xs h-7 border-green-500/30 text-green-400" onClick={() => manualVerify(p.id, "email_verified")}>
-                        <CheckCircle2 className="w-3 h-3 mr-1" /> Verify Email
-                      </Button>
-                    )}
-                    {p._sub?.tier === "founder" || p._sub?.tier === "elite" ? (
-                      <div className="text-xs text-destructive flex items-center">Protected tier</div>
-                    ) : (
-                      <Button size="sm" variant="outline" className={`text-xs h-7 ${p._sub?.tier === "pro" ? "border-primary/60 bg-primary/10 text-primary" : "border-primary/30 text-primary/60"}`} onClick={() => togglePro(p)}>
-                        <Crown className="w-3 h-3 mr-1" /> {p._sub?.tier === "pro" ? "PRO ✓" : "Free"}
-                      </Button>
-                    )}
-                    <Button size="sm" variant="outline" className={`text-xs h-7 ${p.is_boosted ? "border-destructive/40 text-destructive" : "border-yellow-500/30 text-yellow-400"}`} onClick={() => toggleBoost(p)}>
-                      <Zap className="w-3 h-3 mr-1" /> {p.is_boosted ? "Remove Boost" : "Boost"}
-                    </Button>
-                    <Button size="sm" variant="outline" data-testid={`admin-toggle-hidden-${p.id}`} className={`text-xs h-7 ${p.is_hidden ? "border-green-500/30 text-green-400" : "border-destructive/40 text-destructive"}`} onClick={() => toggleHidden(p)}>
-                      {p.is_hidden ? <><Eye className="w-3 h-3 mr-1" /> Unhide</> : <><EyeOff className="w-3 h-3 mr-1" /> Hide</>}
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            ))}
+            <ProfileCommandTable
+              profiles={profiles}
+              currentUserId={user.id}
+              onUserAction={handleProfileAction}
+            />
           </div>
         )}
 
@@ -444,27 +416,119 @@ export default function AdminDashboard() {
 
         {/* STATS */}
         {tab === "stats" && (
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4" data-testid="admin-stats-tab">
-            {[
-              { label: "Total users",    value: stats.users,          icon: Users },
-              { label: "Profiles",       value: stats.profiles,       icon: Film },
-              { label: "Email verified", value: stats.verified_email, icon: CheckCircle2 },
-              { label: "PRO",            value: stats.pro,            icon: Crown },
-              { label: "Elite",          value: stats.elite,          icon: Crown },
-              { label: "Founder",        value: stats.founder,        icon: Crown },
-              { label: "Boosted",        value: stats.boosted,        icon: Zap },
-              { label: "Hidden",         value: stats.hidden,         icon: EyeOff },
-              { label: "Minor",          value: stats.minors,         icon: Users },
-            ].map((s) => (
-              <div key={s.label} className="bg-card border border-border/60 rounded-xl p-5">
-                <s.icon className="w-4 h-4 text-primary mb-2" />
-                <p className="font-display text-2xl font-bold text-foreground">{s.value ?? "—"}</p>
-                <p className="text-xs text-muted-foreground mt-1">{s.label}</p>
-              </div>
-            ))}
+          <div data-testid="admin-stats-tab">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-5">
+              {[
+                { label: "Total users",    value: stats.users,          icon: Users },
+                { label: "Profiles",       value: stats.profiles,       icon: Film },
+                { label: "Email verified", value: stats.verified_email, icon: CheckCircle2 },
+                { label: "PRO",            value: stats.pro,            icon: Crown },
+                { label: "Elite",          value: stats.elite,          icon: Crown },
+                { label: "Founder",        value: stats.founder,        icon: Crown },
+                { label: "Boosted",        value: stats.boosted,        icon: Zap },
+                { label: "Hidden",         value: stats.hidden,         icon: EyeOff },
+                { label: "Minor",          value: stats.minors,         icon: Users },
+              ].map((s) => (
+                <div key={s.label} className="rounded-xl p-5 border border-white/[0.06]" style={{ background: "#131418" }}>
+                  <s.icon className="w-4 h-4 text-primary mb-2" />
+                  <p className="font-display text-2xl font-bold text-foreground">{s.value ?? "—"}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{s.label}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Cleanup tool — admin can sweep test data on production */}
+            <CleanupTestDataCard onCleaned={loadCore} />
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+
+/**
+ * Test-data cleanup card.
+ *
+ * Always runs a dry-run first and shows the preview before letting the admin
+ * commit. Used for one-off post-deploy cleanups so accidentally-leaked test
+ * fixtures don't pollute production.
+ */
+function CleanupTestDataCard({ onCleaned }) {
+  const [preview, setPreview] = useState(null);
+  const [busy, setBusy] = useState(false);
+
+  const dryRun = async () => {
+    setBusy(true);
+    try {
+      const { data } = await base44.http.post("/api/admin/cleanup-test-data", { dry_run: true });
+      setPreview(data);
+    } catch (e) {
+      toast.error("Cleanup preview failed");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const run = async () => {
+    if (!window.confirm("Permanently delete all matching test users + casting calls + email-log entries? This cannot be undone.")) return;
+    setBusy(true);
+    try {
+      const { data } = await base44.http.post("/api/admin/cleanup-test-data", { dry_run: false });
+      toast.success(`Cleaned ${data.deleted.users} user(s), ${data.deleted.casting_calls} call(s), ${data.deleted.email_log} email log(s)`);
+      setPreview(null);
+      onCleaned?.();
+    } catch (e) {
+      toast.error("Cleanup failed");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="rounded-xl p-4 border border-white/[0.06]" style={{ background: "#131418" }} data-testid="cleanup-test-data-card">
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <div>
+          <p className="text-[10px] uppercase tracking-[0.12em] font-mono text-foreground/40 mb-1">Maintenance</p>
+          <p className="font-display text-sm font-semibold text-foreground">Sweep test data</p>
+          <p className="text-[12px] text-foreground/60 mt-0.5">Removes users matching <code className="text-[11px] font-mono text-primary/80">@example.com</code>, <code className="text-[11px] font-mono text-primary/80">test_*</code>, <code className="text-[11px] font-mono text-primary/80">iter*</code>, etc., plus their cascaded data. Admins are protected.</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button size="sm" variant="outline" onClick={dryRun} disabled={busy} className="border-border h-8" data-testid="cleanup-dry-run-btn">
+            {busy ? "…" : "Preview"}
+          </Button>
+          <Button
+            size="sm"
+            onClick={run}
+            disabled={busy || !preview || preview.users.count === 0}
+            className="bg-destructive/15 border border-destructive/30 text-destructive hover:bg-destructive/25 h-8"
+            data-testid="cleanup-run-btn"
+          >
+            {busy ? "Running…" : preview ? `Delete ${preview.users.count}` : "Delete"}
+          </Button>
+        </div>
+      </div>
+
+      {preview && (
+        <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-2">
+          {[
+            { label: "Test users",       data: preview.users },
+            { label: "Test casting",     data: preview.casting_calls },
+            { label: "Email log entries", data: { count: preview.email_log.count, sample: [] } },
+          ].map((s) => (
+            <div key={s.label} className="rounded p-2.5 border border-white/[0.06]" style={{ background: "#0F1014" }}>
+              <p className="text-[10px] uppercase tracking-[0.12em] font-mono text-foreground/40 mb-1">{s.label}</p>
+              <p className="font-display text-lg font-bold text-foreground">{s.data.count}</p>
+              {(s.data.sample || []).slice(0, 3).map((sample) => (
+                <p key={sample} className="text-[10px] text-muted-foreground truncate font-mono">{sample}</p>
+              ))}
+              {(s.data.sample || []).length > 3 && (
+                <p className="text-[10px] text-muted-foreground italic">+{s.data.sample.length - 3} more…</p>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
