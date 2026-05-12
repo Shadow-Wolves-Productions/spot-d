@@ -120,6 +120,7 @@ export default function CreateProject() {
   const [uploadingPoster, setUploadingPoster] = useState(false);
   const [posterDrag, setPosterDrag] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [uploadingBanner, setUploadingBanner] = useState(false);
 
   const [form, setForm] = useState({
     // Step 1 — Production
@@ -144,7 +145,9 @@ export default function CreateProject() {
     runtime: "",
     language: "",
     festival_status: "",
+    production_notes: "",
     release_goals: "",
+    banner_image: "",
     imdb_link: "",
     trailer_url: "",
     pitch_deck_url: "",
@@ -235,6 +238,17 @@ export default function CreateProject() {
       toast.success("Poster uploaded");
     } catch { toast.error("Upload failed"); }
     finally { setUploadingPoster(false); }
+  };
+
+  const handleBannerFile = async (file) => {
+    if (!file || !file.type.startsWith("image/")) { toast.error("Please drop an image file"); return; }
+    setUploadingBanner(true);
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      update("banner_image", file_url);
+      toast.success("Banner uploaded");
+    } catch { toast.error("Upload failed"); }
+    finally { setUploadingBanner(false); }
   };
 
   const canNext = () => {
@@ -566,6 +580,34 @@ export default function CreateProject() {
                   )}
                 </div>
 
+                {/* Banner image */}
+                <div>
+                  <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">
+                    Banner / Hero Image <span className="normal-case text-muted-foreground/60">(optional — wide landscape format)</span>
+                  </Label>
+                  {form.banner_image ? (
+                    <div className="relative rounded-xl overflow-hidden border border-border">
+                      <img src={form.banner_image} alt="Banner" className="w-full h-28 object-cover" />
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="absolute top-2 right-2 h-7 text-xs bg-background/90 backdrop-blur"
+                        onClick={() => update("banner_image", "")}
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                  ) : (
+                    <label className="flex items-center gap-3 px-4 py-3 rounded-lg border border-dashed border-border bg-secondary/40 cursor-pointer hover:border-primary/40 transition-colors">
+                      {uploadingBanner
+                        ? <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                        : <Upload className="w-4 h-4 text-muted-foreground" />}
+                      <span className="text-sm text-muted-foreground">{uploadingBanner ? "Uploading..." : "Upload banner image"}</span>
+                      <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleBannerFile(f); }} />
+                    </label>
+                  )}
+                </div>
+
                 {/* Location + Language */}
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div>
@@ -597,6 +639,28 @@ export default function CreateProject() {
                   <Textarea value={form.director_statement} onChange={(e) => update("director_statement", e.target.value)} rows={3} placeholder="What drives this project? What do you want audiences to feel?" className="bg-secondary border-border" />
                 </div>
 
+                <div>
+                  <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">
+                    Production Notes <span className="normal-case text-muted-foreground/60">(optional)</span>
+                  </Label>
+                  <Textarea value={form.production_notes} onChange={(e) => update("production_notes", e.target.value)} rows={2} placeholder="Shooting schedule, co-production details, financial close status, etc." className="bg-secondary border-border" />
+                </div>
+
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">
+                      Festival Status <span className="normal-case text-muted-foreground/60">(optional)</span>
+                    </Label>
+                    <Input value={form.festival_status} onChange={(e) => update("festival_status", e.target.value)} placeholder="e.g. Sundance 2025 Official Selection" className="bg-secondary border-border" />
+                  </div>
+                  <div>
+                    <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">
+                      IMDb Link <span className="normal-case text-muted-foreground/60">(optional)</span>
+                    </Label>
+                    <Input value={form.imdb_link} onChange={(e) => update("imdb_link", e.target.value)} placeholder="https://imdb.com/title/..." className="bg-secondary border-border" />
+                  </div>
+                </div>
+
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div>
                     <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">
@@ -612,19 +676,11 @@ export default function CreateProject() {
                   </div>
                 </div>
 
-                <div className="grid sm:grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">
-                      IMDb Link <span className="normal-case text-muted-foreground/60">(optional)</span>
-                    </Label>
-                    <Input value={form.imdb_link} onChange={(e) => update("imdb_link", e.target.value)} placeholder="https://imdb.com/title/..." className="bg-secondary border-border" />
-                  </div>
-                  <div>
-                    <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">
-                      Release Goals <span className="normal-case text-muted-foreground/60">(optional)</span>
-                    </Label>
-                    <Input value={form.release_goals} onChange={(e) => update("release_goals", e.target.value)} placeholder="e.g. Festival circuit then streaming" className="bg-secondary border-border" />
-                  </div>
+                <div>
+                  <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">
+                    Release Goals <span className="normal-case text-muted-foreground/60">(optional)</span>
+                  </Label>
+                  <Input value={form.release_goals} onChange={(e) => update("release_goals", e.target.value)} placeholder="e.g. Festival circuit then streaming" className="bg-secondary border-border" />
                 </div>
 
                 {/* Extended attachment URLs */}
@@ -758,7 +814,10 @@ export default function CreateProject() {
                     ["Stage",    form.stage],
                     ["Location", form.filming_location || form.country],
                     ["Budget",   form.budget_range],
+                    ["Festival", form.festival_status],
                     ["Seeking",  form.seeking.join(", ")],
+                    ["Banner",   form.banner_image ? "✓ Uploaded" : ""],
+                    ["Poster",   form.poster_image ? "✓ Uploaded" : ""],
                   ].filter(([, v]) => v).map(([k, v]) => (
                     <div key={k} className="flex gap-3 text-sm">
                       <span className="text-muted-foreground/60 w-20 flex-shrink-0">{k}</span>
