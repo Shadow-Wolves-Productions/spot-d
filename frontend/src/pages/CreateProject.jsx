@@ -148,6 +148,10 @@ export default function CreateProject() {
     imdb_link: "",
     trailer_url: "",
     pitch_deck_url: "",
+    lookbook_url: "",
+    screener_url: "",
+    business_plan_url: "",
+    moodboard_url: "",
     // Step 3 — Seeking
     seeking: [],
   });
@@ -620,6 +624,29 @@ export default function CreateProject() {
                       Release Goals <span className="normal-case text-muted-foreground/60">(optional)</span>
                     </Label>
                     <Input value={form.release_goals} onChange={(e) => update("release_goals", e.target.value)} placeholder="e.g. Festival circuit then streaming" className="bg-secondary border-border" />
+                  </div>
+                </div>
+
+                {/* Extended attachment URLs */}
+                <div>
+                  <p className="text-xs uppercase tracking-wider font-mono text-muted-foreground mb-3">Additional Materials <span className="normal-case">(optional)</span></p>
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">Lookbook URL</Label>
+                      <Input value={form.lookbook_url} onChange={(e) => update("lookbook_url", e.target.value)} placeholder="https://..." className="bg-secondary border-border" />
+                    </div>
+                    <div>
+                      <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">Screener URL</Label>
+                      <Input value={form.screener_url} onChange={(e) => update("screener_url", e.target.value)} placeholder="https://..." className="bg-secondary border-border" />
+                    </div>
+                    <div>
+                      <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">Business Plan URL</Label>
+                      <Input value={form.business_plan_url} onChange={(e) => update("business_plan_url", e.target.value)} placeholder="https://..." className="bg-secondary border-border" />
+                    </div>
+                    <div>
+                      <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">Moodboard URL</Label>
+                      <Input value={form.moodboard_url} onChange={(e) => update("moodboard_url", e.target.value)} placeholder="https://..." className="bg-secondary border-border" />
+                    </div>
                   </div>
                 </div>
               </div>

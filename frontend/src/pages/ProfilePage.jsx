@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
-import { Bookmark, Share2, ArrowLeft, Zap, Check, Image as ImageIcon } from "lucide-react";
+import { Bookmark, Share2, ArrowLeft, Zap, Check, Image as ImageIcon, Film } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ProfileHero from "../components/profile/ProfileHero";
 import ContactPanel from "../components/profile/ContactPanel";
@@ -24,6 +24,7 @@ export default function ProfilePage() {
   const [myProfile, setMyProfile] = useState(null);
   const [similarProfiles, setSimilarProfiles] = useState([]);
   const [linkedCompanies, setLinkedCompanies] = useState([]);
+  const [attachedProjects, setAttachedProjects] = useState([]);
   const [isSaved, setIsSaved] = useState(false);
   const [spotModalOpen, setSpotModalOpen] = useState(false);
   const [hasSpotted, setHasSpotted] = useState(false);
@@ -92,6 +93,21 @@ export default function ProfilePage() {
           );
           setSimilarProfiles(similar.filter((s) => s.id !== p.id).slice(0, 4));
         }
+        // Load approved project attachments for this profile
+        try {
+          const atts = await base44.entities.ProjectAttachment.filter({ profile_id: p.id, status: "approved" });
+          if (atts && atts.length > 0) {
+            const projDetails = (await Promise.all(
+              atts.map(async (a) => {
+                const proj = await base44.entities.Project.filter({ id: a.project_id, is_published: true });
+                if (!proj?.[0]) return null;
+                return { ...proj[0], _role_on_project: a.role_on_project };
+              })
+            )).filter(Boolean);
+            setAttachedProjects(projDetails);
+          }
+        } catch { /* non-critical */ }
+
         // Cross-link: show "Also on Spot'd" company tiles for any
         // CompanyProfile owned by this user.
         if (p.user_id) {
@@ -327,6 +343,40 @@ export default function ProfilePage() {
 
             <CreditsSection profile={profile} />
             <PortfolioSection profile={profile} />
+
+            {/* Projects this person is attached to */}
+            {attachedProjects.length > 0 && (
+              <section className="space-y-3">
+                <h2 className="font-display text-lg font-semibold text-foreground flex items-center gap-2">
+                  <Film className="w-5 h-5 text-primary" /> Projects
+                </h2>
+                <div className="grid sm:grid-cols-2 gap-3">
+                  {attachedProjects.map((proj) => (
+                    <Link
+                      key={proj.id}
+                      to={`/projects/${proj.id}`}
+                      className="flex items-center gap-3 bg-card border border-border rounded-xl p-3 hover:border-primary/30 transition-colors"
+                    >
+                      {proj.poster_image ? (
+                        <img src={proj.poster_image} alt="" className="w-10 h-14 object-cover rounded-lg flex-shrink-0" />
+                      ) : (
+                        <div className="w-10 h-14 rounded-lg bg-secondary flex items-center justify-center flex-shrink-0">
+                          <Film className="w-4 h-4 text-muted-foreground/40" />
+                        </div>
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold text-foreground truncate">{proj.title}</p>
+                        {proj._role_on_project && (
+                          <p className="text-[11px] text-primary/80 truncate">{proj._role_on_project}</p>
+                        )}
+                        <p className="text-[11px] text-muted-foreground truncate">{proj.project_type || "—"} · {proj.stage || "—"}</p>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            )}
+
             <SpottedWithSection profileId={profile.id} />
             <SpotsSection profileId={profile.id} />
 

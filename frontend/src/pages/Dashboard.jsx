@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { Link } from "react-router-dom";
-import { Crown, Eye, Bookmark, Clock, ChevronRight, Edit, Zap, Moon, Sun, Trash2, AlertTriangle, BarChart2, Building2, Sparkles, ArrowRight } from "lucide-react";
+import { Crown, Eye, Bookmark, Clock, ChevronRight, Edit, Zap, Moon, Sun, Trash2, AlertTriangle, BarChart2, Building2, Sparkles, ArrowRight, Film, FolderOpen } from "lucide-react";
 import { usePullToRefresh } from "../hooks/usePullToRefresh";
 import RoleAlertsPanel from "../components/RoleAlertsPanel";
 import { useTheme } from "../lib/useTheme";
@@ -30,6 +30,9 @@ export default function Dashboard() {
   const [revealedByCount, setRevealedByCount] = useState(0);
   const [subscription, setSubscription] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [myProjects, setMyProjects] = useState([]);
+  const [savedProjectRecords, setSavedProjectRecords] = useState([]);
+  const [savedProjectDetails, setSavedProjectDetails] = useState([]);
   const [activatingBoost, setActivatingBoost] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
@@ -69,6 +72,25 @@ export default function Dashboard() {
     // Load any company profiles owned by this user
     const myCompanies = await base44.entities.CompanyProfile.filter({ user_id: me.id });
     setCompanies(myCompanies);
+
+    // Load projects created by this user
+    const projects = await base44.entities.Project.filter({ creator_user_id: me.id });
+    setMyProjects((projects || []).sort((a, b) => new Date(b.created_date || 0) - new Date(a.created_date || 0)));
+
+    // Load saved projects
+    const savedProjRecords = await base44.entities.SavedProject.filter({ user_id: me.id });
+    setSavedProjectRecords(savedProjRecords || []);
+    if (savedProjRecords && savedProjRecords.length > 0) {
+      const projDetails = (await Promise.all(
+        savedProjRecords.map(async (s) => {
+          const p = await base44.entities.Project.filter({ id: s.project_id });
+          return p[0];
+        })
+      )).filter(Boolean);
+      setSavedProjectDetails(projDetails);
+    } else {
+      setSavedProjectDetails([]);
+    }
 
     if (saved.length > 0) {
       const detailPromises = saved.map(async (s) => {
@@ -290,6 +312,104 @@ export default function Dashboard() {
                   if (profiles.length > 0) setProfile(profiles[0]);
                 }}
               />
+            )}
+
+            {/* My Projects */}
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-display text-sm font-semibold text-foreground uppercase tracking-wider flex items-center gap-2">
+                  <Film className="w-4 h-4 text-primary" /> My Projects
+                </h3>
+                <Link to="/projects/new" className="text-xs text-primary hover:text-primary/80 font-medium transition-colors">
+                  + New
+                </Link>
+              </div>
+              {myProjects.length === 0 ? (
+                <div className="bg-card border border-white/[0.06] rounded-xl p-6 text-center">
+                  <FolderOpen className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
+                  <p className="text-sm text-muted-foreground">No projects yet.</p>
+                  <Link to="/projects/new">
+                    <Button size="sm" className="mt-3 bg-primary/10 border border-primary/20 text-primary hover:bg-primary/20 text-xs">
+                      List Your First Project
+                    </Button>
+                  </Link>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {myProjects.slice(0, 5).map((proj) => (
+                    <Link
+                      key={proj.id}
+                      to={`/projects/${proj.id}`}
+                      className="flex items-center gap-3 p-3 rounded-xl bg-card border border-white/[0.06] hover:border-primary/20 transition-all"
+                    >
+                      {proj.poster_image ? (
+                        <img src={proj.poster_image} alt="" className="w-10 h-14 object-cover rounded-lg flex-shrink-0" />
+                      ) : (
+                        <div className="w-10 h-14 rounded-lg bg-secondary flex items-center justify-center flex-shrink-0">
+                          <Film className="w-4 h-4 text-muted-foreground/40" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-foreground truncate">{proj.title}</p>
+                        <p className="text-xs text-muted-foreground truncate">{proj.stage || proj.project_type || "—"}</p>
+                        <div className="flex items-center gap-1.5 mt-1">
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded border font-medium ${proj.is_published ? "border-emerald-500/20 text-emerald-400 bg-emerald-500/10" : "border-amber-500/20 text-amber-400 bg-amber-500/10"}`}>
+                            {proj.is_published ? "Published" : "Draft"}
+                          </span>
+                          {(proj.inquiry_count || 0) > 0 && (
+                            <span className="text-[10px] text-muted-foreground">{proj.inquiry_count} {proj.inquiry_count === 1 ? "inquiry" : "inquiries"}</span>
+                          )}
+                        </div>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-muted-foreground/40 flex-shrink-0" />
+                    </Link>
+                  ))}
+                  {myProjects.length > 5 && (
+                    <Link to="/projects" className="flex items-center justify-center gap-1 text-xs text-muted-foreground hover:text-primary py-2 transition-colors">
+                      View all {myProjects.length} projects <ArrowRight className="w-3 h-3" />
+                    </Link>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Saved Projects */}
+            {savedProjectRecords.length > 0 && (
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-display text-sm font-semibold text-foreground uppercase tracking-wider flex items-center gap-2">
+                    <Bookmark className="w-4 h-4 text-primary" /> Saved Projects
+                  </h3>
+                  <Link to="/projects" className="text-xs text-muted-foreground hover:text-primary transition-colors">
+                    Browse
+                  </Link>
+                </div>
+                <div className="space-y-2">
+                  {savedProjectDetails.slice(0, 4).map((proj) => (
+                    <Link
+                      key={proj.id}
+                      to={`/projects/${proj.id}`}
+                      className="flex items-center gap-3 p-3 rounded-xl bg-card border border-white/[0.06] hover:border-primary/20 transition-all"
+                    >
+                      {proj.poster_image ? (
+                        <img src={proj.poster_image} alt="" className="w-10 h-14 object-cover rounded-lg flex-shrink-0" />
+                      ) : (
+                        <div className="w-10 h-14 rounded-lg bg-secondary flex items-center justify-center flex-shrink-0">
+                          <Film className="w-4 h-4 text-muted-foreground/40" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-foreground truncate">{proj.title}</p>
+                        <p className="text-xs text-muted-foreground truncate">{proj.project_type || "—"} · {proj.stage || "—"}</p>
+                        {proj.production_company && (
+                          <p className="text-[10px] text-muted-foreground/60 truncate mt-0.5">{proj.production_company}</p>
+                        )}
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-muted-foreground/40 flex-shrink-0" />
+                    </Link>
+                  ))}
+                </div>
+              </div>
             )}
 
             {/* Saved Profiles */}

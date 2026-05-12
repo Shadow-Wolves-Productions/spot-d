@@ -200,11 +200,16 @@ class ProjectCreate(_LooseBase):
     imdb_link: Optional[str] = None
     trailer_url: Optional[str] = None
     pitch_deck_url: Optional[str] = None
+    lookbook_url: Optional[str] = None
+    screener_url: Optional[str] = None
+    business_plan_url: Optional[str] = None
+    moodboard_url: Optional[str] = None
     company_name: Optional[str] = None
     company_logo: Optional[str] = None
 
     @field_validator(
         "imdb_link", "trailer_url", "pitch_deck_url",
+        "lookbook_url", "screener_url", "business_plan_url", "moodboard_url",
         "poster_image", "banner_image", "company_logo",
         mode="before",
     )
@@ -238,11 +243,16 @@ class ProjectUpdate(_LooseBase):
     imdb_link: Optional[str] = None
     trailer_url: Optional[str] = None
     pitch_deck_url: Optional[str] = None
+    lookbook_url: Optional[str] = None
+    screener_url: Optional[str] = None
+    business_plan_url: Optional[str] = None
+    moodboard_url: Optional[str] = None
     is_published: Optional[bool] = None
     is_archived: Optional[bool] = None
 
     @field_validator(
         "imdb_link", "trailer_url", "pitch_deck_url",
+        "lookbook_url", "screener_url", "business_plan_url", "moodboard_url",
         "poster_image", "banner_image",
         mode="before", check_fields=False,
     )
@@ -338,10 +348,57 @@ class ContactRevealCreate(_LooseBase):
 # --------------------------------------------------------------------------- #
 # Registry — entity name → (CreateModel, UpdateModel | None)
 # --------------------------------------------------------------------------- #
+# --------------------------------------------------------------------------- #
+# 8. ProjectAttachment — profile or company attaches to a project
+# --------------------------------------------------------------------------- #
+class ProjectAttachmentCreate(_LooseBase):
+    project_id: str = Field(..., min_length=1)
+    profile_id: Optional[str] = None
+    company_profile_id: Optional[str] = None
+    role_on_project: Optional[str] = None
+    note: Optional[str] = None
+    display_name: Optional[str] = None
+    display_photo: Optional[str] = None
+
+    @field_validator("display_photo", mode="before")
+    @classmethod
+    def _urls(cls, v):
+        return _normalize_url(v)
+
+
+# --------------------------------------------------------------------------- #
+# 9. SavedProject — user bookmarks a project
+# --------------------------------------------------------------------------- #
+class SavedProjectCreate(_LooseBase):
+    project_id: str = Field(..., min_length=1)
+    user_id: Optional[str] = None
+
+
+# --------------------------------------------------------------------------- #
+# 10. ProjectInquiry — internal contact/inquiry for a project
+# --------------------------------------------------------------------------- #
+class ProjectInquiryCreate(_LooseBase):
+    project_id: str = Field(..., min_length=1)
+    sender_user_id: Optional[str] = None
+    sender_profile_id: Optional[str] = None
+    sender_name: Optional[str] = None
+    sender_photo: Optional[str] = None
+    inquiry_type: Optional[str] = None
+    message: str = Field(..., min_length=1, max_length=2000)
+
+    @field_validator("sender_photo", mode="before")
+    @classmethod
+    def _urls(cls, v):
+        return _normalize_url(v)
+
+
 ENTITY_MODELS: dict = {
     "Profile":             (ProfileCreate,            ProfileUpdate),
     "CompanyProfile":      (CompanyProfileCreate,     CompanyProfileUpdate),
     "Project":             (ProjectCreate,            ProjectUpdate),
+    "ProjectAttachment":   (ProjectAttachmentCreate,  None),
+    "SavedProject":        (SavedProjectCreate,       None),
+    "ProjectInquiry":      (ProjectInquiryCreate,     None),
     "CastingCall":         (CastingCallCreate,        CastingCallUpdate),
     "CastingApplication":  (CastingApplicationCreate, None),
     "SpotRequest":         (SpotRequestCreate,        None),
