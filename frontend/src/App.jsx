@@ -15,6 +15,9 @@ import ContactFAQ from './pages/ContactFAQ';
 import CastingCalls from './pages/CastingCalls';
 import CreateCastingCall from './pages/CreateCastingCall';
 import CastingCallDetail from './pages/CastingCallDetail';
+import Projects from './pages/Projects';
+import CreateProject from './pages/CreateProject';
+import ProjectDetail from './pages/ProjectDetail';
 import AdminDashboard from './pages/AdminDashboard';
 import Analytics from './pages/Analytics';
 import CastingApplicationsKanban from './pages/CastingApplicationsKanban';
@@ -48,6 +51,10 @@ const AuthenticatedApp = () => {
         <Route path="/pricing" element={<Pricing />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/contact" element={<ContactFAQ />} />
+        <Route path="/projects" element={<Projects />} />
+        <Route path="/projects/new" element={<CreateProject />} />
+        <Route path="/projects/:id/edit" element={<CreateProject />} />
+        <Route path="/projects/:id" element={<ProjectDetail />} />
         <Route path="/casting" element={<CastingCalls />} />
         <Route path="/casting/new" element={<CreateCastingCall />} />
         <Route path="/casting/:id/edit" element={<CreateCastingCall />} />

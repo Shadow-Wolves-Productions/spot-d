@@ -30,6 +30,7 @@ from routers import auth as _auth_router
 from routers import entities as _entities_router
 from routers import profiles as _profiles_router
 from routers import casting as _casting_router
+from routers import projects as _projects_router
 from routers import uploads as _uploads_router
 from routers import webhooks as _webhooks_router
 from routers import admin as _admin_router
@@ -93,8 +94,8 @@ app.mount(
 # --------------------------------------------------------------------------- #
 for _r in (
     _auth_router, _entities_router, _profiles_router, _casting_router,
-    _uploads_router, _webhooks_router, _admin_router, _scheduled_router,
-    _public_router, _spotlight_router,
+    _projects_router, _uploads_router, _webhooks_router, _admin_router,
+    _scheduled_router, _public_router, _spotlight_router,
 ):
     app.include_router(_r.router)
 

@@ -93,6 +93,8 @@ ENTITIES = {
     "Subscription": "subscriptions",
     "CastingCall": "casting_calls",
     "CastingApplication": "casting_applications",
+    "Project": "projects",
+    "ProjectInquiry": "project_inquiries",
     "Spot": "spots",
     "Endorsement": "spots",
     "SpotRequest": "spot_requests",
@@ -116,7 +118,7 @@ PUBLIC_READ = {
     "SpottedWith", "SavedProfile", "ContactReveal", "ProfileView",
     "PortfolioClick", "SearchAppearance", "Notification", "Subscription",
     "SpotRequest", "RoleAlert", "User", "CastingApplication",
-    "SpotScoreHistory",
+    "SpotScoreHistory", "Project",
 }
 
 

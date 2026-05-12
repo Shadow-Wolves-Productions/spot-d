@@ -172,7 +172,87 @@ class CompanyProfileUpdate(_LooseBase):
 
 
 # --------------------------------------------------------------------------- #
-# 3. CastingCall
+# 3. Project
+# --------------------------------------------------------------------------- #
+class ProjectCreate(_LooseBase):
+    title: str = Field(..., min_length=1, max_length=200)
+    project_type: Optional[str] = None
+    stage: Optional[str] = None
+    genre: Optional[str] = None
+    seeking: Optional[List[str]] = None
+    logline: Optional[str] = None
+    synopsis: Optional[str] = None
+    director_statement: Optional[str] = None
+    production_notes: Optional[str] = None
+    country: Optional[str] = None
+    filming_location: Optional[str] = None
+    budget_range: Optional[str] = None
+    runtime: Optional[str] = None
+    language: Optional[str] = None
+    poster_image: Optional[str] = None
+    banner_image: Optional[str] = None
+    production_company: Optional[str] = None
+    director_name: Optional[str] = None
+    contact_role: Optional[str] = None
+    contact_email: Optional[str] = None
+    festival_status: Optional[str] = None
+    release_goals: Optional[str] = None
+    imdb_link: Optional[str] = None
+    trailer_url: Optional[str] = None
+    pitch_deck_url: Optional[str] = None
+    company_name: Optional[str] = None
+    company_logo: Optional[str] = None
+
+    @field_validator(
+        "imdb_link", "trailer_url", "pitch_deck_url",
+        "poster_image", "banner_image", "company_logo",
+        mode="before",
+    )
+    @classmethod
+    def _urls(cls, v):
+        return _normalize_url(v)
+
+
+class ProjectUpdate(_LooseBase):
+    title: Optional[str] = Field(None, min_length=1, max_length=200)
+    project_type: Optional[str] = None
+    stage: Optional[str] = None
+    genre: Optional[str] = None
+    seeking: Optional[List[str]] = None
+    logline: Optional[str] = None
+    synopsis: Optional[str] = None
+    director_statement: Optional[str] = None
+    production_notes: Optional[str] = None
+    country: Optional[str] = None
+    filming_location: Optional[str] = None
+    budget_range: Optional[str] = None
+    runtime: Optional[str] = None
+    language: Optional[str] = None
+    poster_image: Optional[str] = None
+    banner_image: Optional[str] = None
+    production_company: Optional[str] = None
+    director_name: Optional[str] = None
+    contact_role: Optional[str] = None
+    festival_status: Optional[str] = None
+    release_goals: Optional[str] = None
+    imdb_link: Optional[str] = None
+    trailer_url: Optional[str] = None
+    pitch_deck_url: Optional[str] = None
+    is_published: Optional[bool] = None
+    is_archived: Optional[bool] = None
+
+    @field_validator(
+        "imdb_link", "trailer_url", "pitch_deck_url",
+        "poster_image", "banner_image",
+        mode="before", check_fields=False,
+    )
+    @classmethod
+    def _urls(cls, v):
+        return _normalize_url(v)
+
+
+# --------------------------------------------------------------------------- #
+# 3b. CastingCall (legacy — kept for backwards compat)
 # --------------------------------------------------------------------------- #
 class CastingCallCreate(_LooseBase):
     project_title: str = Field(..., min_length=1, max_length=200)
@@ -261,6 +341,7 @@ class ContactRevealCreate(_LooseBase):
 ENTITY_MODELS: dict = {
     "Profile":             (ProfileCreate,            ProfileUpdate),
     "CompanyProfile":      (CompanyProfileCreate,     CompanyProfileUpdate),
+    "Project":             (ProjectCreate,            ProjectUpdate),
     "CastingCall":         (CastingCallCreate,        CastingCallUpdate),
     "CastingApplication":  (CastingApplicationCreate, None),
     "SpotRequest":         (SpotRequestCreate,        None),
