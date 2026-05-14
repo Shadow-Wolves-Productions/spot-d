@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { base44 } from "@/api/base44Client";
 
 /**
- * Single source of truth for the founding-member CTA.
+ * Early Access CTA section.
  * - Reads founder_count + founder_cap live from /api/public-stats
  * - Auto-hides + shows waitlist when cap is reached
  * - Applies urgency thresholds (amber under 75 remaining, orange under 25, pulse final 10)
@@ -75,12 +75,12 @@ export default function FoundingSection({ source = "landing" }) {
     return (
       <section className="py-20 px-4 border-t border-border" data-testid="founding-waitlist-section">
         <div className="max-w-3xl mx-auto text-center">
-          <span className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Founding cohort</span>
+          <span className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Early Access</span>
           <h2 className="font-display font-500 text-4xl sm:text-5xl text-foreground mt-3 leading-tight" style={{ letterSpacing: "-1px" }}>
-            Founding member spots are full.
+            All early access spots are taken.
           </h2>
           <p className="text-muted-foreground mt-5 text-base leading-[1.7] max-w-xl mx-auto">
-            All {founder_cap} founding spots have been claimed. Join the waitlist for our next early access round.
+            All {founder_cap} free PRO spots have been claimed. Join the waitlist for our next early access round.
           </p>
           {waitlisted ? (
             <div className="mt-10 inline-flex items-center gap-2 text-sm font-mono text-primary" data-testid="founding-waitlist-success">
@@ -116,8 +116,8 @@ export default function FoundingSection({ source = "landing" }) {
       : urgency === "orange"
       ? `Almost full — ${founder_remaining} spots left`
       : urgency === "amber"
-      ? `Only ${founder_remaining} founding spots remaining`
-      : `${founder_remaining} founding spots remaining`;
+      ? `Only ${founder_remaining} early access spots remaining`
+      : `${founder_remaining} early access spots remaining`;
 
   return (
     <section className="py-20 px-4 border-t border-border" data-testid="founding-member-section">
@@ -127,10 +127,10 @@ export default function FoundingSection({ source = "landing" }) {
           <div className="p-10 lg:p-14 border-b lg:border-b-0 lg:border-r border-border bg-card">
             <span className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Limited offer</span>
             <h2 className="font-display font-500 text-4xl sm:text-5xl text-foreground mt-2 leading-tight" style={{ letterSpacing: "-1px" }}>
-              Founding<br />member access
+              Free PRO<br />for life
             </h2>
             <p className="text-muted-foreground mt-4 text-base leading-[1.7] max-w-sm">
-              The first {founder_cap} members get lifetime free PRO access, a founding member badge, and priority listing in the directory.
+              The first {founder_cap} members get lifetime free PRO access, verified profile, and priority listing in the directory. No credit card required.
             </p>
 
             <motion.div
@@ -150,7 +150,7 @@ export default function FoundingSection({ source = "landing" }) {
             </motion.div>
 
             <p className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground mt-3 font-mono" data-testid="founding-counter">
-              <span className="text-foreground font-semibold">{founder_count}</span> of {founder_cap} founding spots claimed
+              <span className="text-foreground font-semibold">{founder_count}</span> of {founder_cap} spots claimed
             </p>
 
             {urgency !== "standard" && (
@@ -166,7 +166,6 @@ export default function FoundingSection({ source = "landing" }) {
             <ul className="space-y-2 mb-8">
               {[
                 "Free PRO access for life",
-                "Founding member badge",
                 "Priority placement in search",
                 "Unlimited contact reveals",
                 "Full portfolio uploads",

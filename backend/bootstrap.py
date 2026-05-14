@@ -29,7 +29,7 @@ async def seed_initial_data():
         await db.users.insert_one(user.copy())
     user_id = user["id"]
 
-    # Brendan is always a Founding Member regardless of which billing tier his
+    # Brendan is always an Early Access member regardless of which billing tier his
     # subscription sits at. The flag is also set on every user with an active
     # `tier=founder` subscription via migrate_founding_member_flag() on boot.
     if not user.get("is_founding_member"):

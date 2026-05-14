@@ -22,7 +22,7 @@ import { toast } from "sonner";
 
 const AUDIENCES = [
   { key: "all_users",        label: "All users",            blurb: "Every user with an email" },
-  { key: "founders",         label: "Founding members",     blurb: "Locked-in lifetime PRO" },
+  { key: "founders",         label: "Early Access (PRO)",   blurb: "Lifetime free PRO members" },
   { key: "verified",         label: "Verified emails",      blurb: "Active, engaged users" },
   { key: "imported_pending", label: "Imports — unclaimed",  blurb: "Reserved spot, not signed in yet" },
   { key: "custom",           label: "Custom recipient list", blurb: "Paste emails (comma or newline)" },
@@ -110,16 +110,16 @@ const TEMPLATES = {
     },
   },
   founder_reminder: {
-    name: "Founder reminder",
-    subject: "Your founding spot is still waiting",
+    name: "Early access reminder",
+    subject: "Your free PRO spot is still waiting",
     template: {
       greeting: "Hey {first_name},",
       intro: [
-        "Just a reminder — your <strong style=\"color:#FFFFFF;\">Founding Member</strong> spot on Spot'd hasn't been claimed yet.",
+        "Just a reminder — your <strong style=\"color:#FFFFFF;\">free PRO access</strong> on Spot'd hasn't been claimed yet.",
       ],
       sections: [
         {
-          eyebrow: "Founding member — your spot is waiting",
+          eyebrow: "Your spot is waiting",
           eyebrow_color: "#FF5C35",
           paragraphs: ["What that means:"],
           highlight: [
@@ -127,16 +127,15 @@ const TEMPLATES = {
             "⚡ Priority placement in search",
             "⚡ Unlimited contact reveals",
             "⚡ Full portfolio uploads",
-            "⚡ Founding member badge on your profile",
           ],
         },
         {
           paragraphs: [
-            "There are only <strong style=\"color:#FFFFFF;\">100 founding member spots total</strong>. After that, unclaimed spots go to the public waitlist.",
+            "There are only <strong style=\"color:#FFFFFF;\">100 early access spots total</strong>. After that, unclaimed spots go to the public waitlist.",
           ],
         },
       ],
-      cta: { label: "CLAIM YOUR FOUNDING SPOT →", url: "https://getspotd.app/login" },
+      cta: { label: "CLAIM YOUR SPOT →", url: "https://getspotd.app/login" },
       post_cta: "Enter this email at sign-in and we'll send you a code — no password needed.",
     },
   },
@@ -381,7 +380,7 @@ export default function EmailComposer({ onSent }) {
               <Input
                 value={template.cta?.label || ""}
                 onChange={(e) => setTemplate({ ...template, cta: { ...(template.cta || {}), label: e.target.value } })}
-                placeholder="CLAIM YOUR FOUNDING SPOT →"
+                placeholder="CLAIM YOUR SPOT →"
                 className="bg-secondary border-border text-sm"
                 data-testid="email-cta-label"
               />

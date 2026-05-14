@@ -15,12 +15,11 @@ Structured input:
                 "highlight": ["⚡ Lifetime free PRO", "⚡ ..."], # optional
             },
         ],
-        "cta": {"label": "CLAIM YOUR FOUNDING SPOT →", "url": "https://getspotd.app/login"},
+        "cta": {"label": "CLAIM YOUR SPOT →", "url": "https://getspotd.app/login"},
         "post_cta": "Enter this email at sign-in and we'll send you a code…",
         "signoff": {
             "name": "Brendan Byrne",
-            "title": "Founder — Spot'd",
-            "company": "Shadow Wolves Productions",
+            "title": "Founder — Spot'd",            "company": "Shadow Wolves Productions",
         },
         "footer_email": "user@example.com",   # for the unsubscribe link
     }

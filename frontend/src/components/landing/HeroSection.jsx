@@ -232,8 +232,8 @@ export default function HeroSection() {
                 )}
               </div>
 
-              {/* Floating badge — keeps founding-member moment with live remaining */}
-              <FoundingBadge />
+              {/* Floating badge — live spots remaining */}
+              <EarlyAccessBadge />
             </div>
           </motion.div>
         </div>
@@ -253,22 +253,21 @@ export default function HeroSection() {
   );
 }
 
-function FoundingBadge() {
+function EarlyAccessBadge() {
   const [remaining, setRemaining] = useState(null);
   useEffect(() => {
     base44.http.get("/api/public-stats")
       .then(({ data }) => setRemaining(Math.max(0, (data.founder_cap || 100) - (data.founder_count || 0))))
       .catch(() => setRemaining(null));
   }, []);
-  // Hide entirely when cohort is full — landing page should never lie.
   if (remaining === 0) return null;
   return (
     <div className="absolute -bottom-12 -left-4 rounded-lg px-4 py-3 shadow-xl bg-primary z-10" data-testid="hero-founding-badge">
       <div className="text-[10px] uppercase tracking-[0.08em] font-semibold text-primary-foreground/70">
-        Founding · Free PRO
+        Free PRO · For Life
       </div>
       <div className="font-display font-bold text-lg leading-none mt-1 text-primary-foreground">
-        {remaining !== null ? `${remaining} spots left` : "Founding cohort"}
+        {remaining !== null ? `${remaining} spots left` : "Limited offer"}
       </div>
     </div>
   );

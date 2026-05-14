@@ -298,7 +298,7 @@ export default function Pricing() {
           </motion.div>
         </div>
 
-        {/* Founding member CTA — auto-hides when full, replaced by waitlist */}
+        {/* Early Access CTA — auto-hides when full, replaced by waitlist */}
         {urgency !== "full" ? (
           <motion.div
             initial={{ opacity: 0, y: 24 }}
@@ -310,9 +310,9 @@ export default function Pricing() {
             <div className="relative rounded-2xl p-10 text-center overflow-hidden border" style={{ background: "hsl(var(--card))", borderColor: urgencyColour }}>
               <div className="relative">
                 <span className="text-2xl mb-3 block" style={{ color: urgencyColour }}>✦</span>
-                <h3 className="font-display text-2xl font-500 text-foreground" style={{ letterSpacing: "-0.5px" }}>Founding member offer</h3>
+                <h3 className="font-display text-2xl font-500 text-foreground" style={{ letterSpacing: "-0.5px" }}>Free PRO — for life</h3>
                 <p className="text-muted-foreground mt-3 max-w-md mx-auto text-sm leading-[1.7]">
-                  Join now and lock in PRO access for life — free. The first {maxSpots} members receive a founding member badge, verified profile, and permanent priority listing. No credit card required.
+                  Join now and lock in PRO access for life — free. The first {maxSpots} members get a verified profile and permanent priority listing. No credit card required.
                 </p>
 
                 {/* Spot counter — colour-coded by urgency */}
@@ -343,7 +343,7 @@ export default function Pricing() {
                 )}
                 {urgency === "amber" && (
                   <p className="text-sm font-semibold mt-4" style={{ color: urgencyColour }} data-testid="pricing-urgency-message">
-                    Only {spotsLeft} founding spots remaining
+                    Only {spotsLeft} early access spots remaining
                   </p>
                 )}
 
@@ -370,7 +370,7 @@ export default function Pricing() {
             </div>
           </motion.div>
         ) : (
-          /* Waitlist — shown when founder cohort is full */
+          /* Waitlist — shown when early access cohort is full */
           <motion.div
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
@@ -380,10 +380,10 @@ export default function Pricing() {
           >
             <div className="relative rounded-2xl p-10 text-center overflow-hidden border border-border bg-card">
               <h3 className="font-display text-2xl font-500 text-foreground" style={{ letterSpacing: "-0.5px" }}>
-                Founding member spots are full.
+                All early access spots are taken.
               </h3>
               <p className="text-muted-foreground mt-3 max-w-md mx-auto text-sm leading-[1.7]">
-                All {maxSpots} founding spots have been claimed. Join the waitlist for our next early access round.
+                All {maxSpots} free PRO spots have been claimed. Join the waitlist for our next early access round.
               </p>
               {waitlisted ? (
                 <div className="mt-6 inline-flex items-center gap-2 text-sm font-mono text-primary" data-testid="pricing-waitlist-success">

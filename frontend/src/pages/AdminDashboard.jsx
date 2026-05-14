@@ -179,7 +179,7 @@ export default function AdminDashboard() {
   };
   const [resendingWelcomes, setResendingWelcomes] = useState(false);
   const sendPendingWelcomes = async () => {
-    if (!window.confirm(`Send the founding-member welcome email to all ${imports.unclaimed} unclaimed imported member${imports.unclaimed === 1 ? "" : "s"}?`)) return;
+    if (!window.confirm(`Send the welcome email to all ${imports.unclaimed} unclaimed imported member${imports.unclaimed === 1 ? "" : "s"}?`)) return;
     setResendingWelcomes(true);
     try {
       const { data } = await base44.http.post("/api/admin/send-pending-welcomes", {});
@@ -207,7 +207,7 @@ export default function AdminDashboard() {
       const body = v.includes("@") ? { email: v, claimed } : { profile_slug: v, claimed };
       const { data } = await base44.http.post("/api/admin/flag-founding-member", body);
       const u = data.user || {};
-      toast.success(`${claimed ? "Flagged" : "Unflagged"} ${u.full_name || u.email} as founding member`);
+      toast.success(`${claimed ? "Granted" : "Revoked"} early access for ${u.full_name || u.email}`);
       setFlagInput("");
       loadCore();
     } catch (e) {
@@ -240,7 +240,7 @@ export default function AdminDashboard() {
         case "founder": {
           const claim = !p._user?.is_founding_member;
           await base44.http.post("/api/admin/flag-founding-member", { email: p._user?.email, claimed: claim });
-          toast.success(`${claim ? "Flagged" : "Unflagged"} ${p.full_name} as founder`);
+          toast.success(`${claim ? "Granted" : "Revoked"} early access for ${p.full_name}`);
           loadCore();
           return;
         }
@@ -318,9 +318,9 @@ export default function AdminDashboard() {
         {/* PROFILES (merged with Users — Make Admin lives here too) */}
         {tab === "profiles" && (
           <div className="space-y-2" data-testid="admin-profiles-tab">
-            {/* Manual founding-member flag — relocated here from the now-removed Imports tab */}
+            {/* Manual early access grant */}
             <div className="bg-card border border-border/60 rounded-xl p-4 mb-4" data-testid="manual-founding-flag-card">
-              <p className="text-[10px] uppercase tracking-wider font-mono text-muted-foreground mb-2">Manual founding-member flag</p>
+              <p className="text-[10px] uppercase tracking-wider font-mono text-muted-foreground mb-2">Manual early access grant</p>
               <p className="text-xs text-muted-foreground mb-3">
                 Use this for users who claimed their spot outside the email-verification flow (e.g. external sign-ups, post-cap exceptions). Enter an email or profile slug.
               </p>
@@ -623,7 +623,7 @@ function SpotlightTab({ profiles }) {
           <p className="text-sm text-muted-foreground">Loading…</p>
         ) : pins.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            No pins yet. The homepage will fall back to founding members or the top-SpotScore profile until you pin someone.
+            No pins yet. The homepage will fall back to top-SpotScore profiles until you pin someone.
           </p>
         ) : (
           <div className="space-y-2">

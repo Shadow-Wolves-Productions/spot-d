@@ -429,7 +429,7 @@ async def _process_founding_deadlines():
   <div style="max-width:560px;margin:0 auto;">
     <div style="margin-bottom:32px;">{email_logo_html(40)}</div>
     <p style="margin:0 0 18px;color:#E5E5E5;">Hey {first},</p>
-    <p style="margin:0 0 18px;color:#E5E5E5;">Just a heads up &mdash; your <strong style="color:#FFFFFF;">founding member spot</strong> on Spot&rsquo;d expires in <strong style="color:#FF5C35;">48 hours</strong>.</p>
+    <p style="margin:0 0 18px;color:#E5E5E5;">Just a heads up &mdash; your <strong style="color:#FFFFFF;">free PRO access</strong> on Spot&rsquo;d expires in <strong style="color:#FF5C35;">48 hours</strong>.</p>
     <p style="margin:0 0 18px;color:#E5E5E5;">After that the spot goes to the public waitlist and your <strong style="color:#FFFFFF;">lifetime free PRO access</strong> will be gone forever.</p>
     <p style="margin:0 0 24px;color:#999;">Takes 2 minutes to claim:</p>
     <div style="text-align:center;margin:28px 0;">
@@ -442,7 +442,7 @@ async def _process_founding_deadlines():
             try:
                 await send_email(
                     user["email"],
-                    "48 hours left to claim your Spot'd founding spot",
+                    "48 hours left to claim your free PRO access on Spot'd",
                     html,
                     from_name="Brendan Byrne — Spot'd",
                 )
@@ -477,7 +477,7 @@ async def _process_founding_deadlines():
   <div style="max-width:560px;margin:0 auto;">
     <div style="margin-bottom:32px;">{email_logo_html(40)}</div>
     <p style="margin:0 0 18px;color:#E5E5E5;">Hey {first},</p>
-    <p style="margin:0 0 18px;color:#E5E5E5;">Your 7-day window to claim your founding member profile has passed. Your account is still active on our <strong style="color:#FFFFFF;">free plan</strong>.</p>
+    <p style="margin:0 0 18px;color:#E5E5E5;">Your 7-day window to claim your free PRO profile has passed. Your account is still active on our <strong style="color:#FFFFFF;">free plan</strong>.</p>
     <p style="margin:0 0 24px;color:#E5E5E5;">You can upgrade to PRO any time at <a href="{PUBLIC_APP_URL}/pricing" style="color:#E6FF00;text-decoration:none;font-weight:600;">getspotd.app/pricing</a>.</p>
     <p style="margin:32px 0 0;color:#888;font-size:14px;">&mdash; Brendan</p>
   </div>
@@ -486,7 +486,7 @@ async def _process_founding_deadlines():
             try:
                 await send_email(
                     user["email"],
-                    "Your Spot'd founding spot has expired",
+                    "Your free PRO access on Spot'd has expired",
                     html,
                     from_name="Brendan Byrne — Spot'd",
                 )
@@ -514,7 +514,7 @@ async def claim_founder(request: Request):
     cap = await get_founder_cap()
     count = await db.subscriptions.count_documents({"tier": "founder", "status": "active"})
     if count >= cap:
-        raise HTTPException(400, f"All {cap} founding spots claimed")
+        raise HTTPException(400, f"All {cap} early access spots have been claimed")
     existing = await db.subscriptions.find_one({"user_id": user["id"]})
     sub = {
         "tier": "founder", "status": "active", "started_at": now_iso(),
@@ -535,7 +535,7 @@ async def claim_founder(request: Request):
   <div style="max-width:560px;margin:0 auto;">
     <div style="margin-bottom:32px;">{email_logo_html(40)}</div>
     <p style="margin:0 0 18px;color:#E5E5E5;font-size:17px;">You&rsquo;re in.</p>
-    <p style="margin:0 0 18px;color:#E5E5E5;">Your founding member profile is being set up. Sign in at <a href="{PUBLIC_APP_URL}/login" style="color:#E6FF00;text-decoration:none;font-weight:600;">getspotd.app/login</a> to get started.</p>
+    <p style="margin:0 0 18px;color:#E5E5E5;">Your free PRO profile is being set up. Sign in at <a href="{PUBLIC_APP_URL}/login" style="color:#E6FF00;text-decoration:none;font-weight:600;">getspotd.app/login</a> to get started.</p>
     <div style="text-align:center;margin:32px 0 24px;">
       <a href="{PUBLIC_APP_URL}/login" style="display:inline-block;background:#E6FF00;color:#0D0D0D;text-decoration:none;font-weight:800;padding:14px 32px;border-radius:10px;font-family:'Sora',Arial,sans-serif;">Sign in &rarr;</a>
     </div>
@@ -546,7 +546,7 @@ async def claim_founder(request: Request):
     try:
         await send_email(
             user["email"],
-            "Welcome to Spot'd — you're a founding member",
+            "Welcome to Spot'd — your free PRO access is ready",
             html,
             from_name="Brendan Byrne — Spot'd",
         )

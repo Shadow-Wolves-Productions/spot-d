@@ -30,8 +30,8 @@ const FAQS = [
     answer: "Free members can create a profile, appear in search, and get 2 contact reveals per month. PRO members get unlimited contact reveals, a PRO badge, boosted visibility, priority search placement, full portfolio uploads, and analytics. See our Pricing page for full details.",
   },
   {
-    question: "What is a Founding Member?",
-    answer: "Founding Members are the first 500 people to join Spot'd. They receive lifetime free PRO access, a permanent 'Founder' badge on their profile, verified status, and priority search placement — forever.",
+    question: "What is the free lifetime PRO offer?",
+    answer: "The first 100 people to join Spot'd receive lifetime free PRO access — no credit card required. You get unlimited contact reveals, priority search placement, full portfolio uploads, and all PRO features, forever.",
   },
   {
     question: "How does contact reveal work?",

@@ -236,10 +236,10 @@ async def _send_welcome_internal(user_id: str, profile_id: str, tier: str = "pro
                 ],
             },
             {
-                "eyebrow": "Founding member — your spot is waiting",
+                "eyebrow": "Your early access spot is waiting",
                 "eyebrow_color": "#FF5C35",
                 "paragraphs": [
-                    "Because you were one of the first to put your hand up with CineConnect, you&rsquo;re getting first access to Spot&rsquo;d as a <strong style=\"color:#FFFFFF;\">Founding Member</strong>.",
+                    "Because you were one of the first to put your hand up with CineConnect, you&rsquo;re getting first access to Spot&rsquo;d with <strong style=\"color:#FFFFFF;\">free PRO for life</strong>.",
                     "<span style=\"color:#999;\">What that means:</span>",
                 ],
                 "highlight": [
@@ -248,19 +248,18 @@ async def _send_welcome_internal(user_id: str, profile_id: str, tier: str = "pro
                     "⚡ Priority placement in search",
                     "⚡ Unlimited contact reveals",
                     "⚡ Full portfolio uploads",
-                    "⚡ Founding member badge on your profile",
                 ],
             },
             {
                 "paragraphs": [
-                    "<span style=\"color:#999;font-size:14px;\">After launch, PRO is <strong style=\"color:#FFFFFF;\">$9.99/month</strong> or <strong style=\"color:#FFFFFF;\">$79/year</strong>. As a founding member, your PRO access is free for life.</span>",
-                    "But here&rsquo;s the thing &mdash; there are only <strong style=\"color:#FFFFFF;\">100 founding member spots total</strong>.",
+                    "<span style=\"color:#999;font-size:14px;\">After launch, PRO is <strong style=\"color:#FFFFFF;\">$9.99/month</strong> or <strong style=\"color:#FFFFFF;\">$79/year</strong>. Your PRO access is free for life.</span>",
+                    "But here&rsquo;s the thing &mdash; there are only <strong style=\"color:#FFFFFF;\">100 early access spots total</strong>.",
                     "<span style=\"color:#FF5C35;font-weight:700;font-size:17px;\">You have 7 days to claim yours.</span>",
                     "<span style=\"color:#999;font-size:14px;\">After that, unclaimed spots go to the public waitlist and your profile reverts to a free account.</span>",
                 ],
             },
         ],
-        cta={"label": "CLAIM YOUR FOUNDING SPOT →", "url": login_url},
+        cta={"label": "CLAIM YOUR SPOT →", "url": login_url},
         post_cta="Enter this email address at sign-in and we&rsquo;ll send you a code &mdash; no password needed. Your profile will be waiting for you.",
         signoff={
             "intro": "Can&rsquo;t wait to see you in the directory.",

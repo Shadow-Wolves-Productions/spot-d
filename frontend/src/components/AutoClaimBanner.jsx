@@ -74,13 +74,13 @@ export default function AutoClaimBanner() {
 
         <div className="flex items-center gap-2">
           <Sparkles className="w-4 h-4 text-primary" />
-          <p className="text-[11px] uppercase tracking-[0.08em] font-mono text-primary">Founding member · welcome back</p>
+          <p className="text-[11px] uppercase tracking-[0.08em] font-mono text-primary">Early access · Free PRO for life</p>
         </div>
         <h2 className="font-display text-2xl sm:text-3xl font-500 text-foreground mt-2" style={{ letterSpacing: "-0.5px" }}>
           Welcome to Spot'd, <span className="text-primary">{data.profile.preferred_name}</span>.
         </h2>
         <p className="text-sm text-muted-foreground mt-2 max-w-xl leading-[1.6]">
-          Your founding member profile is live. Complete a few quick wins below to climb the directory in 60 seconds.
+          Your profile is live. Complete a few quick wins below to climb the directory in 60 seconds.
         </p>
 
         {/* Score + completion */}

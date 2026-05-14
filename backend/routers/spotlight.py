@@ -4,7 +4,7 @@ Homepage Spotlight system.
 Display order on the landing page:
   1. Paid Elite spotlight purchases that are still active (carouseled)
   2. Admin-pinned picks
-  3. Founding members (random highest-score) as fallback when nothing is pinned
+  3. Early access members (random highest-score) as fallback when nothing is pinned
   4. Highest-SpotScore non-founder profile as final fallback
 
 Entity: SpotlightPick

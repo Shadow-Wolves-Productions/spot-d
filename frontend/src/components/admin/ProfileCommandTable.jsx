@@ -268,7 +268,7 @@ export default function ProfileCommandTable({
                 {p.email_verified
                   ? <Pill tone="green" icon={CheckCircle2}>Verified</Pill>
                   : <Pill tone="orange" icon={AlertTriangle}>Unverified</Pill>}
-                {tier === "founder" && <Pill tone="yellow" icon={Crown}>Founder</Pill>}
+                {tier === "founder" && <Pill tone="yellow" icon={Crown}>PRO</Pill>}
                 {tier === "elite" && <Pill tone="yellow" icon={Crown}>Elite</Pill>}
                 {tier === "pro" && <Pill tone="yellow" icon={Crown}>PRO</Pill>}
                 {p.is_boosted && <Pill tone="yellow" icon={Zap}>Boosted</Pill>}
@@ -384,7 +384,7 @@ function ProfileInspector({ profile: p, currentUserId, onClose, onAction }) {
               {p.email_verified
                 ? <Pill tone="green" icon={CheckCircle2}>Email verified</Pill>
                 : <Pill tone="orange" icon={AlertTriangle}>Email unverified</Pill>}
-              {tier === "founder" && <Pill tone="yellow" icon={Crown}>Founding member</Pill>}
+              {tier === "founder" && <Pill tone="yellow" icon={Crown}>PRO (Early Access)</Pill>}
               {tier === "elite" && <Pill tone="yellow" icon={Crown}>Elite</Pill>}
               {tier === "pro" && <Pill tone="yellow" icon={Crown}>PRO</Pill>}
               {p.is_boosted && <Pill tone="yellow" icon={Zap}>Boosted</Pill>}
@@ -419,7 +419,7 @@ function ProfileInspector({ profile: p, currentUserId, onClose, onAction }) {
                 </ActionButton>
               )}
               <ActionButton tone="neutral" icon={Star} onClick={() => onAction("founder", p)}>
-                {p._user?.is_founding_member ? "Unflag founder" : "Flag founder"}
+                {p._user?.is_founding_member ? "Revoke Early Access" : "Grant Early Access"}
               </ActionButton>
               <ActionButton tone="neutral" icon={Mail} onClick={() => onAction("resend_welcome", p)}>
                 Resend welcome

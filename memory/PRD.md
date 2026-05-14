@@ -36,7 +36,15 @@ Foundation migration, OTP auth, Stripe checkout, Postmark, bulk import, SpotScor
 
 ### Iter 11 — GridFS uploads, Admin command table, Email composer, Casting CRUD, Founding Member flags
 
-### Iter 12 — Projects Ecosystem (Claude changes synced, May 2026)
+### Iter 13 — "Founding Member" terminology removed (May 2026)
+- All user-facing "Founding Member" / "Founding Member badge" / "founding spot" text replaced with "Early Access" / "Free PRO for life" across all frontend components and backend emails
+- Internal DB fields (`is_founding_member`, `founder` tier) kept unchanged — no data migration needed
+- Hero badge: "Founding · Free PRO" → "Free PRO · For Life"
+- Landing/Pricing CTA: "Founding member access" → "Free PRO — for life"
+- AutoClaimBanner: "Founding member · welcome back" → "Early access · Free PRO for life"
+- ContactFAQ: FAQ updated to describe offer without "Founding Member" term
+- Admin labels: "Flag founder" → "Grant/Revoke Early Access"
+- All transactional & broadcast email templates updated (admin.py, scheduled.py, EmailComposer)
 - **New entities**: Project, ProjectAttachment, ProjectInquiry, SavedProject (core.py + models.py + entities router)
 - **Projects router** (`/api/projects/{id}/view|inquiry|attach`) — view counter, inquiries, team attachment CRUD
 - **New frontend pages**: Projects.jsx (browse), CreateProject.jsx (multi-step form), ProjectDetail.jsx, ProjectManage.jsx
