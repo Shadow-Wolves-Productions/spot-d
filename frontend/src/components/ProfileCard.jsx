@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { MapPin, Crown, CheckCircle, Film, Bookmark, Zap, ChevronLeft, ChevronRight } from "lucide-react";
+import { MapPin, Crown, CheckCircle, Film, ChevronLeft, ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { ensureAbsoluteUrl } from "@/lib/url";
 
@@ -194,24 +194,7 @@ export default function ProfileCard({ profile, subscription, onSave, isSaved, in
                     <Film className="w-2 h-2" /> IMDb
                   </span>
                 )}
-                {spotCount > 0 && (
-                  <div className="flex items-center gap-0.5 px-1 py-0.5 rounded" style={{ background: "rgba(255,92,53,0.15)" }} title={`${spotCount} spot${spotCount !== 1 ? "s" : ""}`}>
-                    <Zap className="w-2 h-2" style={{ color: "#FF5C35" }} />
-                    <span className="text-[9px] font-bold" style={{ color: "#FF5C35" }}>{spotCount}</span>
-                  </div>
-                )}
               </div>
-              {onSave && !profile._isOwnProfile && (
-                <button
-                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); onSave(profile.id); }}
-                  className="w-5 h-5 rounded-full flex items-center justify-center transition-colors flex-shrink-0"
-                  style={{ background: "rgba(255,255,255,0.08)" }}
-                  data-testid="profile-card-save-btn"
-                  aria-label={isSaved ? "Unsave" : "Save"}
-                >
-                  <Bookmark className={`w-2.5 h-2.5 ${isSaved ? "fill-primary text-primary" : "text-muted-foreground"}`} />
-                </button>
-              )}
             </div>
           </div>
         </div>
