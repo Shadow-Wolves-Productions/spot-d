@@ -1,39 +1,30 @@
-**Welcome to SPOT'D** 
+# Spot'd
 
-**About**
+A professional directory and discovery platform for the Australian film and television industry — connecting cast, crew, and creative talent.
 
-View and Edit  your app on [Base44.com](http://Base44.com) 
+## Stack
 
-This project contains everything you need to run your app locally.
+- **Frontend** — React + Vite + Tailwind CSS + shadcn/ui
+- **Backend** — Python / FastAPI
+- **Database** — MongoDB
+- **Platform** — Emergent (hosting + auth + entity layer)
 
-**Edit the code in your local development environment**
+## Local development
 
-Any change pushed to the repo will also be reflected in the Base44 Builder.
+1. Clone the repo
+2. Install frontend dependencies: `npm install`
+3. Create a `.env.local` file at the root with the required environment variables (contact the team for values)
+4. Run the dev server: `npm run dev`
 
-**Prerequisites:** 
+## Key areas
 
-1. Clone the repository using the project's Git URL 
-2. Navigate to the project directory
-3. Install dependencies: `npm install`
-4. Create an `.env.local` file and set the right environment variables
+| Path | Description |
+|---|---|
+| `frontend/src/pages/` | Page-level components (Dashboard, SearchDirectory, ProfilePage, Projects, etc.) |
+| `frontend/src/components/` | Shared UI components (ProfileCard, ProfileHero, Layout, etc.) |
+| `backend/` | FastAPI routers, models, and server entry point |
+| `base44/` | Entity schemas and platform function definitions |
 
-```
-VITE_BASE44_APP_ID=your_app_id
-VITE_BASE44_APP_BASE_URL=your_backend_url
+## Deployment
 
-e.g.
-VITE_BASE44_APP_ID=cbef744a8545c389ef439ea6
-VITE_BASE44_APP_BASE_URL=https://my-to-do-list-81bfaad7.base44.app
-```
-
-Run the app: `npm run dev`
-
-**Publish your changes**
-
-Open [Base44.com](http://Base44.com) and click on Publish.
-
-**Docs & Support**
-
-Documentation: [https://docs.base44.com/Integrations/Using-GitHub](https://docs.base44.com/Integrations/Using-GitHub)
-
-Support: [https://app.base44.com/support](https://app.base44.com/support)
+Changes pushed to `main` are deployed automatically via Emergent.
