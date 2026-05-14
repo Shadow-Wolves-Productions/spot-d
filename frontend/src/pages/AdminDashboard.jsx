@@ -15,7 +15,7 @@ import ProfileCommandTable from "../components/admin/ProfileCommandTable";
 
 const TABS = [
   { id: "profiles",  label: "Profiles",  icon: Film },
-  { id: "casting",   label: "Casting",   icon: Award },
+  { id: "projects",  label: "Projects",  icon: Award },
   { id: "spotlight", label: "Spotlight", icon: Sparkles },
   { id: "emails",    label: "Emails",    icon: Mail },
   { id: "stats",     label: "Stats",     icon: BarChart3 },
@@ -32,6 +32,7 @@ export default function AdminDashboard() {
   const [users, setUsers] = useState([]);
   const [profiles, setProfiles] = useState([]);
   const [castingCalls, setCastingCalls] = useState([]);
+  const [adminProjects, setAdminProjects] = useState([]);
   const [imports, setImports] = useState({ total: 0, claimed: 0, unclaimed: 0, items: [] });
   const [emails, setEmails] = useState([]);
   const [platform, setPlatform] = useState(null);
@@ -83,6 +84,10 @@ export default function AdminDashboard() {
     const { data } = await base44.http.get("/api/admin/casting-calls");
     setCastingCalls(data);
   }, []);
+  const loadProjects = useCallback(async () => {
+    const data = await base44.entities.Project.list("-created_date", 200);
+    setAdminProjects(data);
+  }, []);
   const loadImports = useCallback(async () => {
     const { data } = await base44.http.get("/api/admin/imports");
     setImports(data);
@@ -106,11 +111,12 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     if (tab === "casting" && castingCalls.length === 0) loadCasting();
+    if (tab === "projects" && adminProjects.length === 0) loadProjects();
     if (tab === "imports" && imports.items.length === 0) loadImports();
     if (tab === "emails" && emails.length === 0) loadEmails();
     if (tab === "platform" && !platform) loadPlatform();
     if (tab === "logs" && logs.length === 0) loadLogs();
-  }, [tab, castingCalls.length, imports.items.length, emails.length, platform, logs.length, loadCasting, loadImports, loadEmails, loadPlatform, loadLogs]);
+  }, [tab, castingCalls.length, adminProjects.length, imports.items.length, emails.length, platform, logs.length, loadCasting, loadProjects, loadImports, loadEmails, loadPlatform, loadLogs]);
 
   // Actions
   const setAdminRole = async (userId, makeAdmin) => {
@@ -253,6 +259,7 @@ export default function AdminDashboard() {
   };
 
   const filteredCasting = castingCalls.filter((c) => lc(c.project_title).includes(lc(search)) || lc(c.creator_email).includes(lc(search)));
+  const filteredProjects = adminProjects.filter((p) => lc(p.title).includes(lc(search)) || lc(p.production_company || "").includes(lc(search)));
   const filteredImports = imports.items.filter((p) => lc(p.full_name).includes(lc(search)) || lc(p.email).includes(lc(search)));
 
   if (loading) {
@@ -273,7 +280,7 @@ export default function AdminDashboard() {
               <Shield className="w-5 h-5 text-primary" />
               <h1 className="font-display text-2xl sm:text-3xl font-bold text-foreground">Admin Dashboard</h1>
             </div>
-            <p className="text-muted-foreground text-sm">5-tab admin · profiles · casting · spotlight · emails · stats</p>
+            <p className="text-muted-foreground text-sm">5-tab admin · profiles · projects · spotlight · emails · stats</p>
           </div>
           <Button variant="outline" size="sm" className="border-border" onClick={loadCore} data-testid="admin-refresh-btn">
             <RefreshCw className="w-4 h-4 mr-1" /> Refresh
@@ -296,7 +303,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Search */}
-        {["profiles", "casting", "imports"].includes(tab) && (
+        {["profiles", "casting", "projects", "imports"].includes(tab) && (
           <div className="relative mb-4">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
@@ -380,6 +387,49 @@ export default function AdminDashboard() {
                   }}>
                     {c.is_active ? "Deactivate" : "Activate"}
                   </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* PROJECTS */}
+        {tab === "projects" && (
+          <div className="space-y-2" data-testid="admin-projects-tab">
+            {filteredProjects.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-8 text-center">No projects yet.</p>
+            ) : filteredProjects.map((p) => (
+              <div key={p.id} className="bg-card border border-border/60 rounded-xl p-4">
+                <div className="flex items-start justify-between gap-3 flex-wrap">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium text-foreground text-sm">{p.title}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {p.project_type || "Project"}
+                      {p.genre ? ` · ${p.genre}` : ""}
+                      {p.stage ? ` · ${p.stage}` : ""}
+                      {p.production_company ? ` · ${p.production_company}` : ""}
+                    </p>
+                    <p className="text-[10px] uppercase tracking-[0.06em] font-mono text-muted-foreground mt-1">
+                      {p.is_published ? "published" : "draft"} · {p.view_count || 0} views
+                      {p.is_verified ? " · ✓ verified" : ""}
+                    </p>
+                  </div>
+                  <div className="flex gap-2 flex-wrap">
+                    <Button size="sm" variant="outline" className="text-xs h-7 border-border" onClick={async () => {
+                      await base44.entities.Project.update(p.id, { is_published: !p.is_published });
+                      toast.success(`Project ${!p.is_published ? "published" : "unpublished"}`);
+                      loadProjects();
+                    }}>
+                      {p.is_published ? "Unpublish" : "Publish"}
+                    </Button>
+                    <Button size="sm" variant="outline" className={`text-xs h-7 ${p.is_verified ? "border-primary/30 text-primary" : "border-border"}`} onClick={async () => {
+                      await base44.entities.Project.update(p.id, { is_verified: !p.is_verified });
+                      toast.success(`Project ${!p.is_verified ? "verified" : "unverified"}`);
+                      loadProjects();
+                    }}>
+                      {p.is_verified ? "✓ Verified" : "Verify"}
+                    </Button>
+                  </div>
                 </div>
               </div>
             ))}

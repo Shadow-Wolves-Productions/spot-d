@@ -27,9 +27,8 @@ const HAIR_COLORS = ["Blonde", "Brown", "Black", "Red", "Grey", "White", "Bald",
 const EYE_COLORS = ["Blue", "Brown", "Green", "Hazel", "Grey", "Amber", "Other"];
 const BUILDS = ["Slim", "Athletic", "Average", "Stocky", "Plus-size"];
 const WORK_AUTH = ["Citizen", "Permanent Resident", "Work Visa"];
-const AVAILABILITY = ["Available Now", "Available Soon", "Not Available"];
 
-const STEPS = ["Personal", "Professional", "Portfolio & IMDb", "Availability & Contact"];
+const STEPS = ["Personal", "Professional", "Portfolio & IMDb", "Contact"];
 
 // NOTE: SpotScore is computed authoritatively on the backend via
 // recalculateSpotScore. The legacy client-side `calculateCineScore` was
@@ -92,7 +91,6 @@ export default function CreateProfile() {
     showreel_link: "", resume_url: "", headshots: [],
     equipment_owned: [], special_skills: [], languages_spoken: [],
     bio: "",
-    availability_status: "Available Now", availability_notes: "",
     credits: [],
     agent_name: "", agent_email: "", agent_phone: "",
     is_minor_profile: false,
@@ -730,20 +728,6 @@ export default function CreateProfile() {
               {!checkingSlug && slugAvailable === true && <p className="text-xs text-green-400 mt-1">✓ Available</p>}
               {!checkingSlug && slugAvailable === false && <p className="text-xs text-destructive mt-1">✗ Already taken — try another</p>}
               <p className="text-[11px] text-muted-foreground mt-1">3–30 characters. Letters, numbers, hyphens, underscores only.</p>
-            </div>
-
-            <div>
-              <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">Availability Status</Label>
-              <Select value={form.availability_status} onValueChange={(v) => update("availability_status", v)}>
-                <SelectTrigger className="bg-secondary border-border"><SelectValue /></SelectTrigger>
-                <SelectContent className="bg-card border-border">
-                  {AVAILABILITY.map((a) => <SelectItem key={a} value={a}>{a}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">Availability Notes</Label>
-              <Textarea value={form.availability_notes} onChange={(e) => update("availability_notes", e.target.value)} rows={2} className="bg-secondary border-border" placeholder="Any additional availability details..." />
             </div>
 
             {/* Contact Information with inline verification */}

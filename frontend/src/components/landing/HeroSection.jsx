@@ -14,7 +14,6 @@ function MiniProfileCard({ profile }) {
   const name = profile.preferred_name || profile.full_name || "—";
   const role = profile.primary_role || "Profile";
   const place = [profile.city, profile.state].filter(Boolean).join(", ");
-  const isAvailableNow = profile.availability_status === "Available Now";
 
   return (
     <div className="relative w-full overflow-hidden rounded-xl border border-border" style={{ background: "#161616" }} data-testid="hero-mini-card">
@@ -46,11 +45,6 @@ function MiniProfileCard({ profile }) {
             <MapPin className="w-3 h-3" /> {place}
           </span>
         ) : <span />}
-        {isAvailableNow && (
-          <span className="text-[9px] uppercase tracking-[0.08em] font-semibold px-2 py-0.5 rounded-full" style={{ background: "#E6FF00", color: "#0D0D0D" }}>
-            Available now
-          </span>
-        )}
       </div>
     </div>
   );

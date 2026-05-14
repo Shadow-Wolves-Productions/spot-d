@@ -21,6 +21,7 @@ export default function CompanyProfilePage() {
   const [loading, setLoading] = useState(true);
   const [team, setTeam] = useState([]);
   const [me, setMe] = useState(null);
+  const [companyProjects, setCompanyProjects] = useState([]);
 
   useEffect(() => {
     const load = async () => {
@@ -33,6 +34,12 @@ export default function CompanyProfilePage() {
           const profiles = await Promise.all(ids.map((id) => base44.entities.Profile.get(id).catch(() => null)));
           setTeam(profiles.filter(Boolean));
         }
+      }
+      if (c?.id) {
+        try {
+          const projs = await base44.entities.Project.filter({ posted_as_company_id: c.id, is_published: true });
+          setCompanyProjects(projs || []);
+        } catch { /* non-critical */ }
       }
       try { setMe(await base44.auth.me()); } catch { setMe(null); }
       setLoading(false);
@@ -214,6 +221,39 @@ export default function CompanyProfilePage() {
                     </a>
                   )}
                 </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Active Projects on Spot'd */}
+        {companyProjects.length > 0 && (
+          <section className="mt-10">
+            <h2 className="font-display text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
+              <Film className="w-5 h-5 text-primary" /> Projects on Spot'd
+            </h2>
+            <div className="grid sm:grid-cols-2 gap-3">
+              {companyProjects.map((proj) => (
+                <Link
+                  key={proj.id}
+                  to={`/projects/${proj.id}`}
+                  className="flex items-center gap-3 bg-card border border-border rounded-xl p-3 hover:border-primary/30 transition-colors"
+                >
+                  {proj.poster_image ? (
+                    <img src={proj.poster_image} alt="" className="w-10 h-14 object-cover rounded-lg flex-shrink-0" />
+                  ) : (
+                    <div className="w-10 h-14 rounded-lg bg-secondary flex items-center justify-center flex-shrink-0">
+                      <Film className="w-4 h-4 text-muted-foreground/40" />
+                    </div>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold text-foreground truncate">{proj.title}</p>
+                    <p className="text-xs text-muted-foreground truncate">{proj.project_type || "—"} · {proj.stage || "—"}</p>
+                    {proj.seeking?.length > 0 && (
+                      <p className="text-[10px] text-primary/70 truncate mt-0.5">{proj.seeking.slice(0, 2).join(", ")}</p>
+                    )}
+                  </div>
+                </Link>
               ))}
             </div>
           </section>

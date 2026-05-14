@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
-import { Bookmark, Share2, ArrowLeft, Zap, Check, Image as ImageIcon } from "lucide-react";
+import { Bookmark, Share2, ArrowLeft, Zap, Check, Image as ImageIcon, Film } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ProfileHero from "../components/profile/ProfileHero";
 import ContactPanel from "../components/profile/ContactPanel";
@@ -18,12 +18,12 @@ import { usePageMeta } from "@/lib/usePageMeta";
 export default function ProfilePage() {
   const [profile, setProfile] = useState(null);
   const [profileSubscription, setProfileSubscription] = useState(null);
-  const [profileOwner, setProfileOwner] = useState(null);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
   const [myProfile, setMyProfile] = useState(null);
   const [similarProfiles, setSimilarProfiles] = useState([]);
   const [linkedCompanies, setLinkedCompanies] = useState([]);
+  const [attachedProjects, setAttachedProjects] = useState([]);
   const [isSaved, setIsSaved] = useState(false);
   const [spotModalOpen, setSpotModalOpen] = useState(false);
   const [hasSpotted, setHasSpotted] = useState(false);
@@ -92,17 +92,26 @@ export default function ProfilePage() {
           );
           setSimilarProfiles(similar.filter((s) => s.id !== p.id).slice(0, 4));
         }
+        // Load approved project attachments for this profile
+        try {
+          const atts = await base44.entities.ProjectAttachment.filter({ profile_id: p.id, status: "approved" });
+          if (atts && atts.length > 0) {
+            const projDetails = (await Promise.all(
+              atts.map(async (a) => {
+                const proj = await base44.entities.Project.filter({ id: a.project_id, is_published: true });
+                if (!proj?.[0]) return null;
+                return { ...proj[0], _role_on_project: a.role_on_project };
+              })
+            )).filter(Boolean);
+            setAttachedProjects(projDetails);
+          }
+        } catch { /* non-critical */ }
+
         // Cross-link: show "Also on Spot'd" company tiles for any
         // CompanyProfile owned by this user.
         if (p.user_id) {
           const linked = await base44.entities.CompanyProfile.filter({ user_id: p.user_id }).catch(() => []);
           setLinkedCompanies(linked || []);
-          // Load this profile's owner User record so we can read the
-          // is_founding_member flag for the hero badge.
-          try {
-            const owner = await base44.entities.User.get(p.user_id);
-            setProfileOwner(owner || null);
-          } catch { /* non-critical */ }
           // Load this profile's active subscription (for the tier badge).
           try {
             const subs = await base44.entities.Subscription.filter(
@@ -234,7 +243,7 @@ export default function ProfilePage() {
           myProfile={myProfile}
         />
       )}
-      <ProfileHero profile={profile} subscription={profileSubscription} isFoundingMember={!!profileOwner?.is_founding_member} />
+      <ProfileHero profile={profile} subscription={profileSubscription} />
 
       {/* Actions strip */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
@@ -306,27 +315,42 @@ export default function ProfilePage() {
             <ProfessionalDetails profile={profile} />
             <SkillsSection profile={profile} />
 
-            {/* Availability */}
-            {profile.availability_status && (
+            <CreditsSection profile={profile} />
+            <PortfolioSection profile={profile} />
+
+            {/* Projects this person is attached to */}
+            {attachedProjects.length > 0 && (
               <section className="space-y-3">
-                <h2 className="font-display text-lg font-semibold text-foreground">Availability</h2>
-                <div className="bg-secondary/30 rounded-lg p-4">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-3 h-3 rounded-full ${
-                      profile.availability_status === "Available Now" ? "bg-green-400" :
-                      profile.availability_status === "Available Soon" ? "bg-yellow-400" : "bg-red-400"
-                    }`} />
-                    <span className="text-sm font-medium text-foreground">{profile.availability_status}</span>
-                  </div>
-                  {profile.availability_notes && (
-                    <p className="text-sm text-muted-foreground mt-2">{profile.availability_notes}</p>
-                  )}
+                <h2 className="font-display text-lg font-semibold text-foreground flex items-center gap-2">
+                  <Film className="w-5 h-5 text-primary" /> Projects
+                </h2>
+                <div className="grid sm:grid-cols-2 gap-3">
+                  {attachedProjects.map((proj) => (
+                    <Link
+                      key={proj.id}
+                      to={`/projects/${proj.id}`}
+                      className="flex items-center gap-3 bg-card border border-border rounded-xl p-3 hover:border-primary/30 transition-colors"
+                    >
+                      {proj.poster_image ? (
+                        <img src={proj.poster_image} alt="" className="w-10 h-14 object-cover rounded-lg flex-shrink-0" />
+                      ) : (
+                        <div className="w-10 h-14 rounded-lg bg-secondary flex items-center justify-center flex-shrink-0">
+                          <Film className="w-4 h-4 text-muted-foreground/40" />
+                        </div>
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold text-foreground truncate">{proj.title}</p>
+                        {proj._role_on_project && (
+                          <p className="text-[11px] text-primary/80 truncate">{proj._role_on_project}</p>
+                        )}
+                        <p className="text-[11px] text-muted-foreground truncate">{proj.project_type || "—"} · {proj.stage || "—"}</p>
+                      </div>
+                    </Link>
+                  ))}
                 </div>
               </section>
             )}
 
-            <CreditsSection profile={profile} />
-            <PortfolioSection profile={profile} />
             <SpottedWithSection profileId={profile.id} />
             <SpotsSection profileId={profile.id} />
 
