@@ -2,7 +2,7 @@ import { Search, User, Eye, Phone } from "lucide-react";
 import { motion } from "framer-motion";
 
 const STEPS = [
-  { icon: Search, step: "01", title: "Search", description: "Browse cast, crew, and creative talent by role, location, experience, and availability." },
+  { icon: Search, step: "01", title: "Search", description: "Browse cast, crew, and creative talent by role, location, experience, and more." },
   { icon: User, step: "02", title: "Discover", description: "View profiles with SpotScore, peer Spots, verified credentials, and real project credits." },
   { icon: Eye, step: "03", title: "Reveal", description: "Reveal contact details instantly. No waiting, no internal messaging, no friction." },
   { icon: Phone, step: "04", title: "Connect", description: "Reach out directly via email, phone, Instagram, or LinkedIn. That simple." },

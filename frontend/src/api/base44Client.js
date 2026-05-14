@@ -72,6 +72,7 @@ const ENTITY_NAMES = [
   "Spot", "Endorsement", "SpotRequest", "SavedProfile", "ContactReveal",
   "RoleAlert", "Notification", "SpottedWith", "VerificationCode",
   "ProfileView", "PortfolioClick", "SearchAppearance", "CompanyProfile",
+  "Project", "ProjectAttachment", "ProjectInquiry", "SavedProject",
 ];
 
 const entities = ENTITY_NAMES.reduce((acc, n) => {
