@@ -198,7 +198,9 @@ export default function CreateProject() {
             setLoadingExisting(false);
           }
         }
-      } catch { /* signed out */ }
+      } catch {
+        base44.auth.redirectToLogin(window.location.pathname);
+      }
     };
     init();
   }, [editId, isEditMode, navigate]);
@@ -305,7 +307,11 @@ export default function CreateProject() {
         navigate(`/projects/${created.id}`);
       }
     } catch (e) {
-      toast.error("Save failed — please try again");
+      if (e?.response?.status === 401) {
+        base44.auth.redirectToLogin(window.location.pathname);
+      } else {
+        toast.error("Save failed — please try again");
+      }
     } finally {
       setSaving(false);
     }

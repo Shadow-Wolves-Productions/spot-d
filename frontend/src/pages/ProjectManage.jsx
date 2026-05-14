@@ -234,9 +234,14 @@ export default function ProjectManage() {
         if (b.status === "pending" && a.status !== "pending") return 1;
         return new Date(b.created_date) - new Date(a.created_date);
       }));
-    } catch {
-      toast.error("Failed to load project");
-      navigate("/projects");
+    } catch (err) {
+      // 401 = not logged in → redirect to login preserving return URL
+      if (err?.response?.status === 401) {
+        base44.auth.redirectToLogin(window.location.pathname);
+      } else {
+        toast.error("Failed to load project");
+        navigate("/projects");
+      }
     } finally {
       setLoading(false);
     }
