@@ -21,7 +21,6 @@ const SORT_OPTIONS = [
 
 export default function SearchDirectory() {
   const [profiles, setProfiles] = useState([]);
-  const [founderUserIds, setFounderUserIds] = useState(() => new Set());
   const [companies, setCompanies] = useState([]);
   const [tab, setTab] = useState("crew"); // "talent" | "crew" | "companies"
   const [spotCountMap, setSpotCountMap] = useState({});
@@ -34,13 +33,11 @@ export default function SearchDirectory() {
   const [filters, setFilters] = useState({
     role: "",
     location: "",
-    availability: "",
     union: "",
     experience: "",
     proOnly: false,
     verifiedOnly: false,
     imdbLinked: false,
-    availableNow: false,
     gender: "",
     hair_color: "",
     eye_color: "",
@@ -99,8 +96,6 @@ export default function SearchDirectory() {
       filterObj.all_roles = "Actor";
     }
     if (filters.role && filters.role !== "all_roles") filterObj.all_roles = filters.role;
-    if (filters.availability && filters.availability !== "any_availability") filterObj.availability_status = filters.availability;
-    if (filters.availableNow) filterObj.availability_status = "Available Now";
     if (filters.proOnly) filterObj.is_pro = true;
     if (filters.experience && filters.experience !== "any_level") filterObj.experience_level = filters.experience;
 
@@ -195,19 +190,6 @@ export default function SearchDirectory() {
     }
 
     setProfiles(data);
-
-    // Look up which profiles are founding members. Prefer the User flag
-    // (set by bootstrap migration + admin grants) and union with active
-    // founder-tier subscriptions for backwards compat.
-    try {
-      const users = await base44.entities.User.filter({ is_founding_member: true }, undefined, 500);
-      const ids = new Set((users || []).map((u) => u.id));
-      const subs = await base44.entities.Subscription.filter(
-        { tier: "founder", status: "active" }, "-created_date", 200
-      );
-      (subs || []).forEach((s) => s.user_id && ids.add(s.user_id));
-      setFounderUserIds(ids);
-    } catch { /* non-critical */ }
 
     // Apply tab split — Talent shows anyone with Actor anywhere; Crew shows
     // anyone whose roles include at least one non-Actor role. A profile can
@@ -431,7 +413,6 @@ export default function SearchDirectory() {
                      onSave={handleSave}
                      isSaved={savedIds.has(profile.id)}
                      spotCount={spotCountMap[profile.id] || 0}
-                     isFoundingMember={founderUserIds.has(profile.user_id)}
                    />
                    {profile._distKm !== undefined && (
                      <div className="absolute top-3 left-3 px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold bg-primary text-primary-foreground z-10">

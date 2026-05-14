@@ -9,7 +9,7 @@ import { Search, Shield, Users, Zap, Phone, Megaphone } from "lucide-react";
 import { motion } from "framer-motion";
 
 const FEATURES = [
-  { icon: Search,    title: "Smart search",          desc: "Filter by role, location, experience, availability — across Talent, Crew and Companies." },
+  { icon: Search,    title: "Smart search",          desc: "Filter by role, location, experience, union, and language — across Talent, Crew and Companies." },
   { icon: Shield,    title: "SpotScore trust",       desc: "A 0-100 credibility score built from verifications, peer Spots, and real activity. Not followers. Not vibes." },
   { icon: Users,     title: "Frequently Spotted with",desc: "Automatic crew connections from shared project credits. If you've worked together, Spot'd finds it." },
   { icon: Zap,       title: "Spot them",             desc: "Peer endorsements that mean something — because the other person has to agree." },

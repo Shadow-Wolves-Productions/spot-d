@@ -5,7 +5,7 @@ import { base44, tokenStore } from "@/api/base44Client";
 
 const TABS = [
   { path: "/search", label: "Directory", icon: Search, testId: "tab-directory" },
-  { path: "/casting", label: "Casting", icon: Film, testId: "tab-casting" },
+  { path: "/projects", label: "Projects", icon: Film, testId: "tab-projects" },
   { path: "/notifications", label: "Inbox", icon: Bell, testId: "tab-notifications", badgeKey: "unread" },
   { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard, testId: "tab-dashboard" },
 ];

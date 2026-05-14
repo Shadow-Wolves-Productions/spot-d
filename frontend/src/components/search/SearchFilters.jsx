@@ -12,7 +12,6 @@ import ProximityFilter from "./ProximityFilter";
 
 const ROLES = ["Actor", "Director", "Producer", "Cinematographer", "Editor", "Writer", "Sound Designer", "Production Designer", "Costume Designer", "Makeup Artist", "Gaffer", "Grip", "1st AD", "2nd AD", "Line Producer", "Production Manager", "Script Supervisor", "Stunt Coordinator", "VFX Artist", "Colorist", "Composer", "Sound Mixer", "Boom Operator", "Art Director", "Set Designer", "Props Master", "Location Manager", "Casting Director", "Other"];
 const EXPERIENCE_LEVELS = ["Entry", "Mid", "Senior", "Expert"];
-const AVAILABILITY = ["Available Now", "Available Soon", "Not Available"];
 const UNIONS = ["SAG-AFTRA", "MEAA", "Equity", "DGA", "IATSE", "WGA", "Non-Union"];
 const LANGUAGES = ["English", "Spanish", "French", "Mandarin", "Cantonese", "Japanese", "Korean", "Italian", "German", "Portuguese", "Arabic", "Hindi"];
 
@@ -24,7 +23,7 @@ export default function SearchFilters({ filters, onChange, isProUser, proximity,
   };
 
   const clearFilters = () => {
-    onChange({ role: "", location: "", availability: "", union: "", experience: "", proOnly: false, verifiedOnly: false, imdbLinked: false, availableNow: false, language: "" });
+    onChange({ role: "", location: "", union: "", experience: "", proOnly: false, verifiedOnly: false, imdbLinked: false, language: "" });
   };
 
   const activeCount = Object.values(filters).filter((v) => v && v !== false && v !== "").length;
@@ -59,20 +58,6 @@ export default function SearchFilters({ filters, onChange, isProUser, proximity,
         onChange={(e) => updateFilter("location", e.target.value)}
         className="border text-sm h-9 bg-background border-border"
         />
-      </div>
-
-      {/* Availability */}
-      <div>
-        <Label className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground mb-2 block">Availability</Label>
-        <Select value={filters.availability || ""} onValueChange={(v) => updateFilter("availability", v)}>
-          <SelectTrigger className="border text-sm h-9 bg-background border-border">
-            <SelectValue placeholder="Any availability" />
-          </SelectTrigger>
-          <SelectContent className="bg-card border-border">
-            <SelectItem value="any_availability">Any availability</SelectItem>
-            {AVAILABILITY.map((a) => <SelectItem key={a} value={a}>{a}</SelectItem>)}
-          </SelectContent>
-        </Select>
       </div>
 
       {/* Union affiliation */}
@@ -122,7 +107,6 @@ export default function SearchFilters({ filters, onChange, isProUser, proximity,
       {/* Quick toggles */}
       <div className="space-y-3 pt-3 border-t border-border">
         {[
-          { label: "Available now", key: "availableNow", pro: false },
           { label: "PRO only", key: "proOnly", pro: true },
           { label: "IMDb linked", key: "imdbLinked", pro: true },
           { label: "Verified only", key: "verifiedOnly", pro: true },

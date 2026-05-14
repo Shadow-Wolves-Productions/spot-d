@@ -1,20 +1,9 @@
-import { MapPin, Crown, CheckCircle, Film, Clock, Briefcase, ExternalLink } from "lucide-react";
+import { MapPin, Crown, CheckCircle, Film, Briefcase, ExternalLink } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { Badge } from "@/components/ui/badge";
 import SpotScoreBadge from "../SpotScoreBadge";
-import FoundingMemberBadge from "../FoundingMemberBadge";
+import { PercentileBadge } from "../SpotScoreBreakdown";
 import { ensureAbsoluteUrl } from "@/lib/url";
-
-const AVAILABILITY_STYLES = {
-  "Available Now": "text-black border-0",
-  "Available Soon": "text-white border-0",
-  "Not Available": "text-white border-0",
-};
-const AVAILABILITY_BG = {
-  "Available Now": "#22C55E",
-  "Available Soon": "#FF5C35",
-  "Not Available": "#444",
-};
 
 async function trackImdbClick(profile) {
   try {
@@ -22,7 +11,7 @@ async function trackImdbClick(profile) {
   } catch (_) {}
 }
 
-export default function ProfileHero({ profile, subscription, isFoundingMember }) {
+export default function ProfileHero({ profile, subscription }) {
   return (
     <div className="relative pt-20">
       {/* Background */}
@@ -44,27 +33,18 @@ export default function ProfileHero({ profile, subscription, isFoundingMember })
                 </div>
               )}
             </div>
-            {profile.is_pro && (
+            {(subscription?.tier === "pro" || subscription?.tier === "elite" || subscription?.tier === "founder") && (
               <div className="absolute -bottom-2 -right-2 px-2.5 py-1 rounded-full flex items-center gap-1 bg-primary">
                 <Crown className="w-3.5 h-3.5 text-primary-foreground" />
-                <span className="text-[10px] font-bold text-primary-foreground uppercase tracking-[0.08em]">PRO</span>
+                <span className="text-[10px] font-bold text-primary-foreground uppercase tracking-[0.08em]">
+                  {subscription.tier === "elite" ? "ELITE" : "PRO"}
+                </span>
               </div>
             )}
           </div>
 
           {/* Info */}
           <div className="flex-1 min-w-0">
-            <div className="flex flex-wrap items-center gap-2 mb-2">
-              {profile.is_founding_member && (
-                <Badge variant="outline" className="border-primary/30 text-primary text-[10px] uppercase tracking-wider">
-                  Founding Member
-                </Badge>
-              )}
-              {profile.is_boosted && (
-                <Badge variant="outline" className="border-primary/20 text-primary/80 text-[10px]">Featured</Badge>
-              )}
-              <FoundingMemberBadge tier={subscription?.tier} isFoundingMember={isFoundingMember} />
-            </div>
 
             <h1 className="font-display text-3xl sm:text-4xl font-bold text-foreground">
               {profile.full_name}
@@ -97,16 +77,6 @@ export default function ProfileHero({ profile, subscription, isFoundingMember })
                   {profile.experience_level} · {profile.years_of_experience || 0}+ years
                 </span>
               )}
-              {profile.availability_status && (
-                <Badge
-                  variant="outline"
-                  className={AVAILABILITY_STYLES[profile.availability_status]}
-                  style={{ background: AVAILABILITY_BG[profile.availability_status] }}
-                >
-                  <Clock className="w-3 h-3 mr-1" />
-                  {profile.availability_status}
-                </Badge>
-              )}
             </div>
 
             {/* IMDb button */}
@@ -128,8 +98,8 @@ export default function ProfileHero({ profile, subscription, isFoundingMember })
               </div>
             )}
 
-            {/* Unified verification badge */}
-            {(profile.email_verified || profile.imdb_verified) && (
+            {/* Verification badge — only when email-verified without IMDb (IMDb shows its own checkmark) */}
+            {profile.email_verified && !profile.imdb_verified && (
               <div className="flex items-center gap-1.5 mt-4">
                 <CheckCircle className="w-4 h-4 text-primary" />
                 <span className="text-sm font-semibold text-primary">Verified</span>
@@ -143,7 +113,12 @@ export default function ProfileHero({ profile, subscription, isFoundingMember })
               <span className="font-display font-bold text-primary" style={{ fontSize: 52, lineHeight: 1, color: "hsl(var(--primary))" }}>
                 {profile.spot_score || 0}
               </span>
-              <span className="text-[10px] uppercase tracking-[0.12em] font-mono text-muted-foreground lg:mt-1">SpotScore</span>
+              <div className="flex flex-col items-center gap-1">
+                <span className="text-[10px] uppercase tracking-[0.12em] font-mono text-muted-foreground">SpotScore</span>
+                {profile.spot_percentile >= 75 && (
+                  <PercentileBadge percentile={profile.spot_percentile} compact />
+                )}
+              </div>
             </div>
           </div>
         </div>

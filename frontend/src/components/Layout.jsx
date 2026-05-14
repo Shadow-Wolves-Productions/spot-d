@@ -18,7 +18,7 @@ import {
 
 const NAV_LINKS = [
   { path: "/search", label: "Directory" },
-  { path: "/casting", label: "Casting calls" },
+  { path: "/projects", label: "Projects" },
   { path: "/pricing", label: "Pricing" },
   { path: "/contact", label: "Contact & FAQ" },
 ];
@@ -317,7 +317,7 @@ export default function Layout() {
             </div>
             <div className="flex items-center gap-6 text-sm text-muted-foreground">
               <Link to="/search" className="hover:text-foreground transition-colors">Directory</Link>
-              <Link to="/casting" className="hover:text-foreground transition-colors">Casting</Link>
+              <Link to="/projects" className="hover:text-foreground transition-colors">Projects</Link>
               <Link to="/pricing" className="hover:text-foreground transition-colors">Pricing</Link>
               <Link to="/contact" className="hover:text-foreground transition-colors">Contact</Link>
             </div>
