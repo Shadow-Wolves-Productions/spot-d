@@ -145,7 +145,6 @@ export default function CreateProject() {
     runtime: "",
     language: "",
     festival_status: "",
-    production_notes: "",
     release_goals: "",
     banner_image: "",
     imdb_link: "",

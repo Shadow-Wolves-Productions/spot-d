@@ -31,6 +31,23 @@
 Foundation migration, OTP auth, Stripe checkout, Postmark, bulk import, SpotScore, AgeGate, multi-role profiles, CompanyProfiles, Analytics, Notifications, AutoClaim, mobile UX polish, casting share card, landing redesign with live data, branded ProfileCard placeholder.
 
 ### Iter 9 — Founder cap + waitlist + OG images + Trusted-by + 5min cache + footer + Hero CTA fix
+
+### Iter 10 — Production go-live
+
+### Iter 11 — GridFS uploads, Admin command table, Email composer, Casting CRUD, Founding Member flags
+
+### Iter 12 — Projects Ecosystem (Claude changes synced, May 2026)
+- **New entities**: Project, ProjectAttachment, ProjectInquiry, SavedProject (core.py + models.py + entities router)
+- **Projects router** (`/api/projects/{id}/view|inquiry|attach`) — view counter, inquiries, team attachment CRUD
+- **New frontend pages**: Projects.jsx (browse), CreateProject.jsx (multi-step form), ProjectDetail.jsx, ProjectManage.jsx
+- **Navigation**: Layout + MobileBottomTabs now show "Projects" instead of "Casting"
+- **Badge cleanup**: Founders display as PRO (not "FOUNDER" pill). FoundingMemberBadge no longer imported anywhere.
+- **Availability removed**: Stripped from SearchFilters, SearchDirectory, CreateProfile form, Dashboard sidebar, HeroSection, ProfileHero, ProfilePage.
+- **Dashboard**: Added My Projects + Saved Projects sections.
+- **ProfilePage**: Added attached projects section, removed availability block.
+- **CompanyProfilePage**: Added company projects grid.
+- **Admin**: Projects tab (publish/verify/unpublish) replaces Casting tab.
+- **HowItWorks**: Copy updated to remove "availability" mention.
 - `/api/public-stats` now caches 300s, returns `founder_cap`
 - `/api/og/casting/{id}.png` + `/api/og/profile/{slug}.png` (Pillow, 1h cache)
 - Founder cap: PlatformSettings (default 100, admin-editable). All counters live.

@@ -110,13 +110,12 @@ export default function AdminDashboard() {
   }, []);
 
   useEffect(() => {
-    if (tab === "casting" && castingCalls.length === 0) loadCasting();
     if (tab === "projects" && adminProjects.length === 0) loadProjects();
     if (tab === "imports" && imports.items.length === 0) loadImports();
     if (tab === "emails" && emails.length === 0) loadEmails();
     if (tab === "platform" && !platform) loadPlatform();
     if (tab === "logs" && logs.length === 0) loadLogs();
-  }, [tab, castingCalls.length, adminProjects.length, imports.items.length, emails.length, platform, logs.length, loadCasting, loadProjects, loadImports, loadEmails, loadPlatform, loadLogs]);
+  }, [tab, adminProjects.length, imports.items.length, emails.length, platform, logs.length, loadProjects, loadImports, loadEmails, loadPlatform, loadLogs]);
 
   // Actions
   const setAdminRole = async (userId, makeAdmin) => {
@@ -364,35 +363,6 @@ export default function AdminDashboard() {
         )}
 
         {/* CASTING */}
-        {tab === "casting" && (
-          <div className="space-y-2" data-testid="admin-casting-tab">
-            {filteredCasting.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-8 text-center">No casting calls.</p>
-            ) : filteredCasting.map((c) => (
-              <div key={c.id} className="bg-card border border-border/60 rounded-xl p-4">
-                <div className="flex items-start justify-between gap-3 flex-wrap">
-                  <div className="min-w-0 flex-1">
-                    <p className="font-medium text-foreground text-sm">{c.project_title}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      {c.project_type || "Project"} · {c.creator_name || c.creator_email || "Unknown"}{c.posted_as === "company" ? ` · as ${c.posted_as_company_name}` : ""}
-                    </p>
-                    <p className="text-[10px] uppercase tracking-[0.06em] font-mono text-muted-foreground mt-1">
-                      {c.application_count || 0} app · {c.is_active ? "active" : "inactive"} · deadline {c.deadline ? new Date(c.deadline).toLocaleDateString() : "—"}
-                    </p>
-                  </div>
-                  <Button size="sm" variant="outline" className="text-xs h-7 border-border" onClick={async () => {
-                    await base44.entities.CastingCall.update(c.id, { is_active: !c.is_active });
-                    toast.success(`Casting ${!c.is_active ? "activated" : "deactivated"}`);
-                    loadCasting();
-                  }}>
-                    {c.is_active ? "Deactivate" : "Activate"}
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
         {/* PROJECTS */}
         {tab === "projects" && (
           <div className="space-y-2" data-testid="admin-projects-tab">
