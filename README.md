@@ -1,4 +1,4 @@
-**Welcome to your Base44 project** 
+**Welcome to SPOT'D** 
 
 **About**
 
