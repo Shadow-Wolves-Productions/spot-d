@@ -457,9 +457,7 @@ export default function ProjectDetail() {
                   </span>
                 )}
                 {project.is_verified && (
-                  <span className="text-[10px] uppercase tracking-[0.08em] font-semibold px-2.5 py-1 rounded-full border text-primary bg-primary/10 border-primary/20 inline-flex items-center gap-1">
-                    <CheckCircle2 className="w-3 h-3" /> Verified
-                  </span>
+                  <CheckCircle2 className="w-3.5 h-3.5 text-primary flex-shrink-0" title="Verified project" />
                 )}
               </div>
 

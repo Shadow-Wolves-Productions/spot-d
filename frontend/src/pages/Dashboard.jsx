@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { Link } from "react-router-dom";
-import { Crown, Eye, Bookmark, Clock, ChevronRight, Edit, Zap, Moon, Sun, Trash2, AlertTriangle, BarChart2, Building2, Sparkles, ArrowRight, Film, FolderOpen } from "lucide-react";
+import { Crown, Eye, Bookmark, ChevronRight, Edit, Zap, Moon, Sun, Trash2, AlertTriangle, BarChart2, Building2, Sparkles, ArrowRight, Film, FolderOpen } from "lucide-react";
 import { usePullToRefresh } from "../hooks/usePullToRefresh";
 import RoleAlertsPanel from "../components/RoleAlertsPanel";
 import { useTheme } from "../lib/useTheme";
@@ -443,27 +443,6 @@ export default function Dashboard() {
 
           {/* Sidebar */}
           <div className="space-y-6">
-            {/* Availability */}
-            {profile && (
-              <div className="bg-card border border-border/60 rounded-xl p-6">
-                <h3 className="font-display text-sm font-semibold text-foreground uppercase tracking-wider mb-3">
-                  Availability
-                </h3>
-                <div className="flex items-center gap-2">
-                  <div className={`w-3 h-3 rounded-full ${
-                    profile.availability_status === "Available Now" ? "bg-green-400" :
-                    profile.availability_status === "Available Soon" ? "bg-yellow-400" : "bg-red-400"
-                  }`} />
-                  <span className="text-sm text-foreground">{profile.availability_status}</span>
-                </div>
-                <Link to="/create-profile">
-                  <Button variant="outline" size="sm" className="w-full mt-4 border-border text-xs">
-                    <Clock className="w-3.5 h-3.5 mr-1" /> Update Availability
-                  </Button>
-                </Link>
-              </div>
-            )}
-
             {/* PRO upgrade */}
             {profile && subscription?.tier === "free" && (
               <div className="glass-effect rounded-xl p-6 gold-glow">

@@ -7,7 +7,6 @@ import { useQuery } from "@tanstack/react-query";
 
 export default function FeaturedProfiles() {
   const [profiles, setProfiles] = useState([]);
-  const [founderUserIds, setFounderUserIds] = useState(() => new Set());
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -15,16 +14,6 @@ export default function FeaturedProfiles() {
       const top = await base44.entities.Profile.list("-spot_score", 16);
       const visible = top.filter((p) => !p.is_minor_profile).slice(0, 8);
       setProfiles(visible);
-      // Founding-member lookup — User flag union with founder-tier subs.
-      try {
-        const users = await base44.entities.User.filter({ is_founding_member: true }, undefined, 500);
-        const ids = new Set((users || []).map((u) => u.id));
-        const subs = await base44.entities.Subscription.filter(
-          { tier: "founder", status: "active" }, "-created_date", 200
-        );
-        (subs || []).forEach((s) => s.user_id && ids.add(s.user_id));
-        setFounderUserIds(ids);
-      } catch { /* non-critical */ }
       setLoading(false);
     };
     load();
@@ -66,8 +55,6 @@ export default function FeaturedProfiles() {
               key={profile.id}
               profile={profile}
               index={i}
-              featured={profile.is_boosted}
-              isFoundingMember={founderUserIds.has(profile.user_id)}
             />
           ))}
         </div>

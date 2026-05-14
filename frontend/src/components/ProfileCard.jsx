@@ -1,9 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { MapPin, Crown, CheckCircle, Film, Bookmark, Zap, ChevronLeft, ChevronRight, Check } from "lucide-react";
+import { MapPin, Crown, CheckCircle, Film, Bookmark, Zap, ChevronLeft, ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
-import { PercentileBadge } from "./SpotScoreBreakdown";
-import FoundingMemberBadge from "./FoundingMemberBadge";
 import { ensureAbsoluteUrl } from "@/lib/url";
 
 // Score dot colour based on score value
@@ -18,9 +16,9 @@ function ScoreDot({ score }) {
 }
 
 const TIER_BADGE = {
-  pro:     { label: "PRO",     bg: "#FF5C35", color: "#fff" },
-  founder: { label: "FOUNDER", bg: "#E6FF00", color: "#0D0D0D" },
-  elite:   { label: "ELITE",   bg: "#E6FF00", color: "#0D0D0D" },
+  pro:     { label: "PRO",  bg: "#FF5C35", color: "#fff" },
+  founder: { label: "PRO",  bg: "#FF5C35", color: "#fff" },
+  elite:   { label: "ELITE", bg: "#E6FF00", color: "#0D0D0D" },
 };
 
 // Resolve any photo URL — includes legacy /api/static/uploads/... support.
@@ -40,7 +38,7 @@ function resolvePhoto(p) {
  * additional_photos (max 5 visible) inside the headshot frame; arrows fade
  * in on hover, dots indicate position.
  */
-export default function ProfileCard({ profile, subscription, isFoundingMember, onSave, isSaved, index = 0, featured = false, spotCount }) {
+export default function ProfileCard({ profile, subscription, onSave, isSaved, index = 0, spotCount }) {
   // Build the photo carousel — primary photo first, then any additional photos.
   const photos = [];
   if (profile.profile_photo) photos.push(profile.profile_photo);
@@ -65,17 +63,7 @@ export default function ProfileCard({ profile, subscription, isFoundingMember, o
   const preferred = (profile.preferred_name || "").trim();
   const showPreferred = preferred && preferred.toLowerCase() !== firstName.toLowerCase();
 
-  const availabilityStyle = profile.availability_status === "Available Now"
-    ? { background: "#22C55E", color: "#0D0D0D", label: "Available now" }
-    : profile.availability_status === "Available Soon"
-    ? { background: "#FF5C35", color: "#fff", label: "Available soon" }
-    : { background: "#2A2A2A", color: "#888", label: "Unavailable" };
-
   const tierBadge = subscription ? TIER_BADGE[subscription.tier] : null;
-  // Show the founding-member glyph when the user is flagged. Used in place of
-  // the chunky "FOUNDER" pill so the headshot stays clean at small sizes.
-  const showFounderGlyph = !!isFoundingMember || subscription?.tier === "founder";
-  const isAvailableNow = profile.availability_status === "Available Now";
 
   return (
     <motion.div
@@ -148,60 +136,12 @@ export default function ProfileCard({ profile, subscription, isFoundingMember, o
               </>
             )}
 
-            {/* Top-left status icons — founder + available */}
-            <div className="absolute top-1.5 left-1.5 flex items-center gap-1 pointer-events-none">
-              {showFounderGlyph && (
-                <span
-                  data-testid="founder-diamond"
-                  className="w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold leading-none"
-                  style={{ background: "#38BDF8", color: "#0D0D0D" }}
-                  title="Founding Member"
-                >
-                  ◆
+            {/* Top-right: tier badge */}
+            {tierBadge && (
+              <div className="absolute top-1.5 right-1.5 pointer-events-none">
+                <span className="px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-[0.06em] rounded flex items-center gap-0.5" style={{ background: tierBadge.bg, color: tierBadge.color }}>
+                  <Crown className="w-2 h-2" /> {tierBadge.label}
                 </span>
-              )}
-              {isAvailableNow && (
-                <span
-                  data-testid="available-tick"
-                  className="w-4 h-4 rounded-full flex items-center justify-center"
-                  style={{ background: "#22C55E", color: "#0D0D0D" }}
-                  title="Available now"
-                >
-                  <Check className="w-2.5 h-2.5 stroke-[3]" />
-                </span>
-              )}
-            </div>
-
-            {/* Top-right: tier (if not founder) + featured + minor + score */}
-            <div className="absolute top-1.5 right-1.5 flex items-start gap-1 pointer-events-none">
-              <div className="flex gap-1 flex-wrap items-center">
-                {featured && (
-                  <span className="px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-[0.06em] rounded bg-primary text-primary-foreground">
-                    Featured
-                  </span>
-                )}
-                {tierBadge && tierBadge.label !== "FOUNDER" && (
-                  <span className="px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-[0.06em] rounded flex items-center gap-0.5" style={{ background: tierBadge.bg, color: tierBadge.color }}>
-                    <Crown className="w-2 h-2" /> {tierBadge.label}
-                  </span>
-                )}
-                {profile.is_minor_profile && (
-                  <span data-testid="minor-badge" className="px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-[0.06em] rounded bg-amber-500/90 text-black">
-                    Minor
-                  </span>
-                )}
-                {profile.spot_score > 0 && (
-                  <div className="px-1.5 py-0.5 rounded flex items-center" style={{ background: "rgba(0,0,0,0.65)" }}>
-                    <ScoreDot score={profile.spot_score} />
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Bottom-right percentile (top-N%) — opposite the name/role */}
-            {profile.spot_percentile >= 75 && (
-              <div className="absolute bottom-1.5 right-1.5 pointer-events-none">
-                <PercentileBadge percentile={profile.spot_percentile} compact />
               </div>
             )}
 
@@ -242,6 +182,7 @@ export default function ProfileCard({ profile, subscription, isFoundingMember, o
                 {(profile.email_verified || profile.imdb_verified) && (
                   <CheckCircle className="w-3 h-3 text-primary" title="Verified" />
                 )}
+                {profile.spot_score > 0 && <ScoreDot score={profile.spot_score} />}
                 {profile.imdb_link && (
                   <span
                     role="link"

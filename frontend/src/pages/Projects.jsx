@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { Link, useNavigate } from "react-router-dom";
-import { Plus, MapPin, DollarSign, Search, SlidersHorizontal, Film, X } from "lucide-react";
+import { Plus, MapPin, DollarSign, Search, SlidersHorizontal, Film, X, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { motion, AnimatePresence } from "framer-motion";
@@ -109,9 +109,7 @@ function ProjectCard({ project, index, isOwner }) {
               </span>
             )}
             {project.is_verified && (
-              <span className="text-[10px] uppercase tracking-[0.07em] font-semibold px-2 py-0.5 rounded-full border text-primary bg-primary/10 border-primary/20">
-                ✓ Verified
-              </span>
+              <CheckCircle2 className="w-3.5 h-3.5 text-primary flex-shrink-0" title="Verified project" />
             )}
           </div>
 

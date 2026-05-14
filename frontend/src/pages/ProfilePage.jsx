@@ -18,7 +18,6 @@ import { usePageMeta } from "@/lib/usePageMeta";
 export default function ProfilePage() {
   const [profile, setProfile] = useState(null);
   const [profileSubscription, setProfileSubscription] = useState(null);
-  const [profileOwner, setProfileOwner] = useState(null);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
   const [myProfile, setMyProfile] = useState(null);
@@ -113,12 +112,6 @@ export default function ProfilePage() {
         if (p.user_id) {
           const linked = await base44.entities.CompanyProfile.filter({ user_id: p.user_id }).catch(() => []);
           setLinkedCompanies(linked || []);
-          // Load this profile's owner User record so we can read the
-          // is_founding_member flag for the hero badge.
-          try {
-            const owner = await base44.entities.User.get(p.user_id);
-            setProfileOwner(owner || null);
-          } catch { /* non-critical */ }
           // Load this profile's active subscription (for the tier badge).
           try {
             const subs = await base44.entities.Subscription.filter(
@@ -250,7 +243,7 @@ export default function ProfilePage() {
           myProfile={myProfile}
         />
       )}
-      <ProfileHero profile={profile} subscription={profileSubscription} isFoundingMember={!!profileOwner?.is_founding_member} />
+      <ProfileHero profile={profile} subscription={profileSubscription} />
 
       {/* Actions strip */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
@@ -321,25 +314,6 @@ export default function ProfilePage() {
             <AboutSection bio={profile.bio} />
             <ProfessionalDetails profile={profile} />
             <SkillsSection profile={profile} />
-
-            {/* Availability */}
-            {profile.availability_status && (
-              <section className="space-y-3">
-                <h2 className="font-display text-lg font-semibold text-foreground">Availability</h2>
-                <div className="bg-secondary/30 rounded-lg p-4">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-3 h-3 rounded-full ${
-                      profile.availability_status === "Available Now" ? "bg-green-400" :
-                      profile.availability_status === "Available Soon" ? "bg-yellow-400" : "bg-red-400"
-                    }`} />
-                    <span className="text-sm font-medium text-foreground">{profile.availability_status}</span>
-                  </div>
-                  {profile.availability_notes && (
-                    <p className="text-sm text-muted-foreground mt-2">{profile.availability_notes}</p>
-                  )}
-                </div>
-              </section>
-            )}
 
             <CreditsSection profile={profile} />
             <PortfolioSection profile={profile} />
