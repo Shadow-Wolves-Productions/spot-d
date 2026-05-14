@@ -4,13 +4,18 @@ import { MapPin, Crown, CheckCircle, Film, ChevronLeft, ChevronRight } from "luc
 import { motion } from "framer-motion";
 import { ensureAbsoluteUrl } from "@/lib/url";
 
-// Score dot colour based on score value
-function ScoreDot({ score }) {
-  const color = score >= 80 ? "#E6FF00" : score >= 55 ? "#FF5C35" : "#888";
+// Score badge — coloured background pill for right-aligned display
+function ScoreBadge({ score }) {
+  const bg   = score >= 80 ? "#E6FF00" : score >= 55 ? "#FF5C35" : "#333";
+  const text = score >= 80 ? "#0D0D0D" : score >= 55 ? "#fff"    : "#aaa";
   return (
-    <div className="flex items-center gap-1" title={`SpotScore: ${score}`}>
-      <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: color }} />
-      <span className="font-display font-bold text-[11px]" style={{ color }}>{score}</span>
+    <div
+      className="flex items-center gap-1 px-1.5 py-0.5 rounded"
+      style={{ background: bg }}
+      title={`SpotScore: ${score}`}
+    >
+      <span className="font-display font-bold text-[10px] leading-none" style={{ color: text }}>{score}</span>
+      <span className="text-[8px] font-mono uppercase tracking-[0.04em] leading-none" style={{ color: text, opacity: 0.7 }}>SPOT</span>
     </div>
   );
 }
@@ -56,12 +61,6 @@ export default function ProfileCard({ profile, subscription, onSave, isSaved, in
     e.stopPropagation();
     setPhotoIdx((i) => (i + delta + photos.length) % photos.length);
   };
-
-  // Preferred-name annotation logic — only show if preferred ≠ first token
-  // of full name. Handles whitespace + case-insensitive comparison.
-  const firstName = (profile.full_name || "").trim().split(/\s+/)[0] || "";
-  const preferred = (profile.preferred_name || "").trim();
-  const showPreferred = preferred && preferred.toLowerCase() !== firstName.toLowerCase();
 
   const tierBadge = subscription ? TIER_BADGE[subscription.tier] : null;
 
@@ -146,15 +145,13 @@ export default function ProfileCard({ profile, subscription, onSave, isSaved, in
             )}
 
             {/* Bottom name + role overlay */}
-            <div className="absolute bottom-0 left-0 right-12 p-2.5">
-              <h3 className="font-display text-[13px] font-semibold text-white leading-tight tracking-tight" data-testid="profile-card-name">
-                {profile.full_name || preferred}
+            <div className="absolute bottom-0 left-0 right-0 p-2.5">
+              <h3 className="font-display text-[13px] font-semibold text-white leading-tight tracking-tight flex items-center gap-1" data-testid="profile-card-name">
+                <span className="truncate">{profile.full_name || profile.preferred_name}</span>
+                {(profile.email_verified || profile.imdb_verified) && (
+                  <CheckCircle className="w-3 h-3 flex-shrink-0" style={{ color: "#38BDF8" }} title="Verified" />
+                )}
               </h3>
-              {showPreferred && (
-                <p className="text-[10px] text-white/70 italic mt-0.5 leading-tight" data-testid="profile-card-preferred">
-                  &ldquo;{preferred}&rdquo;
-                </p>
-              )}
               <p className="text-[9px] uppercase tracking-[0.08em] text-white/55 mt-1 truncate">
                 {profile._displayRole || profile.primary_role}
               </p>
@@ -178,12 +175,9 @@ export default function ProfileCard({ profile, subscription, onSave, isSaved, in
             </div>
 
             <div className="flex items-center justify-between pt-0.5 gap-1">
-              <div className="flex items-center gap-1.5">
-                {(profile.email_verified || profile.imdb_verified) && (
-                  <CheckCircle className="w-3 h-3 text-primary" title="Verified" />
-                )}
-                {profile.spot_score > 0 && <ScoreDot score={profile.spot_score} />}
-                {profile.imdb_link && (
+              {/* Left — IMDb */}
+              <div>
+                {profile.imdb_link ? (
                   <span
                     role="link"
                     onClick={(e) => { e.stopPropagation(); e.preventDefault(); window.open(ensureAbsoluteUrl(profile.imdb_link), "_blank", "noopener,noreferrer"); }}
@@ -193,8 +187,10 @@ export default function ProfileCard({ profile, subscription, onSave, isSaved, in
                   >
                     <Film className="w-2 h-2" /> IMDb
                   </span>
-                )}
+                ) : <span />}
               </div>
+              {/* Right — SpotScore */}
+              {profile.spot_score > 0 && <ScoreBadge score={profile.spot_score} />}
             </div>
           </div>
         </div>
